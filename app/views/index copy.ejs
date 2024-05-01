@@ -1,0 +1,70 @@
+<%-  include('header') %>
+  <div class="container mt-3">
+  <form>
+  <div class="input-group">
+      <div class="input-group-text">ป้อนคำค้นหา</div>
+      <input type="text" name="search" class="form-control" />
+        <button class="btn btn-info" type="submit">
+          <span class="material-icon material-symbols-outlined">
+            search
+          </span>
+          ค้นหา
+        </button>
+  </div>
+  </form>
+    <a href="/form" class="btn btn-primary mt-3">
+      <span class="material-icon material-symbols-outlined">
+        add_circle
+      </span>
+      New Data
+    </a>
+    <%
+      let totalTopic = pays.length;
+    %>
+    <div class="mt-3"><h3>จำนวนรายการ : <%= totalTopic %> รายการ</h3></div>
+    <%
+      let totalExpenses = 0;
+      pays.forEach((p) => {
+        totalExpenses += p.total;
+      });
+    %>
+    <div class="mt-3"><h3>สรุปค่าใช้จ่าย : <%= totalExpenses %> บาท</h3></div>
+
+    <div class="mt-4 col-9">
+      <table class="table table-bordered mt-3">
+        <thead class="table-success">
+          <tr>
+            <th width="100px">ลำดับที่</th>
+            <th>รายการ</th>
+            <th>จำนวนเงิน</th>
+            <th>วันที่</th>
+            <th width="150px"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% pays.forEach((p , index) => { %>
+          <tr>
+            <td><%= index+1 %></td>
+            <td><%= p.topic %></td>
+            <td><%= p.total %></td>
+            <td><%= dayjs(p.pay_date).format('DD/MM/YYYY') %></td>
+            <td class="text-center">
+              <a class="btn btn-primary" href="/edit/<%= p.id %>">
+                  <span class="material-icon material-symbols-outlined">
+                  edit
+                  </span>
+              </a>
+              <a class="btn btn-danger" href="/delete/<%= p.id %>" onclick="return confirm('ยืนยันการลบ')">
+                  <span class="material-icon material-symbols-outlined">
+                      delete
+                  </span>
+              </a>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<%-  include('footer') %>
+
