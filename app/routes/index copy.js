@@ -1,72 +1,72 @@
-// // MySQL Database
-// var express = require('express');
-// var router = express.Router();
+// MySQL Database
+var express = require('express');
+var router = express.Router();
 
 
-// let mysql = require('mysql');
-// let conn = mysql.createConnection({
-//   host: 'localhost',
-//   user:'root',
-//   password:'',
-//   database:'db_pay'
-// });
+let mysql = require('mysql');
+let conn = mysql.createConnection({
+  host: 'localhost',
+  user:'root',
+  password:'',
+  database:'db_pay'
+});
 
-// let dayjs = require('dayjs');
+let dayjs = require('dayjs');
 
-// conn.connect((err) => {
-//   if (err) throw err;
-//   console.log('Connect to database MySQL Success');
-// })
+conn.connect((err) => {
+  if (err) throw err;
+  console.log('Connect to database MySQL Success');
+})
 
-// /* GET home page. */
-// router.get('/', (req, res, next) => {
-//   let params = [];
-//   let sql = 'SELECT * FROM tb_pay';
+/* GET home page. */
+router.get('/', (req, res, next) => {
+  let params = [];
+  let sql = 'SELECT * FROM tb_pay';
 
-//   if(req.query.search != undefined){
-//     sql += ' WHERE topic LIKE(?)'
-//     params.push('%'+req.query.search+'%');
-//   }
+  if(req.query.search != undefined){
+    sql += ' WHERE topic LIKE(?)'
+    params.push('%'+req.query.search+'%');
+  }
 
-//   conn.query(sql,params, (err,result) => {
-//     if(err) throw err;
-//     res.render('index',{pays: result, dayjs: dayjs});
-//   })
-// });
+  conn.query(sql,params, (err,result) => {
+    if(err) throw err;
+    res.render('index',{pays: result, dayjs: dayjs});
+  })
+});
 
-// router.get('/form', (req, res) => {
-//   res.render('form',{data: {},dayjs: dayjs});
-// });
+router.get('/form', (req, res) => {
+  res.render('form',{data: {},dayjs: dayjs});
+});
 
-// router.post('/form', (req, res) => {
-//   conn.query('INSERT INTO tb_pay SET ?', req.body, (err, result) => {
-//     if(err) throw err;
-//     res.redirect('/');
-//   })
-// });
+router.post('/form', (req, res) => {
+  conn.query('INSERT INTO tb_pay SET ?', req.body, (err, result) => {
+    if(err) throw err;
+    res.redirect('/');
+  })
+});
 
-// router.get('/delete/:id', (req, res) => {
-//   conn.query('DELETE FROM tb_pay WHERE id = ?', [req.params.id], (err,result) =>{
-//     if(err) throw err;
-//     res.redirect('/');
-//   })
-// });
+router.get('/delete/:id', (req, res) => {
+  conn.query('DELETE FROM tb_pay WHERE id = ?', [req.params.id], (err,result) =>{
+    if(err) throw err;
+    res.redirect('/');
+  })
+});
 
-// router.get('/edit/:id', (req, res) => {
-//   conn.query('SELECT * FROM tb_pay WHERE id = ?', [req.params.id], (err,result) =>{
-//     if(err) throw err;
-//     res.render('form', {data: result[0] , dayjs: dayjs});
-//   })
-// });
+router.get('/edit/:id', (req, res) => {
+  conn.query('SELECT * FROM tb_pay WHERE id = ?', [req.params.id], (err,result) =>{
+    if(err) throw err;
+    res.render('form', {data: result[0] , dayjs: dayjs});
+  })
+});
 
-// router.post('/edit/:id', (req, res) => {
-//   conn.query('UPDATE tb_pay SET ? WHERE id = ?',[req.body,req.params.id], (err,result) =>{
-//     if(err) throw err;
-//     res.redirect('/');
-//   })
-// });
+router.post('/edit/:id', (req, res) => {
+  conn.query('UPDATE tb_pay SET ? WHERE id = ?',[req.body,req.params.id], (err,result) =>{
+    if(err) throw err;
+    res.redirect('/');
+  })
+});
 
-// module.exports = router;
+module.exports = router;
 
 
 
