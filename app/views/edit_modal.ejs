@@ -1,0 +1,33 @@
+<!-- Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editModalLabel">แก้ไขข้อมูล</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm" method="POST" action="/update/<%= gold_edit._id %>">
+                    <div class="form-group">
+                        <label for="goldType">ประเภททองคำ</label>
+                        <input type="text" class="form-control" id="goldType" name="goldtype" value="<%= gold_edit.goldtype %>">
+                    </div>
+                    <div class="form-group">
+                        <label for="goldSize">ขนาดทองคำ</label>
+                        <input type="text" class="form-control" id="goldSize" name="size" value="<%= gold_edit.size %>">
+                    </div>
+                    <div class="form-group">
+                        <label for="goldWeight">น้ำหนักทองคำ</label>
+                        <input type="text" class="form-control" id="goldWeight" name="weight" value="<%= gold_edit.weight %>">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="submit" form="editForm" class="btn btn-primary">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
