@@ -33,11 +33,11 @@
               <td><%= index+1 %></td>
               <td><%= add_data.gold_id %></td>
               <td class="text-center">
-                <a class="btn btn-success" style="margin-right:3px;">
-                    <span class="material-icon material-symbols-outlined">
-                    add
-                    </span>เพิ่มข้อมูลทองคำ
-                </a>
+                <a class="btn btn-success" style="margin-right:3px;" href="/add_dataform?gold_id=<%= add_data.gold_id %>">
+                  <span class="material-icon material-symbols-outlined">
+                      add
+                  </span>เพิ่มข้อมูลทองคำ
+              </a>              
               </td>
             </tr>
           <% }); %>

@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const dayjs = require('dayjs');
+const localizedFormat = require('dayjs/plugin/localizedFormat');
+dayjs.extend(localizedFormat);
 const { ObjectId } = require('mongoose').Types;
 const connectDB = require('../Config/db');
 const rfidModule = require('../rfid_module/rfidReader');
@@ -21,11 +23,21 @@ db.once('open', () => {
 
 // สร้างโครงสร้างข้อมูล
 const goldSchema = new mongoose.Schema({
-  goldtype: String,
-  size: String,
-  weight: String,
-  gold_id: ObjectId
-},{ collection: 'Goldcount' });
+
+  // gold_id: ObjectId,
+  // goldtype: String,
+  // size: String,
+  // weight: String,
+  
+  gold_id: ObjectId,
+  gold_type: String,
+  gold_size: String,
+  gold_weight: String
+  // ,gold_timestamp: { type: Date, default: Date.now }
+},{ 
+  collection: 'gold_data_tag' 
+  // collection: 'Goldcount'
+});
 
 const Gold = mongoose.model('Gold', goldSchema);
 
@@ -86,14 +98,19 @@ router.get('/gold_list', async (req, res, next) => {
   }
 });
 
+// //mockup id for test
 // router.get('/add_golddata', async (req,res) => {
 //   try{
-//       let condition = {};
-//       const addgoldsdata = await Gold.find(condition);
+//     let addgoldsdata = [];
+//     // สร้างข้อมูลเลข tag 001 - 010
+//     for (let i = 1; i <= 10; i++) {
+//         let paddedNumber = i.toString().padStart(3, '0');
+//         addgoldsdata.push({ gold_id: paddedNumber });
+//     }
 //       res.render('add_golddata', {
 //         addgoldsdata: addgoldsdata,
-//         dayjs: dayjs, 
-//         });
+//         dayjs: dayjs
+//     });
 //   } catch (error) {
 //       console.error(error);
 //       res.status(500).send('Internal Server Error');
@@ -114,6 +131,50 @@ router.get('/add_golddata', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).send('Internal Server Error');
+  }
+});
+
+router.get('/add_dataform', async (req, res) => {
+  try {
+      // ดึงค่า Gold_Tag_id จาก query string
+      const goldId = req.query.gold_id;
+
+      res.render('add_dataform', { goldId: goldId });
+  } catch (error) {
+      console.error(error);
+      res.status(500).send('Internal Server Error');
+  }
+});
+
+router.post('/add_dataform', async (req, res) => {
+  try {
+      // ดึงค่า Gold_Tag_id จาก body ของการส่งข้อมูลแบบ POST
+      const goldId = req.body.gold_id;
+      // ดำเนินการบันทึกข้อมูลทองคำโดยใช้ goldId ที่ได้มา
+      const { gold_id, gold_type, gold_size, gold_weight } = req.body;
+
+        // // สร้าง timestamp ปัจจุบัน
+        // const timestamp = Date.now();
+
+        // // แปลง timestamp เป็นวันที่และเวลาในรูปแบบที่ต้องการ (วัน เดือน ปี เวลา ไทย)
+        // const gold_timestamp = dayjs(timestamp).locale('th').format('DD MMMM YYYY HH:mm:ss');
+
+        // สร้างข้อมูลที่จะบันทึกลงในฐานข้อมูล
+        const newGoldData = new Gold({
+            gold_id,
+            gold_type,
+            gold_size,
+            gold_weight
+            // ,gold_timestamp // เพิ่ม timestamp ไปยังข้อมูล
+        });
+        
+        // บันทึกข้อมูลลงในฐานข้อมูล
+        await newGoldData.save();
+
+      res.redirect('./add_golddata');
+  } catch (error) {
+      console.error(error);
+      res.status(500).send('Internal Server Error');
   }
 });
 

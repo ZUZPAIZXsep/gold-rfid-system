@@ -17,8 +17,6 @@ function sleep(delay) {
 
 var seenTags = {}; // เก็บรหัสของแท็กที่เห็นแล้ว
 
-
-
 var rfidTags = []; // เก็บรหัสของแท็กที่เห็นแล้ว
 
 function ShowTagData(data) {
