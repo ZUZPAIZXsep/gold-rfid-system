@@ -5,7 +5,6 @@ const dayjs = require('dayjs');
 const localizedFormat = require('dayjs/plugin/localizedFormat');
 dayjs.extend(localizedFormat);
 const { ObjectId } = require('mongoose').Types;
-const connectDB = require('../Config/db');
 const rfidModule = require('../rfid_module/rfidReader');
 
 
@@ -21,25 +20,35 @@ db.once('open', () => {
   console.log('Connected to MongoDB database');
 });
 
-// สร้างโครงสร้างข้อมูล
-const goldSchema = new mongoose.Schema({
-
-  // gold_id: ObjectId,
-  // goldtype: String,
-  // size: String,
-  // weight: String,
-  
+// สร้างโครงสร้างข้อมูล gold_data_tag
+const goldTagSchema = new mongoose.Schema({
+ 
   gold_id: ObjectId,
   gold_type: String,
   gold_size: String,
-  gold_weight: String
+  gold_weight: String,
+  has_data: Boolean
   // ,gold_timestamp: { type: Date, default: Date.now }
 },{ 
   collection: 'gold_data_tag' 
-  // collection: 'Goldcount'
 });
 
-const Gold = mongoose.model('Gold', goldSchema);
+const GoldTag = mongoose.model('GoldTag', goldTagSchema);
+
+// สร้างโครงสร้างข้อมูล goldcount
+const goldCountSchema = new mongoose.Schema({
+
+  gold_id: ObjectId,
+  goldtype: String,
+  size: String,
+  weight: String,
+  
+  // ,gold_timestamp: { type: Date, default: Date.now }
+},{ 
+  collection: 'Goldcount'
+});
+
+const Gold = mongoose.model('Gold', goldCountSchema);
 
 /* GET home page. */
 router.get('/', async (req, res, next) => {
@@ -122,7 +131,13 @@ router.get('/add_golddata', async (req, res) => {
     let addgoldsdata = [];
     let rfidTags = rfidModule.getRfidTags(); // เรียกใช้งาน rfidTags จาก rfidReader.js
     for (let i = 0; i < rfidTags.length; i++) {
-      addgoldsdata.push({ gold_id: rfidTags[i] });
+      // ตรวจสอบว่า gold_id นี้มีข้อมูลในระบบหรือไม่
+      const existingGold = await GoldTag.findOne({ gold_id: rfidTags[i] });
+      let hasData = false;
+      if (existingGold) {
+        hasData = true; // หากมีข้อมูลในระบบแล้วก็กำหนดให้ hasData เป็น true
+      }
+      addgoldsdata.push({ gold_id: rfidTags[i], has_data: hasData });
     }
     res.render('add_golddata', {
       addgoldsdata: addgoldsdata,
@@ -133,6 +148,8 @@ router.get('/add_golddata', async (req, res) => {
     res.status(500).send('Internal Server Error');
   }
 });
+
+
 
 router.get('/add_dataform', async (req, res) => {
   try {
@@ -160,7 +177,7 @@ router.post('/add_dataform', async (req, res) => {
         // const gold_timestamp = dayjs(timestamp).locale('th').format('DD MMMM YYYY HH:mm:ss');
 
         // สร้างข้อมูลที่จะบันทึกลงในฐานข้อมูล
-        const newGoldData = new Gold({
+        const newGoldData = new GoldTag({
             gold_id,
             gold_type,
             gold_size,
@@ -203,7 +220,7 @@ router.get('/gold_edit', async (req,res) => {
           condition.size = req.query.select_goldSize;
       }
 
-      const goldsedit = await Gold.find(condition);
+      const goldsedit = await GoldTag.find(condition);
       res.render('gold_edit', {
         goldsedit: goldsedit,
         dayjs: dayjs, 

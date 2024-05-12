@@ -24,6 +24,7 @@
           <tr>
             <th width="100px">ลำดับที่</th>
             <th>Gold_Tag_id</th>
+            <th width="180px" style="text-align: center;">สถานะ</th>
             <th width="210px"></th>
           </tr>
         </thead>
@@ -32,12 +33,19 @@
             <tr>
               <td><%= index+1 %></td>
               <td><%= add_data.gold_id %></td>
+              <td class="text-center" style="vertical-align: middle";>
+                <% if (add_data.has_data) { %>
+                  <span class="badge bg-success">มีข้อมูลอยู่ในระบบแล้ว</span>
+                <% } else { %>
+                  <span class="badge bg-danger">ยังไม่มีข้อมูล</span>
+                <% } %>
+              </td>
               <td class="text-center">
                 <a class="btn btn-success" style="margin-right:3px;" href="/add_dataform?gold_id=<%= add_data.gold_id %>">
                   <span class="material-icon material-symbols-outlined">
                       add
                   </span>เพิ่มข้อมูลทองคำ
-              </a>              
+                </a>              
               </td>
             </tr>
           <% }); %>
@@ -63,3 +71,4 @@
             });
     }
 </script>
+

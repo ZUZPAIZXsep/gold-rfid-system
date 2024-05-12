@@ -30,7 +30,7 @@
                     search
                 </span>
                 ค้นหา</button>
-            <a type="button" class="btn btn-danger mt-3" style="margin-left: 4px;" href="./add_edit">
+            <a type="button" class="btn btn-danger mt-3" style="margin-left: 4px;" href="./gold_edit">
                 <span class="material-icon material-symbols-outlined">
                     close
                 </span>
@@ -53,9 +53,9 @@
                   <% goldsedit.forEach((gold_edit , index) => { %>
                     <tr>
                       <td><%= index+1 %></td>
-                      <td><%= gold_edit.goldtype %></td>
-                      <td><%= gold_edit.size %></td>
-                      <td><%= gold_edit.weight %></td>
+                      <td><%= gold_edit.gold_type %></td>
+                      <td><%= gold_edit.gold_size %></td>
+                      <td><%= gold_edit.gold_weight %> กรัม</td>
                       <td><%= gold_edit.gold_id %></td>
                       <td class="text-center">
                         <a class="btn btn-primary" style="margin-right:3px;">
