@@ -1,0 +1,219 @@
+<%- include('header') %>
+
+<div class="container-fluid mt-3">
+    <form method="POST" action="/update_data">
+        <div class="mt-3">
+            <label>Gold_Tag_id</label>
+            <div class="col-3 mt-1">
+                <input type="text" name="gold_id" value="<%= goldId %>" class="form-control" readonly/>
+            </div>
+        </div>
+        <div class="mt-3">
+            <label>ชนิด</label>
+            <div class="col-3">
+                <select name="gold_type" class="form-select">
+                    <option selected disabled>เลือกประเภททองคำ</option>
+                    <option value="สร้อยคอ" <%= goldType === 'สร้อยคอ' ? 'selected' : '' %>>สร้อยคอ</option>
+                    <option value="แหวน" <%= goldType === 'แหวน' ? 'selected' : '' %>>แหวน</option>
+                    <option value="กำไลข้อมือ" <%= goldType === 'กำไลข้อมือ' ? 'selected' : '' %>>กำไลข้อมือ</option>
+                    <option value="สร้อยข้อมือ" <%= goldType === 'สร้อยข้อมือ' ? 'selected' : '' %>>สร้อยข้อมือ</option>
+                    <option value="ต่างหู" <%= goldType === 'ต่างหู' ? 'selected' : '' %>>ต่างหู</option>
+                </select>
+            </div>
+        </div>
+        <div class="mt-3">
+            <label>ขนาด</label>
+            <div class="col-3">
+                <select name="gold_size" id="gold_size" class="form-select" onchange="updateWeight()">
+                    <option selected disabled>เลือกขนาดทองคำ</option>
+                    <option value="ครึ่งสลึง" <%= goldSize === 'ครึ่งสลึง' ? 'selected' : '' %>>ครึ่งสลึง</option>
+                    <option value="1 สลึง" <%= goldSize === '1 สลึง' ? 'selected' : '' %>>1 สลึง</option>
+                    <option value="2 สลึง" <%= goldSize === '2 สลึง' ? 'selected' : '' %>>2 สลึง</option>
+                    <option value="1 บาท" <%= goldSize === '1 บาท' ? 'selected' : '' %>>1 บาท</option>
+                    <option value="2 บาท" <%= goldSize === '2 บาท' ? 'selected' : '' %>>2 บาท</option>
+                    <option value="3 บาท" <%= goldSize === '3 บาท' ? 'selected' : '' %>>3 บาท</option>
+                </select>
+            </div>
+        </div>
+        <div class="mt-3">
+            <label>น้ำหนัก</label>
+            <div class="col-3">
+                <div class="input-group">
+                    <input id="gold_weight" name="gold_weight" class="form-control" value="<%= goldWeight %>">
+                    <span class="input-group-text">กรัม</span>
+                </div>
+            </div>
+        </div>        
+        <div class="mt-4">
+            <button type="submit" class="btn btn-success" style="margin-right: 3px;">
+                <span class="material-icon material-symbols-outlined">
+                    save
+                </span>
+                บันทึก
+            </button>
+            <a href="./edit_goldTagData" class="btn btn-danger">
+                <span class="material-icon material-symbols-outlined">
+                    undo
+                </span>
+                ย้อนกลับ
+            </a> 
+        </div>
+    </form>
+</div>
+
+<%- include('footer') %>
+
+<script>
+    // ฟังก์ชันที่จะถูกเรียกเมื่อหน้าเว็บโหลดเสร็จ
+    window.onload = function () {
+        // ดึงข้อมูลทองคำจากฐานข้อมูลและแสดงในฟอร์ม
+        fetch('/get_goldTagData?gold_id=<%= goldId %>') // เรียกใช้งานเมื่อหน้าเว็บโหลดเสร็จ
+            .then(response => response.json())
+            .then(data => {
+                // เติมข้อมูลที่ดึงมาจากฐานข้อมูลลงในฟอร์ม
+                document.getElementsByName('gold_type')[0].value = data.gold_type;
+                document.getElementsByName('gold_size')[0].value = data.gold_size;
+                document.getElementById('gold_weight').value = data.gold_weight;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    };
+
+    // ฟังก์ชันที่จะถูกเรียกเมื่อมีการเปลี่ยนแปลงใน select ขนาดทองคำ
+    function updateWeight() {
+        // ดึง element ขนาดทองคำและน้ำหนัก
+        var sizeSelect = document.getElementById('gold_size');
+        var weightInput = document.getElementById('gold_weight');
+
+        // ตรวจสอบว่าเลือกขนาดทองคำอย่างไร
+        var sizeValue = sizeSelect.value;
+
+        // กำหนดค่าน้ำหนักตามขนาดทองคำที่ถูกเลือก
+        switch(sizeValue) {
+            case 'ครึ่งสลึง':
+                weightInput.value = '1.9'; // กำหนดน้ำหนักเป็น 1.9 กรัม
+                break;
+            case '1 สลึง':
+                weightInput.value = '3.8'; // กำหนดน้ำหนักเป็น 3.8 กรัม
+                break;
+            case '2 สลึง':
+                weightInput.value = '7.6'; // กำหนดน้ำหนักเป็น 7.6 กรัม
+                break;
+            case '1 บาท':
+                weightInput.value = '15.16'; // กำหนดน้ำหนักเป็น 15.16 กรัม
+                break;
+            case '2 บาท':
+                weightInput.value = '30.4'; // กำหนดน้ำหนักเป็น 30.4 กรัม
+                break;
+            case '3 บาท':
+                weightInput.value = '45.6'; // กำหนดน้ำหนักเป็น 45.6 กรัม
+                break;
+            default:
+                weightInput.value = ''; // หากไม่มีการเลือกขนาดทองคำให้เคลียร์ค่าน้ำหนัก
+        }
+    }
+</script>
+
+
+<!-- 
+
+<div class="container-fluid mt-3">
+    <form method="POST" action="/update_data">
+        <div class="mt-3">
+            <label>Gold_Tag_id</label>
+            <div class="col-3 mt-1">
+                <input type="text" name="gold_id" value="<%= goldId %>" class="form-control" readonly/>
+            </div>
+        </div>
+        <div class="mt-3">
+            <label>ชนิด</label>
+            <div class="col-3">
+                <select name="gold_type" class="form-select">
+                    <option selected>เลือกประเภททองคำ</option>
+                    <option value="สร้อยคอ">สร้อยคอ</option>
+                    <option value="แหวน">แหวน</option>
+                    <option value="กำไลข้อมือ">กำไลข้อมือ</option>
+                    <option value="สร้อยข้อมือ">สร้อยข้อมือ</option>
+                    <option value="ต่างหู">ต่างหู</option>
+                </select>
+            </div>
+        </div>
+        <div class="mt-3">
+            <label>ขนาด</label>
+            <div class="col-3">
+                <select name="gold_size" id="gold_size" class="form-select" onchange="updateWeight()">
+                    <option selected>เลือกขนาดทองคำ</option>
+                    <option value="ครึ่งสลึง">ครึ่งสลึง</option>
+                    <option value="1 สลึง">1 สลึง</option>
+                    <option value="2 สลึง">2 สลึง</option>
+                    <option value="1 บาท">1 บาท</option>
+                    <option value="2 บาท">2 บาท</option>
+                    <option value="3 บาท">3 บาท</option>
+                </select>
+            </div>
+        </div>
+        <div class="mt-3">
+            <label>น้ำหนัก</label>
+            <div class="col-3">
+                <div class="input-group">
+                    <input id="gold_weight" name="gold_weight" class="form-control">
+                    <span class="input-group-text">กรัม</span>
+                </div>
+            </div>
+        </div>               
+        <div class="mt-4">
+            <button type="submit" class="btn btn-success" style="margin-right: 3px;">
+                <span class="material-icon material-symbols-outlined">
+                    save
+                </span>
+                บันทึก
+            </button>
+            <a href="./edit_goldTagData" class="btn btn-danger">
+                <span class="material-icon material-symbols-outlined">
+                    undo
+                </span>
+                ย้อนกลับ
+            </a> 
+        </div>
+    </form>
+</div>
+
+
+
+<script>
+    // ฟังก์ชันที่จะถูกเรียกเมื่อมีการเปลี่ยนแปลงใน select ขนาดทองคำ
+    function updateWeight() {
+        // ดึง element ขนาดทองคำและน้ำหนัก
+        var sizeSelect = document.getElementById('gold_size');
+        var weightInput = document.getElementById('gold_weight');
+
+        // ตรวจสอบว่าเลือกขนาดทองคำอย่างไร
+        var sizeValue = sizeSelect.value;
+
+        // กำหนดค่าน้ำหนักตามขนาดทองคำที่ถูกเลือก
+        switch(sizeValue) {
+            case 'ครึ่งสลึง':
+                weightInput.value = '1.9'; // กำหนดน้ำหนักเป็น 1.9 กรัม
+                break;
+            case '1 สลึง':
+                weightInput.value = '3.8'; // กำหนดน้ำหนักเป็น 3.8 กรัม
+                break;
+            case '2 สลึง':
+                weightInput.value = '7.6'; // กำหนดน้ำหนักเป็น 7.6 กรัม
+                break;
+            case '1 บาท':
+                weightInput.value = '15.16'; // กำหนดน้ำหนักเป็น 15.16 กรัม
+                break;
+            case '2 บาท':
+                weightInput.value = '30.4'; // กำหนดน้ำหนักเป็น 30.4 กรัม
+                break;
+            case '3 บาท':
+                weightInput.value = '45.6'; // กำหนดน้ำหนักเป็น 45.6 กรัม
+                break;
+            default:
+                weightInput.value = ''; // หากไม่มีการเลือกขนาดทองคำให้เคลียร์ค่าน้ำหนัก
+        }
+    }
+
+</script> -->

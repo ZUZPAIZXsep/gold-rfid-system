@@ -30,7 +30,7 @@
                     search
                 </span>
                 ค้นหา</button>
-            <a type="button" class="btn btn-danger mt-3" style="margin-left: 4px;" href="./gold_edit">
+            <a type="button" class="btn btn-danger mt-3" style="margin-left: 4px;" href="./edit_goldTagData">
                 <span class="material-icon material-symbols-outlined">
                     close
                 </span>
@@ -50,24 +50,24 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <% goldsedit.forEach((gold_edit , index) => { %>
+                  <% goldsedit.forEach((edit_goldTagData , index) => { %>
                     <tr>
                       <td><%= index+1 %></td>
-                      <td><%= gold_edit.gold_type %></td>
-                      <td><%= gold_edit.gold_size %></td>
-                      <td><%= gold_edit.gold_weight %> กรัม</td>
-                      <td><%= gold_edit.gold_id %></td>
+                      <td><%= edit_goldTagData.gold_type %></td>
+                      <td><%= edit_goldTagData.gold_size %></td>
+                      <td><%= edit_goldTagData.gold_weight %> กรัม</td>
+                      <td><%= edit_goldTagData.gold_id %></td>
                       <td class="text-center">
-                        <a class="btn btn-primary" style="margin-right:3px;">
-                            <span class="material-icon material-symbols-outlined">
-                            edit
-                            </span>
-                        </a>
-                        <a class="btn btn-danger" href="/delete/<%= gold_edit._id %>" onclick="return confirm('ยืนยันการลบ')">
-                            <span class="material-icon material-symbols-outlined">
-                                delete
-                            </span>
-                        </a>
+                        <a class="btn btn-primary" style="margin-right:3px;" href="/edit_dataform?gold_id=<%= edit_goldTagData.gold_id %>">
+                          <span class="material-icon material-symbols-outlined">
+                              edit
+                          </span>
+                        </a>                    
+                        <a class="btn btn-danger" data-bs-toggle="modal" href="#confirmDeleteModal" data-id="<%= edit_goldTagData.gold_id %>">
+                          <span class="material-icon material-symbols-outlined">
+                              delete
+                          </span>
+                        </a>                                           
                       </td>
                     </tr>
                   <% }); %>
@@ -81,3 +81,32 @@
 </form>
 
 <%-  include('footer') %>
+
+<!-- Modal ยืนยันการลบ -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">ยืนยันการลบ</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?
+      </div>
+      <div class="modal-footer">
+        <a id="confirmDeleteBtn" href="#" class="btn btn-danger">ลบ</a>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  $('#confirmDeleteModal').on('show.bs.modal', function (event) {
+    var button = $(event.relatedTarget) // Button that triggered the modal
+    var goldId = button.data('id') // Extract info from data-id attributes
+    var modal = $(this)
+    modal.find('#confirmDeleteBtn').attr('href', '/delete_goldTagData/' + goldId)
+  })
+</script>
+

@@ -206,58 +206,80 @@ router.get('/clear_rfid_tags', (req, res) => {
   }
 });
 
-router.get('/gold_edit', async (req,res) => {
-  try{
-      let condition = {};
+router.get('/edit_goldTagData', async (req, res) => {
+  try {
+    let condition = {};
 
-      // ถ้ามีการเลือกประเภททองคำ
-      if (req.query.select_goldType && req.query.select_goldType !== 'เลือกประเภททองคำ') {
-          condition.goldtype = req.query.select_goldType;
-      }
+    // ถ้ามีการเลือกประเภททองคำ
+    if (req.query.select_goldType && req.query.select_goldType !== 'เลือกประเภททองคำ') {
+      condition.gold_type = req.query.select_goldType;
+    }
 
-      // ถ้ามีการเลือกขนาดทองคำ
-      if (req.query.select_goldSize && req.query.select_goldSize !== 'เลือกขนาดทองคำ') {
-          condition.size = req.query.select_goldSize;
-      }
+    // ถ้ามีการเลือกขนาดทองคำ
+    if (req.query.select_goldSize && req.query.select_goldSize !== 'เลือกขนาดทองคำ') {
+      condition.gold_size = req.query.select_goldSize;
+    }
 
-      const goldsedit = await GoldTag.find(condition);
-      res.render('gold_edit', {
-        goldsedit: goldsedit,
-        dayjs: dayjs, 
-        select_goldType: 
-        req.query.select_goldType, 
-        select_goldSize: req.query.select_goldSize});
+    const goldsedit = await GoldTag.find(condition);
+    res.render('edit_goldTagData', {
+      goldsedit: goldsedit,
+      dayjs: dayjs,
+      select_goldType: req.query.select_goldType,
+      select_goldSize: req.query.select_goldSize
+    });
   } catch (error) {
-      console.error(error);
-      res.status(500).send('Internal Server Error');
+    console.error(error);
+    res.status(500).send('Internal Server Error');
   }
 });
 
 
 
-// // สร้างเส้นทางเพื่อแก้ไขข้อมูล
-// router.get('/edit/:id', async (req, res) => {
-//   try {
-//       const gold_edit = await Gold.findById(req.params.id);
-//       res.render('edit_modal', { gold_edit: gold_edit });
-//   } catch (error) {
-//       console.error(error);
-//       res.status(500).send('Internal Server Error');
-//   }
-// });
+// GET route เพื่อดึงข้อมูลทองคำที่ต้องการแก้ไข
+router.get('/edit_dataform', async (req, res) => {
+    try {
+        const goldId = req.query.gold_id; // รับ Gold_Tag_id ที่ต้องการแก้ไขจาก query parameter
+        const goldData = await GoldTag.findOne({ gold_id: goldId }); // ค้นหาข้อมูลทองคำที่ต้องการแก้ไขในฐานข้อมูล
 
-// // สร้างเส้นทางเพื่ออัปเดตข้อมูล
-// router.post('/update/:id', async (req, res) => {
-//   try {
-//       const { goldtype, size, weight } = req.body;
-//       await Gold.findByIdAndUpdate(req.params.id, { goldtype, size, weight });
-//       res.redirect('/add_edit');
-//   } catch (error) {
-//       console.error(error);
-//       res.status(500).send('Internal Server Error');
-//   }
-// });
+        if (!goldData) {
+            return res.status(404).send('Gold data not found'); // หากไม่พบข้อมูลทองคำที่ต้องการแก้ไข
+        }
 
+        // ส่งข้อมูลทองคำไปยังหน้าแก้ไขข้อมูล
+        res.render('edit_dataform', { goldId: goldData.gold_id, goldType: goldData.gold_type, goldSize: goldData.gold_size, goldWeight: goldData.gold_weight, select_goldType: goldData.gold_type, select_goldSize: goldData.gold_size });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+// POST route เพื่ออัปเดตข้อมูลทองคำ
+router.post('/update_data', async (req, res) => {
+    try {
+        const { gold_id, gold_type, gold_size, gold_weight } = req.body; // รับข้อมูลที่แก้ไขจากฟอร์ม
+
+        // ค้นหาและอัปเดตข้อมูลทองคำในฐานข้อมูล
+        await GoldTag.findOneAndUpdate({ gold_id: gold_id }, { gold_type: gold_type, gold_size: gold_size, gold_weight: gold_weight });
+
+        res.redirect('/edit_goldTagData'); // ส่งกลับไปยังหน้าหลักหลังจากทำการอัปเดตข้อมูลเสร็จสิ้น
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+//GET route เพื่อลบข้อมูลทองคำ
+router.get('/delete_goldTagData/:gold_id', async (req, res) => {
+  try {
+      const goldId = req.params.gold_id; // รับ Gold_Tag_id ที่ต้องการลบจาก parameter ของ URL
+      await GoldTag.findOneAndDelete({ gold_id: goldId}); // ค้นหาและลบข้อมูลทองคำในฐานข้อมูล
+
+      res.redirect('/edit_goldTagData'); // ส่งกลับไปยังหน้าหลักหลังจากทำการลบข้อมูลเสร็จสิ้น
+  } catch (error) {
+      console.error(error);
+      res.status(500).send('Internal Server Error');
+  }
+});
 
 
 module.exports = router;
