@@ -58,7 +58,8 @@
                       <td><%= edit_goldTagData.gold_size %></td>
                       <td><%= edit_goldTagData.gold_weight %> กรัม</td>
                       <td><%= edit_goldTagData.gold_id %></td>
-                      <td><%= dayjs(edit_goldTagData.createdAt).format('DD/MM/YYYY') %></td>
+                      <td><%= dayjs(edit_goldTagData.createdAt).format('DD/MM/YYYY HH:mm:ss') %>
+                      </td>
                     </tr>
                   <% }); %>
                 </tbody>
