@@ -50,6 +50,34 @@ const goldCountSchema = new mongoose.Schema({
 
 const Gold = mongoose.model('Gold', goldCountSchema);
 
+// สร้างโครงสร้างข้อมูล goldcount_history
+const goldCountHistorySchema = new mongoose.Schema({
+
+  gold_id: ObjectId,
+  gold_type: String,
+  gold_size: String,
+  gold_weight: String,
+  gold_timestamp: { type: Date, default: Date.now }
+},{ 
+  collection: 'goldcount_history'
+});
+
+const Goldhistory = mongoose.model('Goldhistory', goldCountHistorySchema);
+
+// สร้างโครงสร้างข้อมูล goldtags_count
+const goldTagsCountSchema = new mongoose.Schema({
+
+  gold_id: ObjectId,
+  gold_type: String,
+  gold_size: String,
+  gold_weight: String,
+  gold_timestamp: { type: Date, default: Date.now }
+},{ 
+  collection: 'goldtags_count'
+});
+
+const Goldtagscount = mongoose.model('Goldtagscount', goldTagsCountSchema);
+
 /* GET home page. */
 router.get('/', async (req, res, next) => {
   try {
@@ -58,7 +86,7 @@ router.get('/', async (req, res, next) => {
       condition = { topic: { $regex: new RegExp(req.query.search, 'i') } };
     }
 
-    const golds = await Gold.find(condition);
+    const golds = await Goldtagscount.find(condition);
     res.render('index', { golds: golds, dayjs: dayjs });
   } catch (error) {
     console.error(error);
@@ -66,19 +94,60 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-// router.get('/gold_list',async (req, res) => {
-//   try {
-//     let condition = {};
-//     if (req.query.search) {
-//       condition = { topic: { $regex: new RegExp(req.query.search, 'i') } };
-//     }
-//     const goldslist = await Gold.find(condition);
-//     res.render('gold_list', { goldslist: goldslist , golds_data: {} , dayjs: dayjs });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).send('Internal Server Error');
-//   }
-// });
+router.get('/count_goldtags', async (req, res) => {
+  try {
+    let countgoldtags = [];
+    let rfidTags = rfidModule.getRfidTags(); // เรียกใช้งาน rfidTags จาก rfidModule
+    
+    // ดึงข้อมูลจาก database ที่มี gold_id ตรงกับ rfidTags
+    countgoldtags = await GoldTag.find({ gold_id: { $in: rfidTags } });
+
+    res.render('count_goldtags', {
+      countgoldtags: countgoldtags,
+      dayjs: dayjs
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+router.post('/save_goldtags', async (req, res) => {
+  try {
+      // ดึงข้อมูลจาก database ที่มี gold_id ตรงกับ rfidTags
+      let rfidTags = rfidModule.getRfidTags(); // เรียกใช้งาน rfidTags จาก rfidModule
+      let countgoldtags = await GoldTag.find({ gold_id: { $in: rfidTags } });
+
+      // สร้าง object ที่จะบันทึกลงใน collection `goldtags_count`
+      let newGoldtagscount = countgoldtags.map(count_tag => ({
+          gold_id: count_tag.gold_id,
+          gold_type: count_tag.gold_type,
+          gold_size: count_tag.gold_size,
+          gold_weight: count_tag.gold_weight,
+          gold_timestamp: dayjs().locale('th').format('YYYY-MM-DD HH:mm:ss') // Timestamp ปัจจุบัน (รูปแบบวันที่และเวลาไทย)
+      }));
+
+      await Goldtagscount.deleteMany({}); // ลบข้อมูลเก่าออกก่อน
+      // บันทึกข้อมูลใน collection `goldtags_count`
+      await Goldtagscount.insertMany(newGoldtagscount); // เพิ่มข้อมูลใหม่เข้าไป
+
+      res.json({ message: 'บันทึกรายการเรียบร้อยแล้ว' });
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+
+  router.get('/clear_goldtags_count', async (req, res) => {
+    try {
+        await Goldtagscount.deleteMany({}); // ลบข้อมูลทั้งหมดใน collection `goldtags_count`
+        res.json({ message: 'ลบข้อมูลการนับทั้งหมดเรียบร้อยแล้ว' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
 
 router.get('/gold_list', async (req, res, next) => {
   try {
@@ -86,20 +155,19 @@ router.get('/gold_list', async (req, res, next) => {
 
       // ถ้ามีการเลือกประเภททองคำ
       if (req.query.select_goldType && req.query.select_goldType !== 'เลือกประเภททองคำ') {
-          condition.goldtype = req.query.select_goldType;
+          condition.gold_type = req.query.select_goldType;
       }
 
       // ถ้ามีการเลือกขนาดทองคำ
       if (req.query.select_goldSize && req.query.select_goldSize !== 'เลือกขนาดทองคำ') {
-          condition.size = req.query.select_goldSize;
+          condition.gold_size = req.query.select_goldSize;
       }
 
-      const goldslist = await Gold.find(condition);
+      const goldslist = await Goldtagscount.find(condition);
       res.render('gold_list', { 
         goldslist: goldslist, 
         dayjs: dayjs, 
-        select_goldType: 
-        req.query.select_goldType, 
+        select_goldType: req.query.select_goldType, 
         select_goldSize: req.query.select_goldSize });
   } catch (error) {
       console.error(error);
@@ -280,6 +348,5 @@ router.get('/delete_goldTagData/:gold_id', async (req, res) => {
       res.status(500).send('Internal Server Error');
   }
 });
-
 
 module.exports = router;

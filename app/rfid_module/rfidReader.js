@@ -44,7 +44,7 @@ async function run() {
     if (deviceInfo) {
         var device = new HID.HID(deviceInfo.path);
         try {
-            console.log("open success");
+            console.log("Open Rfid Reader Success");
             device.sendFeatureReport([0x00, 0xFF, 0xC7, 0x83, 0xCC, 0x30, 0x00]);  //Open USB-Hid must set usb feature value first
         } catch (err) {
             
