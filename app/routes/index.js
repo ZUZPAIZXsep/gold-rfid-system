@@ -175,6 +175,46 @@ router.get('/gold_list', async (req, res, next) => {
   }
 });
 
+router.get('/gold_history', async (req, res) => {
+  try {
+    let condition = {};
+
+    // ถ้ามีการเลือกประเภททองคำ
+    if (req.query.select_goldType && req.query.select_goldType !== 'เลือกประเภททองคำ') {
+      condition.gold_type = req.query.select_goldType;
+    }
+
+    // ถ้ามีการเลือกขนาดทองคำ
+    if (req.query.select_goldSize && req.query.select_goldSize !== 'เลือกขนาดทองคำ') {
+      condition.gold_size = req.query.select_goldSize;
+    }
+    
+    // ถ้ามีการเลือกวันที่
+    if (req.query.startDate || req.query.endDate) {
+      condition.createdAt = {};
+      if (req.query.startDate) {
+          condition.createdAt.$gte = dayjs(req.query.startDate).startOf('day').toDate();
+      }
+      if (req.query.endDate) {
+          condition.createdAt.$lte = dayjs(req.query.endDate).endOf('day').toDate();
+      }
+  }
+
+    const goldsedit = await GoldTag.find(condition);
+    res.render('gold_history', {
+      goldsedit: goldsedit,
+      dayjs: dayjs,
+      select_goldType: req.query.select_goldType,
+      select_goldSize: req.query.select_goldSize,
+      startDate: req.query.startDate,
+        endDate: req.query.endDate
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
 // //mockup id for test
 // router.get('/add_golddata', async (req,res) => {
 //   try{
