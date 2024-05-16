@@ -47,16 +47,18 @@
                     <th>ขนาด</th>
                     <th>น้ำหนัก</th>
                     <th>Gold_Tag_id</th>
+                    <th>วันที่บันทึกเข้าระบบ</th>
                   </tr>
                 </thead>
                 <tbody>
                   <% goldslist.forEach((gold_list , index) => { %>
                     <tr>
                       <td><%= index+1 %></td>
-                      <td><%= gold_list.goldtype %></td>
-                      <td><%= gold_list.size %></td>
-                      <td><%= gold_list.weight %></td>
+                      <td><%= gold_list.gold_type %></td>
+                      <td><%= gold_list.gold_size %></td>
+                      <td><%= gold_list.gold_weight %> กรัม</td>
                       <td><%= gold_list.gold_id %></td>
+                      <td><%= dayjs(gold_list.gold_timestamp).locale('th').format('DD-MM-YYYY HH:mm:ss') %></td>
                     </tr>
                   <% }); %>
                 </tbody>
