@@ -82,12 +82,8 @@ const Goldtagscount = mongoose.model('Goldtagscount', goldTagsCountSchema);
 router.get('/', async (req, res, next) => {
   try {
     let condition = {};
-    if (req.query.search) {
-      condition = { topic: { $regex: new RegExp(req.query.search, 'i') } };
-    }
-
     const golds = await Goldtagscount.find(condition);
-    res.render('index', { golds: golds, dayjs: dayjs });
+    res.render('index', { golds: golds, dayjs: dayjs, currentUrl: req.originalUrl });
   } catch (error) {
     console.error(error);
     res.status(500).send('Internal Server Error');
@@ -104,39 +100,14 @@ router.get('/count_goldtags', async (req, res) => {
 
     res.render('count_goldtags', {
       countgoldtags: countgoldtags,
-      dayjs: dayjs
+      dayjs: dayjs, 
+      currentUrl: req.originalUrl
     });
   } catch (error) {
     console.error(error);
     res.status(500).send('Internal Server Error');
   }
 });
-
-// router.post('/save_goldtags', async (req, res) => {
-//   try {
-//       // ดึงข้อมูลจาก database ที่มี gold_id ตรงกับ rfidTags
-//       let rfidTags = rfidModule.getRfidTags(); // เรียกใช้งาน rfidTags จาก rfidModule
-//       let countgoldtags = await GoldTag.find({ gold_id: { $in: rfidTags } });
-
-//       // สร้าง object ที่จะบันทึกลงใน collection `goldtags_count`
-//       let newGoldtagscount = countgoldtags.map(count_tag => ({
-//           gold_id: count_tag.gold_id,
-//           gold_type: count_tag.gold_type,
-//           gold_size: count_tag.gold_size,
-//           gold_weight: count_tag.gold_weight,
-//           gold_timestamp: dayjs().locale('th').format('YYYY-MM-DD HH:mm:ss') // Timestamp ปัจจุบัน (รูปแบบวันที่และเวลาไทย)
-//       }));
-
-//       await Goldtagscount.deleteMany({}); // ลบข้อมูลเก่าออกก่อน
-//       // บันทึกข้อมูลใน collection `goldtags_count`
-//       await Goldtagscount.insertMany(newGoldtagscount); // เพิ่มข้อมูลใหม่เข้าไป
-
-//       res.json({ message: 'บันทึกรายการเรียบร้อยแล้ว' });
-//   } catch (error) {
-//       console.error(error);
-//       res.status(500).json({ error: 'Internal Server Error' });
-//   }
-// });
 
 router.post('/save_goldtags', async (req, res) => {
   try {
@@ -158,30 +129,20 @@ router.post('/save_goldtags', async (req, res) => {
       // บันทึกข้อมูลใน collection `goldtags_count`
       await Goldtagscount.insertMany(newGoldtagscount);
 
-      // เพิ่มฟังก์ชันในการบันทึกลงใน collection `goldcount_history`
-      let currentDate = dayjs().locale('th').startOf('day'); // เริ่มต้นวันปัจจุบัน
-      let endOfCurrentDate = dayjs().locale('th').endOf('day'); // สิ้นสุดวันปัจจุบัน
+      // เพิ่มฟังก์ชันในการบันทึกลงใน collection `goldhistory`
+      let currentDate = dayjs().locale('th').startOf('day').toDate(); // เริ่มต้นวันปัจจุบัน
+      let endOfCurrentDate = dayjs().locale('th').endOf('day').toDate(); // สิ้นสุดวันปัจจุบัน
 
-      for (let goldTag of newGoldtagscount) {
-          let existingRecord = await Goldhistory.findOne({
-              gold_id: goldTag.gold_id,
-              gold_timestamp: {
-                  $gte: currentDate.toDate(),
-                  $lte: endOfCurrentDate.toDate()
-              }
-          });
-
-          if (existingRecord) {
-              // อัปเดตข้อมูลที่มีอยู่ในวันเดียวกัน
-              await Goldhistory.updateOne(
-                  { _id: existingRecord._id },
-                  { $set: goldTag }
-              );
-          } else {
-              // เพิ่มข้อมูลใหม่ถ้าเป็นข้อมูลคนละวัน
-              await Goldhistory.create(goldTag);
+      // ลบข้อมูลเก่าที่เป็นวันเดียวกันทั้งหมดก่อน
+      await Goldhistory.deleteMany({
+          gold_timestamp: {
+              $gte: currentDate,
+              $lte: endOfCurrentDate
           }
-      }
+      });
+
+      // เพิ่มข้อมูลใหม่
+      await Goldhistory.insertMany(newGoldtagscount);
 
       res.json({ message: 'บันทึกรายการเรียบร้อยแล้ว' });
   } catch (error) {
@@ -189,6 +150,8 @@ router.post('/save_goldtags', async (req, res) => {
       res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+
 
   router.get('/clear_goldtags_count', async (req, res) => {
     try {
@@ -200,31 +163,32 @@ router.post('/save_goldtags', async (req, res) => {
     }
   });
 
-  router.get('/gold_list', async (req, res, next) => {
-    try {
-        let condition = {};
+router.get('/gold_list', async (req, res, next) => {
+  try {
+      let condition = {};
 
-        // ถ้ามีการเลือกประเภททองคำ
-        if (req.query.select_goldType && req.query.select_goldType !== 'เลือกประเภททองคำ') {
-            condition.gold_type = req.query.select_goldType;
-        }
+      // ถ้ามีการเลือกประเภททองคำ
+      if (req.query.select_goldType && req.query.select_goldType !== 'เลือกประเภททองคำ') {
+          condition.gold_type = req.query.select_goldType;
+      }
 
-        // ถ้ามีการเลือกขนาดทองคำ
-        if (req.query.select_goldSize && req.query.select_goldSize !== 'เลือกขนาดทองคำ') {
-            condition.gold_size = req.query.select_goldSize;
-        }
+      // ถ้ามีการเลือกขนาดทองคำ
+      if (req.query.select_goldSize && req.query.select_goldSize !== 'เลือกขนาดทองคำ') {
+          condition.gold_size = req.query.select_goldSize;
+      }
 
-        const goldslist = await Goldtagscount.find(condition);
-        res.render('gold_list', { 
-          goldslist: goldslist, 
-          dayjs: dayjs, 
-          select_goldType: req.query.select_goldType, 
-          select_goldSize: req.query.select_goldSize });
-    } catch (error) {
-        console.error(error);
-        res.status(500).send('Internal Server Error');
-    }
-  });
+      const goldslist = await Goldtagscount.find(condition);
+      res.render('gold_list', { 
+        goldslist: goldslist, 
+        dayjs: dayjs, 
+        select_goldType: req.query.select_goldType, 
+        select_goldSize: req.query.select_goldSize, 
+        currentUrl: req.originalUrl });
+  } catch (error) {
+      console.error(error);
+      res.status(500).send('Internal Server Error');
+  }
+});
 
   // GET route เพื่อดึงข้อมูลทองคำที่ต้องการแก้ไข
   router.get('/edit_countdataform', async (req, res) => {
@@ -306,7 +270,8 @@ router.post('/save_goldtags', async (req, res) => {
       }
       res.render('add_golddata', {
         addgoldsdata: addgoldsdata,
-        dayjs: dayjs
+        dayjs: dayjs, 
+        currentUrl: req.originalUrl
       });
     } catch (error) {
       console.error(error);
@@ -390,7 +355,8 @@ router.post('/save_goldtags', async (req, res) => {
         goldsedit: goldsedit,
         dayjs: dayjs,
         select_goldType: req.query.select_goldType,
-        select_goldSize: req.query.select_goldSize
+        select_goldSize: req.query.select_goldSize, 
+        currentUrl: req.originalUrl
       });
     } catch (error) {
       console.error(error);
@@ -488,9 +454,10 @@ router.post('/save_goldtags', async (req, res) => {
             condition.gold_timestamp = { $lt: dayjs(endDate).add(1, 'day').toDate() };
         }
 
-        const page = req.query.page || 1; // หากไม่ได้ระบุหน้า ให้เริ่มจากหน้าที่ 1
+        const page = parseInt(req.query.page) || 1; // หากไม่ได้ระบุหน้า ให้เริ่มจากหน้าที่ 1
         const perPage = 15; // จำนวนรายการต่อหน้า
         const skip = (page - 1) * perPage; // คำนวณหาจำนวนรายการที่ต้องข้าม
+        console.log('Page:', req.query.page);
 
         // ดึงข้อมูลทองคำจากฐานข้อมูลโดยใช้เงื่อนไข condition
         const goldshistory = await Goldhistory.find(condition)
@@ -499,15 +466,17 @@ router.post('/save_goldtags', async (req, res) => {
             .limit(perPage); // จำกัดจำนวนรายการที่แสดงต่อหน้า
 
         res.render('gold_history', { 
-            goldshistory: goldshistory, 
-            dayjs: dayjs, 
-            select_goldType: req.query.select_goldType, 
-            select_goldSize: req.query.select_goldSize,
-            startDate: req.query.start_date,
-            endDate: req.queryend_date,
-            currentPage: page, // ส่งหมายเลขหน้าปัจจุบันไปยังแม่แบบ
-            totalPages: Math.ceil(await Goldhistory.countDocuments(condition) / perPage) // คำนวณหาจำนวนหน้าทั้งหมด
-          });
+          goldshistory: goldshistory, 
+          dayjs: dayjs, 
+          select_goldType: req.query.select_goldType, 
+          select_goldSize: req.query.select_goldSize,
+          startDate: req.query.start_date,
+          endDate: req.query.end_date,
+          currentPage: page,
+          totalPages: Math.ceil(await Goldhistory.countDocuments(condition) / perPage), 
+          currentUrl: req.originalUrl
+        });
+          
         } catch (error) {
           console.error(error);
           res.status(500).send('Internal Server Error');

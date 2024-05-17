@@ -2,8 +2,10 @@
 
 <form method="GET">
     <div class="container-fluid mt-3">
-        <div class="row">
+      <div><h3 style="font-weight: bold;">แก้ไขข้อมูลแท็กของทองคำ</h3></div>
+        <div class="row mt-2">
             <div class="col-2">
+              <label style="font-weight: 600;">ประเภทของทองคำ</label>
                 <select class="form-select" name="select_goldType">
                     <option value="">เลือกประเภททองคำ</option>
                     <option value="สร้อยคอ" <%= select_goldType === 'สร้อยคอ' ? 'selected' : '' %>>สร้อยคอ</option>
@@ -14,6 +16,7 @@
                 </select>                
             </div>
             <div class="col-2">
+              <label style="font-weight: 600;">ขนาดของทองคำ</label>
                 <select class="form-select" name="select_goldSize">
                     <option value="">เลือกขนาดทองคำ</option>
                     <option value="1 สลึง" <%= select_goldSize === '1 สลึง' ? 'selected' : '' %>>1 สลึง</option>
@@ -36,9 +39,13 @@
                 </span>
                 ล้างค่า</a>
         </div>
-        <div class="mt-3">
+        <%
+        let totalTags = goldsedit.length;
+        %>
+        <div class="mt-3"><h4>จำนวนแท็กที่มีอยู่ในระบบ : <%= totalTags %> รายการ</h4></div>
+        <div>
             <% if (goldsedit.length > 0) { %>
-              <table class="table table-bordered mt-3">
+              <table class="table table-bordered">
                 <thead class="table-success">
                   <tr>
                     <th width="100px">ลำดับที่</th>
