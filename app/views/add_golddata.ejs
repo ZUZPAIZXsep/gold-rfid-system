@@ -1,10 +1,7 @@
 <%-  include('header') %>
 
 <div class="container-fluid mt-3">
-    <%
-      let totalTags = addgoldsdata.length;
-    %>
-    <div class="mt-3"><h3>จำนวนแท็กที่นับได้ : <%= totalTags %> รายการ</h3></div>
+    <div><h3 style="font-weight: bold;">เพิ่มข้อมูลแท็กของทองคำ</h3></div>
     <div class="mt-3">
         <button class="btn btn-primary" style="margin-right: 4px;" onclick="reloadAddTags()">
             <span class="material-icon material-symbols-outlined">
@@ -19,7 +16,11 @@
             ล้างค่า RFID Tags
         </button>
     </div>
-    <table class="table table-bordered mt-3">
+    <%
+      let totalTags = addgoldsdata.length;
+    %>
+    <div class="mt-3"><h4>จำนวนแท็กที่นับได้ : <%= totalTags %> รายการ</h4></div>
+    <table class="table table-bordered">
         <thead class="table-success">
           <tr>
             <th width="100px">ลำดับที่</th>
