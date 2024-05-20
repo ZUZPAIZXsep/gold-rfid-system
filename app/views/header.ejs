@@ -37,53 +37,70 @@
   </head>
   <body>
     <div class="container-fluid">
-    <div class="gold-icon">
-      <img src="/images/gold-bars.png" alt="icon" style="height: 48px; width: 48px; margin-right: 10px;"/>
-      <h2 style="font-weight: bold;">Gold Inventory System</h2>
-    </div>
-    <nav class="navbar navbar-expand-lg navbar-light mt-2" style="background-color: #D1F2EB;">
-      <div class="container-fluid">
-        <a class="navbar-brand" href="./">
-          <span class="material-symbols-outlined">home</span> หน้าหลัก
-        </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarText">
-          <ul class="navbar-nav">
-            <li class="nav-item">
-              <a class="nav-link <%= currentUrl === '/count_goldtags' ? 'active' : '' %>" href="/count_goldtags">
-                <span class="material-icon material-symbols-outlined">inventory</span> ระบบตรวจนับ
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link <%= currentUrl === '/gold_list' ? 'active' : '' %>" href="/gold_list">
-                <span class="material-icon material-symbols-outlined">inventory_2</span> รายการทองคำ
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link <%= currentUrl === '/add_golddata' ? 'active' : '' %>" href="/add_golddata">
-                <span class="material-icon material-symbols-outlined">add</span> เพิ่มข้อมูลแท็กทองคำ
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link <%= currentUrl === '/edit_goldTagData' ? 'active' : '' %>" href="/edit_goldTagData">
-                <span class="material-icon material-symbols-outlined">edit_note</span> แก้ไขข้อมูลแท็ก
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link <%= currentUrl === '/gold_history' ? 'active' : '' %>" href="/gold_history">
-                <span class="material-icon material-symbols-outlined">schedule</span> ประวัติ
-              </a>
-            </li>
-          </ul>
-          <span class="navbar-text ms-auto" style="font-size: 20px;">
-            ระบบตรวจนับทองคำรูปพรรณ
-          </span>
-        </div>
+      <div class="gold-icon">
+        <img src="/images/gold-bars.png" alt="icon" style="height: 48px; width: 48px; margin-right: 10px;"/>
+        <h2 style="font-weight: bold;">Gold Inventory System</h2>
       </div>
-    </nav>    
-  </div>
+      <nav class="navbar navbar-expand-lg navbar-light mt-2" style="background-color: #D1F2EB;">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="./">
+            <span class="material-symbols-outlined">home</span> หน้าหลัก
+          </a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarText">
+            <ul class="navbar-nav">
+              <li class="nav-item">
+                <a class="nav-link" href="/count_goldtags">
+                  <span class="material-icon material-symbols-outlined">inventory</span> ระบบตรวจนับ
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/gold_list">
+                  <span class="material-icon material-symbols-outlined">inventory_2</span> รายการทองคำ
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/add_golddata">
+                  <span class="material-icon material-symbols-outlined">add</span> เพิ่มข้อมูลแท็กทองคำ
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/edit_goldTagData">
+                  <span class="material-icon material-symbols-outlined">edit_note</span> แก้ไขข้อมูลแท็ก
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/gold_history">
+                  <span class="material-icon material-symbols-outlined">schedule</span> ประวัติ
+                </a>
+              </li>
+            </ul>
+            <span class="navbar-text ms-auto" style="font-size: 20px;">
+              ระบบตรวจนับทองคำรูปพรรณ
+            </span>
+          </div>
+        </div>
+      </nav>    
+    </div>
 
+    <script>
+      $(document).ready(function() {
+        // Get the current URL path
+        var currentPath = window.location.pathname;
 
-  
+        // Remove the active class from all nav links
+        $('.nav-link').removeClass('active');
+
+        // Add the active class to the nav link that matches the current path
+        $('.nav-link').each(function() {
+          var href = $(this).attr('href');
+          if (currentPath === href) {
+            $(this).addClass('active');
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
