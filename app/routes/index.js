@@ -457,31 +457,63 @@ router.get('/gold_list', async (req, res, next) => {
         const page = parseInt(req.query.page) || 1; // หากไม่ได้ระบุหน้า ให้เริ่มจากหน้าที่ 1
         const perPage = 15; // จำนวนรายการต่อหน้า
         const skip = (page - 1) * perPage; // คำนวณหาจำนวนรายการที่ต้องข้าม
-        console.log('Page:', req.query.page);
 
-        // ดึงข้อมูลทองคำจากฐานข้อมูลโดยใช้เงื่อนไข condition
-        const goldshistory = await Goldhistory.find(condition)
-            .sort({ gold_timestamp: -1 }) // เรียงลำดับจากวันที่ล่าสุดไปยังเก่าสุด
-            .skip(skip) // ข้ามจำนวนรายการตามหน้า
-            .limit(perPage); // จำกัดจำนวนรายการที่แสดงต่อหน้า
+        // ดึงข้อมูลทองคำจากฐานข้อมูลโดยใช้เงื่อนไข condition และจัดกลุ่มตามวัน
+        const aggregateQuery = [
+            { $match: condition },
+            { $sort: { gold_timestamp: -1 } }, // เรียงลำดับจากวันที่ล่าสุดไปยังเก่าสุด
+            { $group: {
+                _id: {
+                    day: { $dayOfMonth: "$gold_timestamp" },
+                    month: { $month: "$gold_timestamp" },
+                    year: { $year: "$gold_timestamp" }
+                },
+                records: { $push: "$$ROOT" },
+                count: { $sum: 1 }
+            }},
+            { $sort: { "_id.year": -1, "_id.month": -1, "_id.day": -1 } },
+        ];
+
+        const allRecords = await Goldhistory.aggregate(aggregateQuery);
+
+        // Flatten the grouped data into a single array
+        let flatRecords = [];
+        allRecords.forEach(group => {
+            group.records.forEach(record => {
+                flatRecords.push({
+                    ...record,
+                    count: group.count,
+                    groupDate: new Date(group._id.year, group._id.month - 1, group._id.day)
+                });
+            });
+        });
+
+        // Calculate total pages
+        const totalRecords = flatRecords.length;
+        const totalPages = Math.ceil(totalRecords / perPage);
+
+        // Get records for the current page
+        const paginatedRecords = flatRecords.slice(skip, skip + perPage);
 
         res.render('gold_history', { 
-          goldshistory: goldshistory, 
-          dayjs: dayjs, 
-          select_goldType: req.query.select_goldType, 
-          select_goldSize: req.query.select_goldSize,
-          startDate: req.query.start_date,
-          endDate: req.query.end_date,
-          currentPage: page,
-          totalPages: Math.ceil(await Goldhistory.countDocuments(condition) / perPage), 
-          currentUrl: req.originalUrl
+            goldshistory: paginatedRecords, 
+            dayjs: dayjs, 
+            select_goldType: req.query.select_goldType, 
+            select_goldSize: req.query.select_goldSize,
+            startDate: req.query.start_date,
+            endDate: req.query.end_date,
+            currentPage: page,
+            totalPages: totalPages, 
+            currentUrl: req.originalUrl
         });
-          
-        } catch (error) {
-          console.error(error);
-          res.status(500).send('Internal Server Error');
-        }
-      });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+
 
 
 module.exports = router;
