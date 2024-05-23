@@ -58,10 +58,12 @@
                     <thead class="table-success">
                         <tr>
                             <th width="250px">วันที่บันทึกเข้าระบบ</th>
+                            <th width="150px">ถาด</th>
                             <th>ชนิด</th>
                             <th>ขนาด</th>
                             <th>น้ำหนัก</th>
                             <th>Gold_Tag_id</th>
+                            <th width="250px">จำนวนทองคำในถาด (รายการ)</th>
                             <th width="250px">จำนวนทองคำในวันนี้ (รายการ)</th>
                         </tr>
                     </thead>
@@ -69,11 +71,13 @@
                         <% goldshistory.forEach((gold_history, index) => { %>
                             <tr>
                                 <td><%= dayjs(gold_history.gold_timestamp).locale('th').format('DD-MM-YYYY HH:mm:ss') %></td>
+                                <td><%= gold_history.gold_tray %></td>
                                 <td><%= gold_history.gold_type %></td>
                                 <td><%= gold_history.gold_size %></td>
                                 <td><%= gold_history.gold_weight %> กรัม</td>
                                 <td><%= gold_history.gold_id %></td>
-                                <td><%= gold_history.count %></td>
+                                <td><%= gold_history.trayCount %></td>
+                                <td><%= gold_history.totalCount %></td>
                             </tr>
                         <% }); %>
                     </tbody>
