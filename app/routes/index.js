@@ -6,7 +6,6 @@ const localizedFormat = require('dayjs/plugin/localizedFormat');
 dayjs.extend(localizedFormat);
 const { ObjectId } = require('mongoose').Types;
 const rfidModule = require('../rfid_module/rfidReader');
-const trayFunction = require('./trayFunction');
 
 
 // เชื่อมต่อกับ MongoDB
