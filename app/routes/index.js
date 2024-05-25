@@ -35,22 +35,6 @@ const goldTagSchema = new mongoose.Schema({
 
 const GoldTag = mongoose.model('GoldTag', goldTagSchema);
 
-// // สร้างโครงสร้างข้อมูล goldcount
-// const goldCountSchema = new mongoose.Schema({
-
-//   gold_id: ObjectId,
-//   goldtype: String,
-//   size: String,
-//   weight: String,
-//   gold_tray: String
-  
-//   // ,gold_timestamp: { type: Date, default: Date.now }
-// },{ 
-//   collection: 'Goldcount'
-// });
-
-// const Gold = mongoose.model('Gold', goldCountSchema);
-
 // สร้างโครงสร้างข้อมูล goldcount_history
 const goldCountHistorySchema = new mongoose.Schema({
 
