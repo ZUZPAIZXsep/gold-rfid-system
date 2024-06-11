@@ -2,7 +2,17 @@
 
 <div class="container-fluid mt-3">
     <div><h3 style="font-weight: bold;">ระบบตรวจนับทองคำรูปพรรณ</h3></div>
-    <div class="mt-3">
+    
+    <!-- Success message container -->
+    <div class="row">
+        <div class="col-2">
+            <div id="successMessage" class="alert alert-success d-none" role="alert">
+                บันทึกข้อมูลเรียบร้อยแล้ว
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-2">
         <button id="saveBtn" class="btn btn-success" style="margin-right: 4px;">
             <span class="material-icon material-symbols-outlined">
                 save
@@ -83,10 +93,6 @@
             });
     }
 
-    // setInterval(reloadAddTags, 1000);
-</script>
-
-<script>
     document.getElementById('saveBtn').addEventListener('click', saveGoldTags);
     
     function saveGoldTags() {
@@ -94,7 +100,16 @@
             .then(response => response.json())
             .then(data => {
                 console.log(data);
-                window.location.reload(true);
+                if (data.message) {
+                    // Show success message
+                    const successMessage = document.getElementById('successMessage');
+                    successMessage.classList.remove('d-none');
+                    // Hide the message after 3 seconds
+                    setTimeout(() => {
+                        successMessage.classList.add('d-none');
+                        window.location.reload(true); // Refresh the page
+                    }, 3000);
+                }
             })
             .catch(error => {
                 console.error('Error:', error);
