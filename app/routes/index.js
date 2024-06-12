@@ -27,28 +27,29 @@ const goldTagSchema = new mongoose.Schema({
   gold_type: String,
   gold_size: String,
   gold_weight: String,
-  has_data: Boolean
-  // ,gold_timestamp: { type: Date, default: Date.now }
+  has_data: Boolean,
+  gold_tray: String
 },{ 
   collection: 'gold_data_tag' 
 });
 
 const GoldTag = mongoose.model('GoldTag', goldTagSchema);
 
-// สร้างโครงสร้างข้อมูล goldcount
-const goldCountSchema = new mongoose.Schema({
+// // สร้างโครงสร้างข้อมูล goldcount
+// const goldCountSchema = new mongoose.Schema({
 
-  gold_id: ObjectId,
-  goldtype: String,
-  size: String,
-  weight: String,
+//   gold_id: ObjectId,
+//   goldtype: String,
+//   size: String,
+//   weight: String,
+//   gold_tray: String
   
-  // ,gold_timestamp: { type: Date, default: Date.now }
-},{ 
-  collection: 'Goldcount'
-});
+//   // ,gold_timestamp: { type: Date, default: Date.now }
+// },{ 
+//   collection: 'Goldcount'
+// });
 
-const Gold = mongoose.model('Gold', goldCountSchema);
+// const Gold = mongoose.model('Gold', goldCountSchema);
 
 // สร้างโครงสร้างข้อมูล goldcount_history
 const goldCountHistorySchema = new mongoose.Schema({
@@ -57,6 +58,7 @@ const goldCountHistorySchema = new mongoose.Schema({
   gold_type: String,
   gold_size: String,
   gold_weight: String,
+  gold_tray: String,
   gold_timestamp: { type: Date, default: Date.now }
 },{ 
   collection: 'goldcount_history'
@@ -71,18 +73,53 @@ const goldTagsCountSchema = new mongoose.Schema({
   gold_type: String,
   gold_size: String,
   gold_weight: String,
+  gold_tray: String,
   gold_timestamp: { type: Date, default: Date.now }
+  
 },{ 
   collection: 'goldtags_count'
 });
 
 const Goldtagscount = mongoose.model('Goldtagscount', goldTagsCountSchema);
 
+// ฟังก์ชันสำหรับจัดถาด
+function assignTray(gold_type) {
+  switch(gold_type) {
+    case 'สร้อยคอ':
+      return 'ถาดที่ 1';
+    case 'แหวน':
+      return 'ถาดที่ 2';
+    case 'กำไลข้อมือ':
+      return 'ถาดที่ 3';
+    case 'สร้อยข้อมือ':
+      return 'ถาดที่ 4';
+    case 'ต่างหู':
+      return 'ถาดที่ 5';
+    default:
+      return 'ถาดอื่นๆ';
+  }
+}
+
 /* GET home page. */
 router.get('/', async (req, res, next) => {
   try {
     let condition = {};
     const golds = await Goldtagscount.find(condition);
+
+    // เรียงข้อมูลตามลำดับถาด
+      golds.sort((a, b) => {
+      const trayOrder = {
+        'ถาดที่ 1': 1,
+        'ถาดที่ 2': 2,
+        'ถาดที่ 3': 3,
+        'ถาดที่ 4': 4,
+        'ถาดที่ 5': 5,
+        'ถาดอื่นๆ': 6
+      };
+
+      return trayOrder[a.gold_tray] - trayOrder[b.gold_tray];
+    });
+
     res.render('index', { golds: golds, dayjs: dayjs, currentUrl: req.originalUrl });
   } catch (error) {
     console.error(error);
@@ -97,6 +134,28 @@ router.get('/count_goldtags', async (req, res) => {
     
     // ดึงข้อมูลจาก database ที่มี gold_id ตรงกับ rfidTags
     countgoldtags = await GoldTag.find({ gold_id: { $in: rfidTags } });
+
+    // เพิ่มการจัดถาดให้กับทองคำแต่ละชนิด
+    countgoldtags = countgoldtags.map(tag => {
+      return {
+        ...tag._doc,
+        gold_tray: assignTray(tag.gold_type)
+      };
+    });
+
+    // เรียงข้อมูลตามลำดับถาด
+    countgoldtags.sort((a, b) => {
+      const trayOrder = {
+        'ถาดที่ 1': 1,
+        'ถาดที่ 2': 2,
+        'ถาดที่ 3': 3,
+        'ถาดที่ 4': 4,
+        'ถาดที่ 5': 5,
+        'ถาดอื่นๆ': 6
+      };
+
+      return trayOrder[a.gold_tray] - trayOrder[b.gold_tray];
+    });
 
     res.render('count_goldtags', {
       countgoldtags: countgoldtags,
@@ -121,6 +180,7 @@ router.post('/save_goldtags', async (req, res) => {
           gold_type: count_tag.gold_type,
           gold_size: count_tag.gold_size,
           gold_weight: count_tag.gold_weight,
+          gold_tray: assignTray(count_tag.gold_type),
           gold_timestamp: dayjs().locale('th').format('YYYY-MM-DD HH:mm:ss') // Timestamp ปัจจุบัน (รูปแบบวันที่และเวลาไทย)
       }));
 
@@ -151,8 +211,6 @@ router.post('/save_goldtags', async (req, res) => {
   }
 });
 
-
-
   router.get('/clear_goldtags_count', async (req, res) => {
     try {
         await Goldtagscount.deleteMany({}); // ลบข้อมูลทั้งหมดใน collection `goldtags_count`
@@ -178,6 +236,21 @@ router.get('/gold_list', async (req, res, next) => {
       }
 
       const goldslist = await Goldtagscount.find(condition);
+
+      // เรียงข้อมูลตามลำดับถาด
+      goldslist.sort((a, b) => {
+      const trayOrder = {
+        'ถาดที่ 1': 1,
+        'ถาดที่ 2': 2,
+        'ถาดที่ 3': 3,
+        'ถาดที่ 4': 4,
+        'ถาดที่ 5': 5,
+        'ถาดอื่นๆ': 6
+      };
+
+  return trayOrder[a.gold_tray] - trayOrder[b.gold_tray];
+});
+      
       res.render('gold_list', { 
         goldslist: goldslist, 
         dayjs: dayjs, 
@@ -430,7 +503,7 @@ router.get('/gold_list', async (req, res, next) => {
         if (req.query.start_date && req.query.end_date) {
             const startDate = new Date(req.query.start_date);
             const endDate = new Date(req.query.end_date);
-            
+
             // ถ้าวันที่เริ่มต้นและสิ้นสุดเป็นวันเดียวกัน
             if (startDate.toDateString() === endDate.toDateString()) {
                 condition.gold_timestamp = {
@@ -457,31 +530,85 @@ router.get('/gold_list', async (req, res, next) => {
         const page = parseInt(req.query.page) || 1; // หากไม่ได้ระบุหน้า ให้เริ่มจากหน้าที่ 1
         const perPage = 15; // จำนวนรายการต่อหน้า
         const skip = (page - 1) * perPage; // คำนวณหาจำนวนรายการที่ต้องข้าม
-        console.log('Page:', req.query.page);
 
-        // ดึงข้อมูลทองคำจากฐานข้อมูลโดยใช้เงื่อนไข condition
-        const goldshistory = await Goldhistory.find(condition)
-            .sort({ gold_timestamp: -1 }) // เรียงลำดับจากวันที่ล่าสุดไปยังเก่าสุด
-            .skip(skip) // ข้ามจำนวนรายการตามหน้า
-            .limit(perPage); // จำกัดจำนวนรายการที่แสดงต่อหน้า
+        // ดึงข้อมูลทองคำจากฐานข้อมูลโดยใช้เงื่อนไข condition และจัดกลุ่มตามวันและถาด
+        const aggregateQuery = [
+            { $match: condition },
+            { $sort: { gold_timestamp: -1, gold_tray: 1 } }, // เรียงลำดับจากวันที่ล่าสุดไปยังเก่าสุดและตามถาด
+            {
+                $group: {
+                    _id: {
+                        day: { $dayOfMonth: "$gold_timestamp" },
+                        month: { $month: "$gold_timestamp" },
+                        year: { $year: "$gold_timestamp" },
+                        gold_tray: "$gold_tray"
+                    },
+                    records: { $push: "$$ROOT" },
+                    trayCount: { $sum: 1 }
+                }
+            },
+            {
+                $group: {
+                    _id: {
+                        day: "$_id.day",
+                        month: "$_id.month",
+                        year: "$_id.year"
+                    },
+                    trays: { $push: "$$ROOT" },
+                    totalCount: { $sum: "$trayCount" }
+                }
+            },
+            { $sort: { "_id.year": -1, "_id.month": -1, "_id.day": -1 } },
+        ];
+
+        const allRecords = await Goldhistory.aggregate(aggregateQuery);
+
+        // Flatten the grouped data into a single array
+        let flatRecords = [];
+        allRecords.forEach(group => {
+            group.trays.forEach(tray => {
+                tray.records.forEach(record => {
+                    flatRecords.push({
+                        ...record,
+                        trayCount: tray.trayCount,
+                        totalCount: group.totalCount,
+                        groupDate: new Date(group._id.year, group._id.month - 1, group._id.day)
+                    });
+                });
+            });
+        });
+
+        // Sorting flat records by date and tray within each day
+        flatRecords.sort((a, b) => {
+            if (a.groupDate > b.groupDate) return -1;
+            if (a.groupDate < b.groupDate) return 1;
+            if (a.gold_tray > b.gold_tray) return 1;
+            if (a.gold_tray < b.gold_tray) return -1;
+            return 0;
+        });
+
+        const totalRecords = flatRecords.length;
+        const totalPages = Math.ceil(totalRecords / perPage);
+        const paginatedRecords = flatRecords.slice(skip, skip + perPage);
 
         res.render('gold_history', { 
-          goldshistory: goldshistory, 
-          dayjs: dayjs, 
-          select_goldType: req.query.select_goldType, 
-          select_goldSize: req.query.select_goldSize,
-          startDate: req.query.start_date,
-          endDate: req.query.end_date,
-          currentPage: page,
-          totalPages: Math.ceil(await Goldhistory.countDocuments(condition) / perPage), 
-          currentUrl: req.originalUrl
+            goldshistory: paginatedRecords, 
+            dayjs: dayjs, 
+            select_goldType: req.query.select_goldType, 
+            select_goldSize: req.query.select_goldSize,
+            startDate: req.query.start_date,
+            endDate: req.query.end_date,
+            currentPage: page,
+            totalPages: totalPages, 
+            currentUrl: req.originalUrl
         });
-          
-        } catch (error) {
-          console.error(error);
-          res.status(500).send('Internal Server Error');
-        }
-      });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
 
 
 module.exports = router;

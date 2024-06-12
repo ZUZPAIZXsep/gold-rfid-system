@@ -58,20 +58,26 @@
                     <thead class="table-success">
                         <tr>
                             <th width="250px">วันที่บันทึกเข้าระบบ</th>
+                            <th width="150px">ถาด</th>
                             <th>ชนิด</th>
                             <th>ขนาด</th>
                             <th>น้ำหนัก</th>
                             <th>Gold_Tag_id</th>
+                            <th width="250px">จำนวนทองคำในถาด (รายการ)</th>
+                            <th width="250px">จำนวนทองคำในวันนี้ (รายการ)</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <% goldshistory.forEach((gold_history , index) => { %>
+                        <% goldshistory.forEach((gold_history, index) => { %>
                             <tr>
                                 <td><%= dayjs(gold_history.gold_timestamp).locale('th').format('DD-MM-YYYY HH:mm:ss') %></td>
+                                <td><%= gold_history.gold_tray %></td>
                                 <td><%= gold_history.gold_type %></td>
                                 <td><%= gold_history.gold_size %></td>
                                 <td><%= gold_history.gold_weight %> กรัม</td>
                                 <td><%= gold_history.gold_id %></td>
+                                <td><%= gold_history.trayCount %></td>
+                                <td><%= gold_history.totalCount %></td>
                             </tr>
                         <% }); %>
                     </tbody>
@@ -97,9 +103,9 @@
                                 <a class="page-link" href="?page=<%= parseInt(currentPage) + 1 %>&select_goldType=<%= select_goldType %>&select_goldSize=<%= select_goldSize %>&start_date=<%= startDate %>&end_date=<%= endDate %>" aria-label="Next"><span aria-hidden="true">&raquo;</span></a>
                             </li>
                             <li class="page-item">
-                                <a class="page-link color-nextpage" href="?page=<%= totalPages %>&select_goldType=<%= select_goldType %>&select_goldSize=<%= select_goldSize %>&start_date=<%= startDate %>&end_date=<%= endDate %>">หน้าหลังสุด</a>
+                                <a class="page-link color-nextpage" href="?page=<%= totalPages %>&select_goldType=<%= select_goldType %>&select_goldSize=<%= select_goldSize %>&start_date=<%= startDate %>&end_date=<%= endDate %>">หน้าสุดท้าย</a>
                             </li>
-                        <% } %>                                                               
+                        <% } %>
                     </ul>
                 </nav>
             <% } else { %>
@@ -125,3 +131,5 @@
         color: #ffffff; /* สีข้อความของหน้าปัจจุบัน */
     }
 </style>
+
+

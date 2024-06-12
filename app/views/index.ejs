@@ -23,12 +23,24 @@
     <%
       let totalGold = golds.length;
     %>
-    <div class="mt-3"><h3>จำนวนทองคำในระบบ : <%= totalGold %> รายการ</h3></div>
+    <div class="mt-3">
+      <h3>จำนวนทองคำในระบบ : <%= totalGold %> รายการ</h3>
+      <ul>
+        <% const trays = { 'ถาดที่ 1': 'สร้อยคอ', 'ถาดที่ 2': 'แหวน', 'ถาดที่ 3': 'กำไลข้อมือ', 'ถาดที่ 4': 'สร้อยข้อมือ', 'ถาดที่ 5': 'ต่างหู' }; %>
+        <% Object.keys(trays).forEach(tray => {
+            const count = golds.filter(tag => tag.gold_tray === tray).length;
+            if (count > 0) { %>
+                <li><%= tray %> มี <%= trays[tray] %> <%= count %> ชิ้น</li>
+            <% }
+        }); %>
+      </ul>
+    </div>
     <div>
       <table class="table table-bordered">
         <thead class="table-success">
           <tr>
             <th width="100px">ลำดับที่</th>
+            <th width="150px">ถาด</th>
             <th>ชนิด</th>
             <th>ขนาด</th>
             <th>น้ำหนัก</th>
@@ -40,6 +52,7 @@
           <% golds.forEach((gold , index) => { %>
             <tr>
               <td><%= index+1 %></td>
+              <td><%= gold.gold_tray %></td>
               <td><%= gold.gold_type %></td>
               <td><%= gold.gold_size %></td>
               <td><%= gold.gold_weight %> กรัม</td>

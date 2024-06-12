@@ -9,12 +9,6 @@
             </span>
             บันทึกรายการ
         </button>        
-        <!-- <button class="btn btn-danger" onclick="clearGoldtagsCount()">
-            <span class="material-icon material-symbols-outlined">
-                delete
-            </span>
-            ลบข้อมูลการนับ
-        </button>         -->
     </div>
     <div class="mt-2">
         <button class="btn btn-primary" style="margin-right: 4px;" onclick="reloadAddTags()">
@@ -35,12 +29,22 @@
     %>
     <div class="mt-4">
         <h3>จำนวนทองคำที่นับได้ : <%= totalTags %> รายการ</h3>
+        <ul>
+            <% const trays = { 'ถาดที่ 1': 'สร้อยคอ', 'ถาดที่ 2': 'แหวน', 'ถาดที่ 3': 'กำไลข้อมือ', 'ถาดที่ 4': 'สร้อยข้อมือ', 'ถาดที่ 5': 'ต่างหู' }; %>
+            <% Object.keys(trays).forEach(tray => {
+                const count = countgoldtags.filter(tag => tag.gold_tray === tray).length;
+                if (count > 0) { %>
+                    <li><%= tray %> มี <%= trays[tray] %> <%= count %> ชิ้น</li>
+                <% }
+            }); %>
+        </ul> 
     </div>
     <table class="table table-bordered">
         <thead class="table-success">
             <tr>
                 <th width="40px">ลำดับที่</th>
                 <th width="100px">Gold_Tag_id</th>
+                <th width="75px">ถาด</th>
                 <th width="100px">ประเภท</th>
                 <th width="100px">ขนาด</th>
                 <th width="100px">น้ำหนัก</th>
@@ -51,6 +55,7 @@
                 <tr>
                     <td><%= index + 1 %></td>
                     <td><%= count_tag.gold_id %></td>
+                    <td><%= count_tag.gold_tray %></td>
                     <td><%= count_tag.gold_type %></td>
                     <td><%= count_tag.gold_size %></td>
                     <td><%= count_tag.gold_weight %> กรัม</td>

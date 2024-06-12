@@ -43,50 +43,58 @@
         <%
         let totalGold = goldslist.length;
         %>
-        <div class="mt-3"><h4>จำนวนทองคำในระบบ : <%= totalGold %> รายการ</h4></div>
-        <div>
-            <% if (goldslist.length > 0) { %>
-              <table class="table table-bordered mt-2">
-                <thead class="table-success">
-                  <tr>
-                    <th width="100px">ลำดับที่</th>
-                    <th>ชนิด</th>
-                    <th>ขนาด</th>
-                    <th>น้ำหนัก</th>
-                    <th>Gold_Tag_id</th>
-                    <th>วันที่บันทึกเข้าระบบ</th>
-                    <th width="160px"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <% goldslist.forEach((gold_list , index) => { %>
-                    <tr>
-                      <td><%= index+1 %></td>
-                      <td><%= gold_list.gold_type %></td>
-                      <td><%= gold_list.gold_size %></td>
-                      <td><%= gold_list.gold_weight %> กรัม</td>
-                      <td><%= gold_list.gold_id %></td>
-                      <td><%= dayjs(gold_list.gold_timestamp).locale('th').format('DD-MM-YYYY HH:mm:ss') %></td>
-                      <td class="text-center">
-                        <a class="btn btn-primary" style="margin-right:3px;" href="/edit_countdataform?gold_id=<%= gold_list.gold_id %>">
-                          <span class="material-icon material-symbols-outlined">
-                              edit
-                          </span>
-                        </a>                    
-                        <a class="btn btn-danger" data-bs-toggle="modal" href="#confirmDeleteModal" data-id="<%= gold_list.gold_id %>">
-                          <span class="material-icon material-symbols-outlined">
-                              delete
-                          </span>
-                        </a>                                           
-                      </td>
-                    </tr>
-                  <% }); %>
-                </tbody>
-              </table>
-            <% } else { %>
-              <p>ไม่มีข้อมูลทองคำตรงกับเงื่อนไขที่คุณเลือก</p>
-            <% } %>
-          </div>
+        <div class="mt-3">
+          <h3>จำนวนทองคำในระบบ : <%= totalGold %> รายการ</h3>
+          <ul>
+            <% const trays = { 'ถาดที่ 1': 'สร้อยคอ', 'ถาดที่ 2': 'แหวน', 'ถาดที่ 3': 'กำไลข้อมือ', 'ถาดที่ 4': 'สร้อยข้อมือ', 'ถาดที่ 5': 'ต่างหู' }; %>
+            <% Object.keys(trays).forEach(tray => { %>
+              <% const count = goldslist.filter(tag => tag.gold_tray === tray).length; %>
+              <% if (count > 0) { %>
+                  <div>
+                      <table class="table table-bordered mt-4">
+                          <thead class="table-success">
+                              <tr>
+                                  <th colspan="7" style="font-size: large;"><%= tray %> มี <%= trays[tray] %> <%= count %> ชิ้น</th>
+                              </tr>
+                              <tr>
+                                  <th width="100px">ลำดับที่</th>
+                                  <th width="160px">ชนิด</th>
+                                  <th width="160px">ขนาด</th>
+                                  <th width="160px">น้ำหนัก</th>
+                                  <th>Gold_Tag_id</th>
+                                  <th>วันที่บันทึกเข้าระบบ</th>
+                                  <th width="160px"></th>
+                              </tr>
+                          </thead>
+                          <tbody>
+                              <% goldslist.filter(tag => tag.gold_tray === tray).forEach((gold_list , index) => { %>
+                                  <tr>
+                                      <td><%= index+1 %></td>
+                                      <td><%= gold_list.gold_type %></td>
+                                      <td><%= gold_list.gold_size %></td>
+                                      <td><%= gold_list.gold_weight %> กรัม</td>
+                                      <td><%= gold_list.gold_id %></td>
+                                      <td><%= dayjs(gold_list.gold_timestamp).locale('th').format('DD-MM-YYYY HH:mm:ss') %></td>
+                                      <td class="text-center">
+                                          <a class="btn btn-primary" style="margin-right:3px;" href="/edit_countdataform?gold_id=<%= gold_list.gold_id %>">
+                                              <span class="material-icon material-symbols-outlined">
+                                                  edit
+                                              </span>
+                                          </a>                    
+                                          <a class="btn btn-danger" data-bs-toggle="modal" href="#confirmDeleteModal" data-id="<%= gold_list.gold_id %>">
+                                              <span class="material-icon material-symbols-outlined">
+                                                  delete
+                                              </span>
+                                          </a>                                           
+                                      </td>
+                                  </tr>
+                              <% }); %>
+                          </tbody>
+                      </table>
+                  </div>
+              <% } %>
+          <% }); %>      
+        </div>
     </div>
 </form>
 
