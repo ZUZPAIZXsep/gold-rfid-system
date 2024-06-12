@@ -1,6 +1,15 @@
-<%-  include('header') %>
+<%- include('header') %>
 
 <div class="container-fluid mt-3">
+    <!-- Success message container -->
+    <div class="row">
+      <div class="col-3">
+          <div id="successMessage" class="alert alert-success d-none" role="alert">
+              บันทึกข้อมูลแท็กเรียบร้อยแล้ว
+          </div>
+      </div>
+  </div>
+
     <div><h3 style="font-weight: bold;">เพิ่มข้อมูลแท็กของทองคำ</h3></div>
     <div class="mt-3">
         <button class="btn btn-primary" style="margin-right: 4px;" onclick="reloadAddTags()">
@@ -58,20 +67,30 @@
 
 <script>
     function reloadAddTags(){
-        window.location.reload(true);//รีหน้าเว็บ
+        window.location.reload(true); // รีหน้าเว็บ
     }
     function clearRfidTags() {
         fetch('/clear_rfid_tags') // เรียกใช้งานเมื่อคลิกที่ปุ่มล้างค่า
             .then(response => response.json())
             .then(data => {
                 console.log(data); // แสดงข้อมูลที่ได้รับกลับมาใน console
-                window.location.reload(true);//รีหน้าเว็บ
+                window.location.reload(true); // รีหน้าเว็บ
             })
             .catch(error => {
                 console.error('Error:', error);
             });
     }
 
-    // setInterval(reloadAddTags, 1000);
+    // Display success message if query parameter is set
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('success')) {
+            const successMessage = document.getElementById('successMessage');
+            successMessage.classList.remove('d-none');
+            // Hide the message after 3 seconds
+            setTimeout(() => {
+                successMessage.classList.add('d-none');
+            }, 3000);
+        }
+    });
 </script>
-

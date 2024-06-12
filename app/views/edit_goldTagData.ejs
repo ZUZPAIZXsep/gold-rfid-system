@@ -2,6 +2,22 @@
 
 <form method="GET">
     <div class="container-fluid mt-3">
+      <!-- Success message container -->
+      <div class="row">
+        <div class="col-3">
+            <div id="successMessage" class="alert alert-success d-none" role="alert">
+                แก้ไขข้อมูลแท็กเรียบร้อยแล้ว
+            </div>
+        </div>
+      </div>
+      <!-- Success message container -->
+      <div class="row">
+        <div class="col-3">
+            <div id="deleteSuccessMessage" class="alert alert-danger d-none" role="alert">
+                ลบข้อมูลแท็กเรียบร้อยแล้ว
+            </div>
+        </div>
+      </div>
       <div><h3 style="font-weight: bold;">แก้ไขข้อมูลแท็กของทองคำ</h3></div>
         <div class="row mt-2">
             <div class="col-2">
@@ -114,6 +130,27 @@
     var goldId = button.data('id') // Extract info from data-id attributes
     var modal = $(this)
     modal.find('#confirmDeleteBtn').attr('href', '/delete_goldTagData/' + goldId)
-  })
+  });
+
+  // Display success message if query parameter is set
+  document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('success')) {
+            const successMessage = document.getElementById('successMessage');
+            successMessage.classList.remove('d-none');
+            // Hide the message after 3 seconds
+            setTimeout(() => {
+                successMessage.classList.add('d-none');
+            }, 3000);
+        }
+        if (urlParams.has('deleteSuccess')) {
+            const deleteSuccessMessage = document.getElementById('deleteSuccessMessage');
+            deleteSuccessMessage.classList.remove('d-none');
+            // Hide the message after 3 seconds
+            setTimeout(() => {
+                deleteSuccessMessage.classList.add('d-none');
+            }, 3000);
+        }
+    });
 </script>
 

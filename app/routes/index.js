@@ -35,22 +35,6 @@ const goldTagSchema = new mongoose.Schema({
 
 const GoldTag = mongoose.model('GoldTag', goldTagSchema);
 
-// // สร้างโครงสร้างข้อมูล goldcount
-// const goldCountSchema = new mongoose.Schema({
-
-//   gold_id: ObjectId,
-//   goldtype: String,
-//   size: String,
-//   weight: String,
-//   gold_tray: String
-  
-//   // ,gold_timestamp: { type: Date, default: Date.now }
-// },{ 
-//   collection: 'Goldcount'
-// });
-
-// const Gold = mongoose.model('Gold', goldCountSchema);
-
 // สร้างโครงสร้างข้อมูล goldcount_history
 const goldCountHistorySchema = new mongoose.Schema({
 
@@ -263,51 +247,51 @@ router.get('/gold_list', async (req, res, next) => {
   }
 });
 
-  // GET route เพื่อดึงข้อมูลทองคำที่ต้องการแก้ไข
-  router.get('/edit_countdataform', async (req, res) => {
-    try {
-        const goldId = req.query.gold_id; // รับ Gold_Tag_id ที่ต้องการแก้ไขจาก query parameter
-        const goldData = await Goldtagscount.findOne({ gold_id: goldId }); // ค้นหาข้อมูลทองคำที่ต้องการแก้ไขในฐานข้อมูล
+  // // GET route เพื่อดึงข้อมูลทองคำที่ต้องการแก้ไข
+  // router.get('/edit_countdataform', async (req, res) => {
+  //   try {
+  //       const goldId = req.query.gold_id; // รับ Gold_Tag_id ที่ต้องการแก้ไขจาก query parameter
+  //       const goldData = await Goldtagscount.findOne({ gold_id: goldId }); // ค้นหาข้อมูลทองคำที่ต้องการแก้ไขในฐานข้อมูล
 
-        if (!goldData) {
-            return res.status(404).send('Gold data not found'); // หากไม่พบข้อมูลทองคำที่ต้องการแก้ไข
-        }
+  //       if (!goldData) {
+  //           return res.status(404).send('Gold data not found'); // หากไม่พบข้อมูลทองคำที่ต้องการแก้ไข
+  //       }
 
-        // ส่งข้อมูลทองคำไปยังหน้าแก้ไขข้อมูล
-        res.render('edit_countdataform', { goldId: goldData.gold_id, goldType: goldData.gold_type, goldSize: goldData.gold_size, goldWeight: goldData.gold_weight, select_goldType: goldData.gold_type, select_goldSize: goldData.gold_size });
-    } catch (error) {
-        console.error(error);
-        res.status(500).send('Internal Server Error');
-    }
-  });
+  //       // ส่งข้อมูลทองคำไปยังหน้าแก้ไขข้อมูล
+  //       res.render('edit_countdataform', { goldId: goldData.gold_id, goldType: goldData.gold_type, goldSize: goldData.gold_size, goldWeight: goldData.gold_weight, select_goldType: goldData.gold_type, select_goldSize: goldData.gold_size });
+  //   } catch (error) {
+  //       console.error(error);
+  //       res.status(500).send('Internal Server Error');
+  //   }
+  // });
 
-  // POST route เพื่ออัปเดตข้อมูลทองคำ
-  router.post('/update_countdata', async (req, res) => {
-    try {
-        const { gold_id, gold_type, gold_size, gold_weight } = req.body; // รับข้อมูลที่แก้ไขจากฟอร์ม
+  // // POST route เพื่ออัปเดตข้อมูลทองคำ
+  // router.post('/update_countdata', async (req, res) => {
+  //   try {
+  //       const { gold_id, gold_type, gold_size, gold_weight } = req.body; // รับข้อมูลที่แก้ไขจากฟอร์ม
 
-        // ค้นหาและอัปเดตข้อมูลทองคำในฐานข้อมูล
-        await Goldtagscount.findOneAndUpdate({ gold_id: gold_id }, { gold_type: gold_type, gold_size: gold_size, gold_weight: gold_weight });
+  //       // ค้นหาและอัปเดตข้อมูลทองคำในฐานข้อมูล
+  //       await Goldtagscount.findOneAndUpdate({ gold_id: gold_id }, { gold_type: gold_type, gold_size: gold_size, gold_weight: gold_weight });
 
-        res.redirect('/gold_list'); // ส่งกลับไปยังหน้าหลักหลังจากทำการอัปเดตข้อมูลเสร็จสิ้น
-    } catch (error) {
-        console.error(error);
-        res.status(500).send('Internal Server Error');
-    }
-  });
+  //       res.redirect('/gold_list?success=true'); // ส่งกลับไปยังหน้าหลักหลังจากทำการอัปเดตข้อมูลเสร็จสิ้น
+  //   } catch (error) {
+  //       console.error(error);
+  //       res.status(500).send('Internal Server Error');
+  //   }
+  // });
 
-  //GET route เพื่อลบข้อมูลทองคำ
-  router.get('/delete_goldCountData/:gold_id', async (req, res) => {
-    try {
-        const goldId = req.params.gold_id; // รับ Gold_Tag_id ที่ต้องการลบจาก parameter ของ URL
-        await Goldtagscount.findOneAndDelete({ gold_id: goldId}); // ค้นหาและลบข้อมูลทองคำในฐานข้อมูล
+  // //GET route เพื่อลบข้อมูลทองคำ
+  // router.get('/delete_goldCountData/:gold_id', async (req, res) => {
+  //   try {
+  //       const goldId = req.params.gold_id; // รับ Gold_Tag_id ที่ต้องการลบจาก parameter ของ URL
+  //       await Goldtagscount.findOneAndDelete({ gold_id: goldId}); // ค้นหาและลบข้อมูลทองคำในฐานข้อมูล
 
-        res.redirect('/gold_list'); // ส่งกลับไปยังหน้าหลักหลังจากทำการลบข้อมูลเสร็จสิ้น
-    } catch (error) {
-        console.error(error);
-        res.status(500).send('Internal Server Error');
-    }
-  });
+  //       res.redirect('/gold_list?deleteSuccess=true'); // ส่งกลับไปยังหน้าหลักหลังจากทำการลบข้อมูลเสร็จสิ้น
+  //   } catch (error) {
+  //       console.error(error);
+  //       res.status(500).send('Internal Server Error');
+  //   }
+  // });
 
   // //mockup id for test
   // router.get('/add_golddata', async (req,res) => {
@@ -391,7 +375,7 @@ router.get('/gold_list', async (req, res, next) => {
           // บันทึกข้อมูลลงในฐานข้อมูล
           await newGoldData.save();
 
-        res.redirect('./add_golddata');
+          res.redirect('/add_golddata?success=true');
     } catch (error) {
         console.error(error);
         res.status(500).send('Internal Server Error');
@@ -451,6 +435,7 @@ router.get('/gold_list', async (req, res, next) => {
 
           // ส่งข้อมูลทองคำไปยังหน้าแก้ไขข้อมูล
           res.render('edit_dataform', { goldId: goldData.gold_id, goldType: goldData.gold_type, goldSize: goldData.gold_size, goldWeight: goldData.gold_weight, select_goldType: goldData.gold_type, select_goldSize: goldData.gold_size });
+          
       } catch (error) {
           console.error(error);
           res.status(500).send('Internal Server Error');
@@ -465,7 +450,7 @@ router.get('/gold_list', async (req, res, next) => {
           // ค้นหาและอัปเดตข้อมูลทองคำในฐานข้อมูล
           await GoldTag.findOneAndUpdate({ gold_id: gold_id }, { gold_type: gold_type, gold_size: gold_size, gold_weight: gold_weight });
 
-          res.redirect('/edit_goldTagData'); // ส่งกลับไปยังหน้าหลักหลังจากทำการอัปเดตข้อมูลเสร็จสิ้น
+          res.redirect('/edit_goldTagData?success=true'); // ส่งกลับไปยังหน้าหลักหลังจากทำการอัปเดตข้อมูลเสร็จสิ้น
       } catch (error) {
           console.error(error);
           res.status(500).send('Internal Server Error');
@@ -478,7 +463,7 @@ router.get('/gold_list', async (req, res, next) => {
         const goldId = req.params.gold_id; // รับ Gold_Tag_id ที่ต้องการลบจาก parameter ของ URL
         await GoldTag.findOneAndDelete({ gold_id: goldId}); // ค้นหาและลบข้อมูลทองคำในฐานข้อมูล
 
-        res.redirect('/edit_goldTagData'); // ส่งกลับไปยังหน้าหลักหลังจากทำการลบข้อมูลเสร็จสิ้น
+        res.redirect('/edit_goldTagData?deleteSuccess=true'); // ส่งกลับไปยังหน้าหลักหลังจากทำการลบข้อมูลเสร็จสิ้น
     } catch (error) {
         console.error(error);
         res.status(500).send('Internal Server Error');

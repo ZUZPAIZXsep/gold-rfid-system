@@ -2,6 +2,7 @@
 
 <form method="GET">
       <div class="container-fluid mt-3">
+      
         <div><h3 style="font-weight: bold;">ข้อมูลทองคำที่มีอยู่ในระบบ</h3></div>
         <div class="row mt-2">
             <div class="col-2">
@@ -63,7 +64,6 @@
                                   <th width="160px">น้ำหนัก</th>
                                   <th>Gold_Tag_id</th>
                                   <th>วันที่บันทึกเข้าระบบ</th>
-                                  <th width="160px"></th>
                               </tr>
                           </thead>
                           <tbody>
@@ -75,18 +75,6 @@
                                       <td><%= gold_list.gold_weight %> กรัม</td>
                                       <td><%= gold_list.gold_id %></td>
                                       <td><%= dayjs(gold_list.gold_timestamp).locale('th').format('DD-MM-YYYY HH:mm:ss') %></td>
-                                      <td class="text-center">
-                                          <a class="btn btn-primary" style="margin-right:3px;" href="/edit_countdataform?gold_id=<%= gold_list.gold_id %>">
-                                              <span class="material-icon material-symbols-outlined">
-                                                  edit
-                                              </span>
-                                          </a>                    
-                                          <a class="btn btn-danger" data-bs-toggle="modal" href="#confirmDeleteModal" data-id="<%= gold_list.gold_id %>">
-                                              <span class="material-icon material-symbols-outlined">
-                                                  delete
-                                              </span>
-                                          </a>                                           
-                                      </td>
                                   </tr>
                               <% }); %>
                           </tbody>
