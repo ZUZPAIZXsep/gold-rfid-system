@@ -223,7 +223,7 @@ router.get('/gold_list', async (req, res, next) => {
       if (req.query.gold_id) {
         condition.gold_id = req.query.gold_id;
       }
-
+      
       const goldslist = await Goldtagscount.find(condition);
 
       // เรียงข้อมูลตามลำดับถาด
