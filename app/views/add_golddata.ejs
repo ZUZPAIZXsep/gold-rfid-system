@@ -51,11 +51,19 @@
                 <% } %>
               </td>
               <td class="text-center">
-                <a class="btn btn-success" style="margin-right:3px;" href="/add_dataform?gold_id=<%= add_data.gold_id %>">
-                  <span class="material-icon material-symbols-outlined">
-                      add
-                  </span>เพิ่มข้อมูลทองคำ
-                </a>              
+                <% if (!add_data.has_data) { %>
+                  <a class="btn btn-success" style="margin-right:3px;" href="/add_dataform?gold_id=<%= add_data.gold_id %>">
+                    <span class="material-icon material-symbols-outlined">
+                        add
+                    </span>เพิ่มข้อมูลทองคำ
+                  </a>
+                <% } else { %>
+                  <button class="btn btn-secondary" disabled>
+                    <span class="material-icon material-symbols-outlined">
+                        add
+                    </span>เพิ่มข้อมูลทองคำ
+                  </button>
+                <% } %>
               </td>
             </tr>
           <% }); %>
