@@ -219,6 +219,11 @@ router.get('/gold_list', async (req, res, next) => {
           condition.gold_size = req.query.select_goldSize;
       }
 
+      // ถ้ามีการกรอกเลข Gold ID
+      if (req.query.gold_id) {
+        condition.gold_id = req.query.gold_id;
+      }
+      
       const goldslist = await Goldtagscount.find(condition);
 
       // เรียงข้อมูลตามลำดับถาด
@@ -239,7 +244,8 @@ router.get('/gold_list', async (req, res, next) => {
         goldslist: goldslist, 
         dayjs: dayjs, 
         select_goldType: req.query.select_goldType, 
-        select_goldSize: req.query.select_goldSize, 
+        select_goldSize: req.query.select_goldSize,
+        gold_id: req.query.gold_id, 
         currentUrl: req.originalUrl });
   } catch (error) {
       console.error(error);
@@ -407,12 +413,18 @@ router.get('/gold_list', async (req, res, next) => {
         condition.gold_size = req.query.select_goldSize;
       }
 
+      // ถ้ามีการกรอกเลข Gold ID
+      if (req.query.gold_id) {
+        condition.gold_id = req.query.gold_id;
+      }
+
       const goldsedit = await GoldTag.find(condition);
       res.render('edit_goldTagData', {
         goldsedit: goldsedit,
         dayjs: dayjs,
         select_goldType: req.query.select_goldType,
         select_goldSize: req.query.select_goldSize, 
+        gold_id: req.query.gold_id,
         currentUrl: req.originalUrl
       });
     } catch (error) {
