@@ -1,10 +1,10 @@
-<%-  include('header') %>
+<%- include('header') %>
 
 <form method="GET">
-      <div class="container-fluid mt-3">
-      
+    <div class="container-fluid mt-3">
         <div><h3 style="font-weight: bold;">ข้อมูลทองคำที่มีอยู่ในระบบ</h3></div>
         <div class="row mt-2">
+            <!-- Filter inputs -->
             <div class="col-2">
               <label style="font-weight: 600;">ประเภทของทองคำ</label>
                 <select class="form-select" name="select_goldType">
@@ -68,6 +68,7 @@
                                   <th width="160px">น้ำหนัก</th>
                                   <th>Gold_Tag_id</th>
                                   <th>วันที่บันทึกเข้าระบบ</th>
+                                  <th class="text-center" width="170px">อัปเดตสถานะทองคำ</th>
                               </tr>
                           </thead>
                           <tbody>
@@ -79,6 +80,11 @@
                                       <td><%= gold_list.gold_weight %> กรัม</td>
                                       <td><%= gold_list.gold_id %></td>
                                       <td><%= dayjs(gold_list.gold_timestamp).locale('th').format('DD-MM-YYYY HH:mm:ss') %></td>
+                                      <td class="text-center">
+                                        <a class="btn btn-success" id="sellButton" data-gold-id="<%= gold_list.gold_id %>">
+                                          <span class="material-icon material-symbols-outlined">sell</span> ขายออกแล้ว
+                                      </a>                                                                                                   
+                                    </td>
                                   </tr>
                               <% }); %>
                           </tbody>
@@ -90,32 +96,69 @@
     </div>
 </form>
 
-<%-  include('footer') %>
+<%- include('footer') %>
 
-<!-- Modal ยืนยันการลบ
-<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<!-- Modal -->
+<div class="modal fade" id="confirmSellModal" tabindex="-1" aria-labelledby="confirmSellModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel">ยืนยันการลบ</h5>
+        <h5 class="modal-title" id="confirmSellModalLabel">ยืนยันการอัปเดตสถานะ</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?
+        คุณต้องการอัปเดตสถานะเป็น "ขายออกแล้ว" หรือไม่?
       </div>
       <div class="modal-footer">
-        <a id="confirmDeleteBtn" href="#" class="btn btn-danger">ลบ</a>
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+        <button type="button" class="btn btn-primary" id="confirmButton">ยืนยัน</button>
+        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">ยกเลิก</button>
       </div>
     </div>
   </div>
 </div>
 
 <script>
-  $('#confirmDeleteModal').on('show.bs.modal', function (event) {
-    var button = $(event.relatedTarget) // Button that triggered the modal
-    var goldId = button.data('id') // Extract info from data-id attributes
-    var modal = $(this)
-    modal.find('#confirmDeleteBtn').attr('href', '/delete_goldCountData/' + goldId)
-  })
-</script> -->
+  document.addEventListener('DOMContentLoaded', function() {
+      const sellButtons = document.querySelectorAll('#sellButton');
+  
+      sellButtons.forEach(button => {
+          button.addEventListener('click', function() {
+              const goldId = button.getAttribute('data-gold-id');
+              const confirmButton = document.getElementById('confirmButton');
+  
+              // เมื่อคลิกปุ่ม "ขายออกแล้ว" ให้แสดง Modal
+              $('#confirmSellModal').modal('show');
+  
+              // เมื่อคลิกปุ่มยืนยันใน Modal
+              confirmButton.addEventListener('click', async () => {
+                  try {
+                      // ส่งคำขอไปยังเซิร์ฟเวอร์เพื่ออัปเดตสถานะทองคำ
+                      const response = await fetch('/update_goldstatus', {
+                          method: 'POST',
+                          headers: {
+                              'Content-Type': 'application/json'
+                          },
+                          body: JSON.stringify({ gold_id: goldId })
+                      });
+  
+                      if (response.ok) {
+                          // อัปเดตสำเร็จ รีเฟรชหน้าหลังจาก 1 วินาที
+                          setTimeout(() => {
+                              window.location.reload();
+                          }, 300);
+                      } else {
+                          console.error('Failed to update gold status');
+                      }
+                  } catch (error) {
+                      console.error('Error updating gold status:', error);
+                  } finally {
+                      // ปิด Modal หลังจากทำการอัปเดตเสร็จสิ้น
+                      $('#confirmSellModal').modal('hide');
+                  }
+              });
+          });
+      });
+  });
+  </script>
+  
+

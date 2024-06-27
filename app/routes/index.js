@@ -43,7 +43,9 @@ const goldCountHistorySchema = new mongoose.Schema({
   gold_size: String,
   gold_weight: String,
   gold_tray: String,
-  gold_timestamp: { type: Date, default: Date.now }
+  gold_timestamp: { type: Date, default: Date.now },
+  gold_status: String,
+  gold_outDateTime: Date
 },{ 
   collection: 'goldcount_history'
 });
@@ -58,7 +60,9 @@ const goldTagsCountSchema = new mongoose.Schema({
   gold_size: String,
   gold_weight: String,
   gold_tray: String,
-  gold_timestamp: { type: Date, default: Date.now }
+  gold_timestamp: { type: Date, default: Date.now },
+  gold_status: String,
+  gold_outDateTime: Date
   
 },{ 
   collection: 'goldtags_count'
@@ -165,7 +169,8 @@ router.post('/save_goldtags', async (req, res) => {
           gold_size: count_tag.gold_size,
           gold_weight: count_tag.gold_weight,
           gold_tray: assignTray(count_tag.gold_type),
-          gold_timestamp: dayjs().locale('th').format('YYYY-MM-DD HH:mm:ss') // Timestamp ปัจจุบัน (รูปแบบวันที่และเวลาไทย)
+          gold_timestamp: dayjs().locale('th').format('YYYY-MM-DD HH:mm:ss'), // Timestamp ปัจจุบัน (รูปแบบวันที่และเวลาไทย)
+          gold_status: 'in stock' // เพิ่มสถานะ
       }));
 
       // ลบข้อมูลเก่าออกก่อน
@@ -205,99 +210,100 @@ router.post('/save_goldtags', async (req, res) => {
     }
   });
 
-router.get('/gold_list', async (req, res, next) => {
-  try {
-      let condition = {};
+  router.get('/gold_list', async (req, res, next) => {
+    try {
+        let condition = { gold_status: 'in stock' }; // เพิ่มเงื่อนไขการกรองโดย gold_status
+  
+        // ถ้ามีการเลือกประเภททองคำ
+        if (req.query.select_goldType && req.query.select_goldType !== 'เลือกประเภททองคำ') {
+            condition.gold_type = req.query.select_goldType;
+        }
+  
+        // ถ้ามีการเลือกขนาดทองคำ
+        if (req.query.select_goldSize && req.query.select_goldSize !== 'เลือกขนาดทองคำ') {
+            condition.gold_size = req.query.select_goldSize;
+        }
+  
+        // ถ้ามีการกรอกเลข Gold ID
+        if (req.query.gold_id) {
+          condition.gold_id = req.query.gold_id;
+        }
+        
+        const goldslist = await Goldtagscount.find(condition);
+  
+        // เรียงข้อมูลตามลำดับถาด
+        goldslist.sort((a, b) => {
+        const trayOrder = {
+          'ถาดที่ 1': 1,
+          'ถาดที่ 2': 2,
+          'ถาดที่ 3': 3,
+          'ถาดที่ 4': 4,
+          'ถาดที่ 5': 5,
+          'ถาดอื่นๆ': 6
+        };
+  
+        return trayOrder[a.gold_tray] - trayOrder[b.gold_tray];
+      });
+        
+        res.render('gold_list', { 
+          goldslist: goldslist, 
+          dayjs: dayjs, 
+          select_goldType: req.query.select_goldType, 
+          select_goldSize: req.query.select_goldSize,
+          gold_id: req.query.gold_id, 
+          currentUrl: req.originalUrl });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Internal Server Error');
+    }
+  });
+  
+  router.post('/update_goldstatus', async (req, res) => {
+    try {
+        const { gold_id } = req.body;
+        const currentTimestamp = dayjs().locale('th').format('YYYY-MM-DD HH:mm:ss');
 
-      // ถ้ามีการเลือกประเภททองคำ
-      if (req.query.select_goldType && req.query.select_goldType !== 'เลือกประเภททองคำ') {
-          condition.gold_type = req.query.select_goldType;
-      }
+        // Update gold_status and gold_outDateTime in Goldtagscount collection
+        const result = await Goldtagscount.updateOne(
+            { gold_id: gold_id },
+            {
+                $set: {
+                    gold_status: 'out of stock',
+                    gold_outDateTime: currentTimestamp,
+                },
+            }
+        );
 
-      // ถ้ามีการเลือกขนาดทองคำ
-      if (req.query.select_goldSize && req.query.select_goldSize !== 'เลือกขนาดทองคำ') {
-          condition.gold_size = req.query.select_goldSize;
-      }
+        // Determine the start and end of the current day in Thai locale
+        const startOfDay = dayjs().locale('th').startOf('day').format('YYYY-MM-DD HH:mm:ss');
+        const endOfDay = dayjs().locale('th').endOf('day').format('YYYY-MM-DD HH:mm:ss');
 
-      // ถ้ามีการกรอกเลข Gold ID
-      if (req.query.gold_id) {
-        condition.gold_id = req.query.gold_id;
-      }
-      
-      const goldslist = await Goldtagscount.find(condition);
-
-      // เรียงข้อมูลตามลำดับถาด
-      goldslist.sort((a, b) => {
-      const trayOrder = {
-        'ถาดที่ 1': 1,
-        'ถาดที่ 2': 2,
-        'ถาดที่ 3': 3,
-        'ถาดที่ 4': 4,
-        'ถาดที่ 5': 5,
-        'ถาดอื่นๆ': 6
-      };
-
-  return trayOrder[a.gold_tray] - trayOrder[b.gold_tray];
+        // Update gold_status and gold_outDateTime in Goldhistory collection
+        const historyResult = await Goldhistory.updateOne(
+            {
+                gold_id: gold_id,
+                gold_timestamp: {
+                    $gte: startOfDay,
+                    $lte: endOfDay,
+                },
+            },
+            {
+                $set: {
+                    gold_status: 'out of stock',
+                    gold_outDateTime: currentTimestamp,
+                },
+            },
+            { upsert: true }
+        );
+        res.redirect('/gold_list');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Internal Server Error');
+    }
 });
-      
-      res.render('gold_list', { 
-        goldslist: goldslist, 
-        dayjs: dayjs, 
-        select_goldType: req.query.select_goldType, 
-        select_goldSize: req.query.select_goldSize,
-        gold_id: req.query.gold_id, 
-        currentUrl: req.originalUrl });
-  } catch (error) {
-      console.error(error);
-      res.status(500).send('Internal Server Error');
-  }
-});
 
-  // // GET route เพื่อดึงข้อมูลทองคำที่ต้องการแก้ไข
-  // router.get('/edit_countdataform', async (req, res) => {
-  //   try {
-  //       const goldId = req.query.gold_id; // รับ Gold_Tag_id ที่ต้องการแก้ไขจาก query parameter
-  //       const goldData = await Goldtagscount.findOne({ gold_id: goldId }); // ค้นหาข้อมูลทองคำที่ต้องการแก้ไขในฐานข้อมูล
 
-  //       if (!goldData) {
-  //           return res.status(404).send('Gold data not found'); // หากไม่พบข้อมูลทองคำที่ต้องการแก้ไข
-  //       }
 
-  //       // ส่งข้อมูลทองคำไปยังหน้าแก้ไขข้อมูล
-  //       res.render('edit_countdataform', { goldId: goldData.gold_id, goldType: goldData.gold_type, goldSize: goldData.gold_size, goldWeight: goldData.gold_weight, select_goldType: goldData.gold_type, select_goldSize: goldData.gold_size });
-  //   } catch (error) {
-  //       console.error(error);
-  //       res.status(500).send('Internal Server Error');
-  //   }
-  // });
-
-  // // POST route เพื่ออัปเดตข้อมูลทองคำ
-  // router.post('/update_countdata', async (req, res) => {
-  //   try {
-  //       const { gold_id, gold_type, gold_size, gold_weight } = req.body; // รับข้อมูลที่แก้ไขจากฟอร์ม
-
-  //       // ค้นหาและอัปเดตข้อมูลทองคำในฐานข้อมูล
-  //       await Goldtagscount.findOneAndUpdate({ gold_id: gold_id }, { gold_type: gold_type, gold_size: gold_size, gold_weight: gold_weight });
-
-  //       res.redirect('/gold_list?success=true'); // ส่งกลับไปยังหน้าหลักหลังจากทำการอัปเดตข้อมูลเสร็จสิ้น
-  //   } catch (error) {
-  //       console.error(error);
-  //       res.status(500).send('Internal Server Error');
-  //   }
-  // });
-
-  // //GET route เพื่อลบข้อมูลทองคำ
-  // router.get('/delete_goldCountData/:gold_id', async (req, res) => {
-  //   try {
-  //       const goldId = req.params.gold_id; // รับ Gold_Tag_id ที่ต้องการลบจาก parameter ของ URL
-  //       await Goldtagscount.findOneAndDelete({ gold_id: goldId}); // ค้นหาและลบข้อมูลทองคำในฐานข้อมูล
-
-  //       res.redirect('/gold_list?deleteSuccess=true'); // ส่งกลับไปยังหน้าหลักหลังจากทำการลบข้อมูลเสร็จสิ้น
-  //   } catch (error) {
-  //       console.error(error);
-  //       res.status(500).send('Internal Server Error');
-  //   }
-  // });
 
   // //mockup id for test
   // router.get('/add_golddata', async (req,res) => {
