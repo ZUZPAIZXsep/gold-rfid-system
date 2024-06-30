@@ -30,7 +30,7 @@
         <% Object.keys(trays).forEach(tray => {
             const count = golds.filter(tag => tag.gold_tray === tray).length;
             if (count > 0) { %>
-                <li><%= tray %> มี <%= trays[tray] %> <%= count %> ชิ้น</li>
+                <li class="h5"><%= tray %> มี <%= trays[tray] %> <%= count %> ชิ้น</li>
             <% }
         }); %>
       </ul>
