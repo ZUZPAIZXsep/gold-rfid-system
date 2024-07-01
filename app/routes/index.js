@@ -278,17 +278,11 @@ router.post('/save_goldtags', async (req, res) => {
             }
         );
 
-        // หาเอกสารทองคำใน Goldhistory โดยใช้ gold_id และ timestamp ของวันนี้
-        const existingGold = await Goldhistory.findOne({
-            gold_id: gold_id,
-            gold_timestamp: {
-                $gte: dayjs().locale('th').startOf('day').toDate(),
-                $lte: dayjs().locale('th').endOf('day').toDate(),
-            },
-        });
+        // Check if the document exists in Goldhistory by gold_id
+        let existingGold = await Goldhistory.findOne({ gold_id: gold_id });
 
         if (existingGold) {
-            // อัปเดตข้อมูลผู้ซื้อไปยังเอกสารที่มีอยู่แล้ว
+            // Update existing document
             existingGold.customer_name = customer_name;
             existingGold.customer_surname = customer_surname;
             existingGold.customer_phone = customer_phone;
@@ -296,7 +290,7 @@ router.post('/save_goldtags', async (req, res) => {
             existingGold.gold_outDateTime = currentTimestamp;
             await existingGold.save();
         } else {
-            // สร้างเอกสารใหม่ในกรณีที่ไม่มีเอกสารทองคำในวันนี้
+            // Create new document in Goldhistory
             await Goldhistory.create({
                 gold_id: gold_id,
                 gold_status: 'out of stock',
@@ -314,9 +308,6 @@ router.post('/save_goldtags', async (req, res) => {
         res.status(500).send('Internal Server Error');
     }
 });
-
-
-
 
   // //mockup id for test
   // router.get('/add_golddata', async (req,res) => {
@@ -532,7 +523,6 @@ router.post('/save_goldtags', async (req, res) => {
             condition.gold_outDateTime = { $lt: dayjs(endDate).endOf('day').toDate() };
         }
 
-
         // Pagination logic
         const page = parseInt(req.query.page) || 1;
         const skip = (page - 1) * ITEMS_PER_PAGE;
@@ -562,6 +552,32 @@ router.post('/save_goldtags', async (req, res) => {
         res.status(500).send('Internal Server Error');
     }
 });
+
+router.get('/gold_saleDetails', async (req, res, next) => {
+  try {
+      const goldId = req.query.gold_id;
+      console.log("Gold ID:", goldId);  // ตรวจสอบว่า gold_id ถูกส่งมาถูกต้องหรือไม่
+
+      const saleDetails = await Goldhistory.findOne({ _id: goldId, gold_status: 'out of stock' });
+
+      if (saleDetails) {
+          console.log("Sale Details:", saleDetails);  // ตรวจสอบผลลัพธ์จากฐานข้อมูล
+
+          res.json({
+              customer_name: saleDetails.customer_name,
+              customer_surname: saleDetails.customer_surname,
+              customer_phone: saleDetails.customer_phone,
+              gold_outDateTime: dayjs(saleDetails.gold_outDateTime).locale('th').format('DD-MM-YYYY HH:mm:ss')
+          });
+      } else {
+          res.status(404).json({ error: 'Sale details not found' });
+      }
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 
 
   router.get('/gold_history', async (req, res, next) => {
