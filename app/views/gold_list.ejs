@@ -58,7 +58,7 @@
                       <table class="table table-bordered mt-4">
                           <thead class="table-success">
                               <tr>
-                                  <th colspan="7" style="font-size: large;"><%= tray %> มี <%= trays[tray] %> <%= count %> ชิ้น</th>
+                                  <th colspan="8" style="font-size: large;"><%= tray %> มี <%= trays[tray] %> <%= count %> ชิ้น</th>
                               </tr>
                               <tr>
                                   <th width="100px">ลำดับที่</th>
@@ -66,6 +66,7 @@
                                   <th width="160px">ขนาด</th>
                                   <th width="160px">น้ำหนัก</th>
                                   <th>Gold_Tag_id</th>
+                                  <th>ราคาทองคำ (บาท)</th>
                                   <th>วันที่บันทึกเข้าระบบ</th>
                                   <th class="text-center" width="170px">อัปเดตสถานะทองคำ</th>
                               </tr>
@@ -78,9 +79,33 @@
                                       <td><%= gold_list.gold_size %></td>
                                       <td><%= gold_list.gold_weight %> กรัม</td>
                                       <td><%= gold_list.gold_id %></td>
+                                      <td>
+                                        <% if (gold_list.gold_size === 'ครึ่งสลึง' && gold_list.gold_weight == 1.9) { %>
+                                            <%= prices.halfSalung.toFixed(2) %>
+                                        <% } else if (gold_list.gold_size === '1 สลึง' && gold_list.gold_weight == 3.8) { %>
+                                            <%= prices.oneSalung.toFixed(2) %>
+                                        <% } else if (gold_list.gold_size === '2 สลึง' && gold_list.gold_weight == 7.6) { %>
+                                            <%= prices.twoSalung.toFixed(2) %>
+                                        <% } else if (gold_list.gold_size === '1 บาท' && gold_list.gold_weight == 15.16) { %>
+                                            <%= prices.oneBaht.toFixed(2) %>
+                                        <% } else if (gold_list.gold_size === '2 บาท' && gold_list.gold_weight == 30.4) { %>
+                                            <%= prices.twoBaht.toFixed(2) %>
+                                        <% } else if (gold_list.gold_size === '3 บาท' && gold_list.gold_weight == 45.6) { %>
+                                            <%= prices.threeBaht.toFixed(2) %>
+                                        <% } else { %>
+                                            N/A
+                                        <% } %>
+                                    </td>                                    
                                       <td><%= dayjs(gold_list.gold_timestamp).locale('th').format('DD-MM-YYYY HH:mm:ss') %></td>
                                       <td class="text-center">
-                                        <a class="btn btn-success" id="sellButton" data-gold-id="<%= gold_list.gold_id %>">
+                                        <a class="btn btn-success" id="sellButton" data-gold-id="<%= gold_list.gold_id %>" data-gold-price="<%= 
+                                          (gold_list.gold_size === 'ครึ่งสลึง' && gold_list.gold_weight == 1.9) ? prices.halfSalung.toFixed(2) : 
+                                          (gold_list.gold_size === '1 สลึง' && gold_list.gold_weight == 3.8) ? prices.oneSalung.toFixed(2) : 
+                                          (gold_list.gold_size === '2 สลึง' && gold_list.gold_weight == 7.6) ? prices.twoSalung.toFixed(2) : 
+                                          (gold_list.gold_size === '1 บาท' && gold_list.gold_weight == 15.16) ? prices.oneBaht.toFixed(2) : 
+                                          (gold_list.gold_size === '2 บาท' && gold_list.gold_weight == 30.4) ? prices.twoBaht.toFixed(2) : 
+                                          (gold_list.gold_size === '3 บาท' && gold_list.gold_weight == 45.6) ? prices.threeBaht.toFixed(2) : 
+                                          'N/A' %>">
                                           <span class="material-icon material-symbols-outlined">sell</span> ขายออกแล้ว
                                         </a>                                                                                                   
                                       </td>
@@ -138,6 +163,7 @@ document.addEventListener('DOMContentLoaded', function() {
     sellButtons.forEach(button => {
         button.addEventListener('click', function() {
             const goldId = button.getAttribute('data-gold-id');
+            const goldPrice = button.getAttribute('data-gold-price');
             const confirmButton = document.getElementById('confirmButton');
 
             // Show the confirmation modal
@@ -156,8 +182,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ 
-                            gold_id: goldId, 
+                        body: JSON.stringify({
+                            gold_id: goldId,
+                            gold_price: goldPrice,
                             customer_name: customerName, 
                             customer_surname: customerSurname, 
                             customer_phone: customerPhone 
@@ -181,6 +208,39 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+</script>
+
+<script>
+  // รอให้หน้าเว็บโหลดเสร็จก่อนที่จะทำงาน
+  document.addEventListener("DOMContentLoaded", function() {
+      // เลือก element ที่ต้องการกรองข้อมูล
+      const goldTypeSelect = document.querySelector('select[name="select_goldType"]');
+      const goldSizeSelect = document.querySelector('select[name="select_goldSize"]');
+      const form = document.querySelector('form');
+      form.addEventListener('submit', function(event) {
+          event.preventDefault(); // Prevent form submission
+          const formData = new FormData(form);
+          const queryString = new URLSearchParams(formData).toString();
+          window.location.href = `/gold_list?${queryString}`;
+      });
+
+      // เพิ่ม event listener สำหรับ input date และ select
+      goldTypeSelect.addEventListener('change', filterData);
+      goldSizeSelect.addEventListener('change', filterData);
+      
+      // function สำหรับกรองข้อมูล
+      function filterData() {
+          // เก็บค่าที่กรองไว้
+          const goldType = goldTypeSelect.value;
+          const goldSize = goldSizeSelect.value;
+          
+          // สร้าง query string สำหรับส่งไปที่ server
+          let queryString = `?select_goldType=${goldType}&select_goldSize=${goldSize}`;
+          
+          // โหลดหน้าใหม่ด้วย query string ที่สร้างขึ้น
+          window.location.href = `/gold_list${queryString}`;
+      }
+  });
 </script>
 
 

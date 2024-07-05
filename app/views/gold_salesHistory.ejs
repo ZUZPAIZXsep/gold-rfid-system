@@ -166,6 +166,7 @@
         const customerSurnameSpan = document.getElementById('customerSurname');
         const customerPhoneSpan = document.getElementById('customerPhone');
         const goldOutDateTimeSpan = document.getElementById('goldOutDateTime');
+        const goldPriceSpan = document.getElementById('goldPrice');
 
         // เพิ่ม event listener สำหรับปุ่ม "รายละเอียด"
         const viewDetailsButtons = document.querySelectorAll('.view-details-btn');
@@ -185,6 +186,7 @@
                     customerSurnameSpan.textContent = data.customer_surname;
                     customerPhoneSpan.textContent = data.customer_phone;
                     goldOutDateTimeSpan.textContent = data.gold_outDateTime;
+                    goldPriceSpan.textContent = data.gold_price;
                     // เปิด modal
                     const modal = new bootstrap.Modal(saleDetailsModal);
                     modal.show();
@@ -211,6 +213,7 @@
           <p><strong>นามสกุล:</strong> <span id="customerSurname"></span></p>
           <p><strong>เบอร์โทรศัพท์:</strong> <span id="customerPhone"></span></p>
           <p><strong>วันที่ขายออก:</strong> <span id="goldOutDateTime"></span></p>
+          <p><strong>ราคาขาย:</strong> <span id="goldPrice"></span>  บาท</p>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
