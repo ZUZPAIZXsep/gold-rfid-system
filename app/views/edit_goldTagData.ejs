@@ -72,6 +72,7 @@
                     <th>ชนิด</th>
                     <th>ขนาด</th>
                     <th>น้ำหนัก</th>
+                    <th>ราคาทองคำ (บาท)</th>
                     <th>Gold_Tag_id</th>
                     <th width="160px"></th>
                   </tr>
@@ -83,6 +84,23 @@
                       <td><%= edit_goldTagData.gold_type %></td>
                       <td><%= edit_goldTagData.gold_size %></td>
                       <td><%= edit_goldTagData.gold_weight %> กรัม</td>
+                      <td>
+                        <% if (edit_goldTagData.gold_size === 'ครึ่งสลึง' && edit_goldTagData.gold_weight == 1.9) { %>
+                            <%= prices.halfSalung.toFixed(2) %>
+                        <% } else if (edit_goldTagData.gold_size === '1 สลึง' && edit_goldTagData.gold_weight == 3.8) { %>
+                            <%= prices.oneSalung.toFixed(2) %>
+                        <% } else if (edit_goldTagData.gold_size === '2 สลึง' && edit_goldTagData.gold_weight == 7.6) { %>
+                            <%= prices.twoSalung.toFixed(2) %>
+                        <% } else if (edit_goldTagData.gold_size === '1 บาท' && edit_goldTagData.gold_weight == 15.16) { %>
+                            <%= prices.oneBaht.toFixed(2) %>
+                        <% } else if (edit_goldTagData.gold_size === '2 บาท' && edit_goldTagData.gold_weight == 30.4) { %>
+                            <%= prices.twoBaht.toFixed(2) %>
+                        <% } else if (edit_goldTagData.gold_size === '3 บาท' && edit_goldTagData.gold_weight == 45.6) { %>
+                            <%= prices.threeBaht.toFixed(2) %>
+                        <% } else { %>
+                            N/A
+                        <% } %>
+                      </td>
                       <td><%= edit_goldTagData.gold_id %></td>
                       <td class="text-center">
                         <a class="btn btn-primary" style="margin-right:3px;" href="/edit_dataform?gold_id=<%= edit_goldTagData.gold_id %>">
@@ -156,5 +174,38 @@
             }, 3000);
         }
     });
+</script>
+
+<script>
+  // รอให้หน้าเว็บโหลดเสร็จก่อนที่จะทำงาน
+  document.addEventListener("DOMContentLoaded", function() {
+      // เลือก element ที่ต้องการกรองข้อมูล
+      const goldTypeSelect = document.querySelector('select[name="select_goldType"]');
+      const goldSizeSelect = document.querySelector('select[name="select_goldSize"]');
+      const form = document.querySelector('form');
+      form.addEventListener('submit', function(event) {
+          event.preventDefault(); // Prevent form submission
+          const formData = new FormData(form);
+          const queryString = new URLSearchParams(formData).toString();
+          window.location.href = `/edit_goldTagData?${queryString}`;
+      });
+
+      // เพิ่ม event listener สำหรับ input date และ select
+      goldTypeSelect.addEventListener('change', filterData);
+      goldSizeSelect.addEventListener('change', filterData);
+      
+      // function สำหรับกรองข้อมูล
+      function filterData() {
+          // เก็บค่าที่กรองไว้
+          const goldType = goldTypeSelect.value;
+          const goldSize = goldSizeSelect.value;
+          
+          // สร้าง query string สำหรับส่งไปที่ server
+          let queryString = `?select_goldType=${goldType}&select_goldSize=${goldSize}`;
+          
+          // โหลดหน้าใหม่ด้วย query string ที่สร้างขึ้น
+          window.location.href = `/edit_goldTagData${queryString}`;
+      }
+  });
 </script>
 
