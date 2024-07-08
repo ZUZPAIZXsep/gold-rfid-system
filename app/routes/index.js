@@ -602,6 +602,10 @@ router.post('/save_goldtags', async (req, res) => {
 
         const totalItems = await Goldhistory.countDocuments(condition);
 
+        // Create query parameters string without the page parameter
+        const queryParams = new URLSearchParams(req.query);
+        queryParams.delete('page');
+
         res.render('gold_salesHistory', {
           goldshistory: allRecords,
           dayjs: dayjs,
@@ -612,7 +616,8 @@ router.post('/save_goldtags', async (req, res) => {
           gold_id: req.query.gold_id,
           currentUrl: req.originalUrl,
           totalPages: Math.ceil(totalItems / ITEMS_PER_PAGE),
-          currentPage: page
+          currentPage: page,
+          queryParams: queryParams.toString(),
       });
 
     } catch (error) {
@@ -660,9 +665,10 @@ router.get('/gold_history', async (req, res, next) => {
       if (req.query.select_goldSize && req.query.select_goldSize !== 'เลือกขนาดทองคำ') {
           condition.gold_size = req.query.select_goldSize;
       }
+
       if (req.query.gold_id && req.query.gold_id.trim().length > 0) {
-        condition.gold_id = req.query.gold_id.trim();
-      } 
+          condition.gold_id = req.query.gold_id.trim();
+      }
 
       // ถ้ามีการเลือกวันที่เริ่มต้นและสิ้นสุด
       if (req.query.start_date && req.query.end_date) {
@@ -700,12 +706,29 @@ router.get('/gold_history', async (req, res, next) => {
       const page = parseInt(req.query.page) || 1;
       const skip = (page - 1) * ITEMS_PER_PAGE;
 
+      // เพิ่มการค้นหาทองที่มีสถานะเป็น in stock ในแต่ละวัน
       const allRecords = await Goldhistory.find(condition)
-          .sort({ gold_timestamp: -1, gold_tray: 1 })
+          .sort({ gold_timestamp: -1, gold_tray: 1 })  // เรียงตาม gold_timestamp และ gold_tray
           .skip(skip)
           .limit(ITEMS_PER_PAGE);
 
       const totalItems = await Goldhistory.countDocuments(condition);
+
+      // Create query parameters string without the page parameter
+      const queryParams = new URLSearchParams(req.query);
+      queryParams.delete('page');
+
+      // นับจำนวนทองคำที่มีสถานะเป็น in stock ในแต่ละวัน
+      const allInStockRecords = await Goldhistory.find({ gold_status: 'in stock' });
+
+      const dailyInStockMap = {};
+      allInStockRecords.forEach(item => {
+          const dateKey = `${item.gold_timestamp.getFullYear()}-${item.gold_timestamp.getMonth() + 1}-${item.gold_timestamp.getDate()}`;
+          if (!dailyInStockMap[dateKey]) {
+              dailyInStockMap[dateKey] = 0;
+          }
+          dailyInStockMap[dateKey] += 1;
+      });
 
       res.render('gold_history', { 
           goldshistory: allRecords, 
@@ -718,7 +741,9 @@ router.get('/gold_history', async (req, res, next) => {
           currentUrl: req.originalUrl,
           totalPages: Math.ceil(totalItems / ITEMS_PER_PAGE),
           currentPage: page,
-          latestDate: latestDate
+          latestDate: latestDate,
+          queryParams: queryParams.toString(),
+          dailyInStockMap: dailyInStockMap // ส่งข้อมูลจำนวนทองคำไปยัง EJS
       });
 
   } catch (error) {
@@ -726,7 +751,6 @@ router.get('/gold_history', async (req, res, next) => {
       res.status(500).send('Internal Server Error');
   }
 });
-
 
 
 module.exports = router;
