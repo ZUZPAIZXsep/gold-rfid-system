@@ -68,7 +68,7 @@
                             <th>น้ำหนัก</th>
                             <th>Gold_Tag_id</th>
                             <th width="160px" style="text-align: center;">สถานะ</th>
-                            <th width="250px">จำนวนทองคำในวันนี้ (รายการ)</th>
+                            <th width="260px">จำนวนทองคำคงเหลือในวันนี้ (รายการ)</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -95,7 +95,9 @@
                                         <% } %>
                                     <% } %>
                                 </td>
-                                <td><%= gold_history.totalCount %></td>
+                                <td style="text-align: center;">
+                                    <%= dailyInStockMap[dayjs(gold_history.gold_timestamp).format('YYYY-M-D')] || 0 %>
+                                </td>                                
                             </tr>
                         <% }); %>
                     </tbody>
@@ -104,21 +106,21 @@
                 <nav aria-label="Page navigation">
                     <ul class="pagination justify-content-center mt-3">
                         <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
-                            <a class="page-link" href="/gold_history?page=1">หน้าแรก</a>
+                            <a class="page-link" href="?page=1&<%= queryParams %>">หน้าแรก</a>
                         </li>
                         <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
-                            <a class="page-link" href="/gold_history?page=<%= currentPage - 1 %>" aria-label="Next"><span aria-hidden="true">&laquo;</span></a>
+                            <a class="page-link" href="?page=<%= currentPage - 1 %>&<%= queryParams %>" aria-label="Next"><span aria-hidden="true">&laquo;</span></a>
                         </li>
                         <% for (let i = 1; i <= totalPages; i++) { %>
                             <li class="page-item <%= currentPage === i ? 'active' : '' %>">
-                                <a class="page-link" href="/gold_history?page=<%= i %>"><%= i %></a>
+                                <a class="page-link" href="?page=<%= i %>&<%= queryParams %>"><%= i %></a>
                             </li>
                         <% } %>
                         <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
-                            <a class="page-link" href="/gold_history?page=<%= currentPage + 1 %>" aria-label="Next"><span aria-hidden="true">&raquo;</span></a>
+                            <a class="page-link" href="?page=<%= currentPage + 1 %>&<%= queryParams %>" aria-label="Next"><span aria-hidden="true">&raquo;</span></a>
                         </li>
                         <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
-                            <a class="page-link" href="/gold_history?page=<%= totalPages %>">หน้าสุดท้าย</a>
+                            <a class="page-link" href="?page=<%= totalPages %>&<%= queryParams %>">หน้าสุดท้าย</a>
                         </li>
                     </ul>
                 </nav>
