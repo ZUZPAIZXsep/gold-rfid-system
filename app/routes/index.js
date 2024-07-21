@@ -142,7 +142,12 @@ router.get('/', async (req, res, next) => {
       return trayOrder[a.gold_tray] - trayOrder[b.gold_tray];
     });
 
-    res.render('index', { golds: golds, dayjs: dayjs, currentUrl: req.originalUrl, prices, updateTime});
+    res.render('index', { 
+      golds: golds, 
+      dayjs: dayjs, 
+      currentUrl: req.originalUrl, 
+      prices, 
+      updateTime});
   } catch (error) {
     console.error(error);
     res.status(500).send('Internal Server Error');
