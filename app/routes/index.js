@@ -98,7 +98,7 @@ function assignTray(gold_type) {
 /* GET home page. */
 router.get('/', async (req, res, next) => {
   try {
-    let condition = {};
+    let condition = { gold_status: 'in stock' };
     const golds = await Goldtagscount.find(condition);
 
     const dataUrl = 'http://www.thaigold.info/RealTimeDataV2/gtdata_.txt';
