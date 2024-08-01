@@ -423,8 +423,6 @@ router.post('/save_goldtags', async (req, res) => {
     }
   });
 
-
-
   router.get('/add_dataform', async (req, res) => {
     try {
         // ดึงค่า Gold_Tag_id จาก query string
@@ -518,12 +516,12 @@ router.post('/save_goldtags', async (req, res) => {
 
         // คำนวณราคาทองคำตามน้ำหนักต่างๆ
         const prices = {
-            halfSalung: pricePerGram * 3.81 / 15.244 / 2,
-            oneSalung: pricePerGram * 3.81 / 15.244,
-            twoSalung: pricePerGram * 3.81 * 2 / 15.244,
-            oneBaht: pricePerGram,
-            twoBaht: pricePerGram * 2,
-            threeBaht: pricePerGram * 3
+            halfSalung: (pricePerGram * 3.81 / 15.244 / 2)+400,
+            oneSalung: (pricePerGram * 3.81 / 15.244)+400,
+            twoSalung: (pricePerGram * 3.81 * 2 / 15.244)+400,
+            oneBaht: (pricePerGram)+400,
+            twoBaht: (pricePerGram * 2)+400,
+            threeBaht: (pricePerGram * 3)+400
         };
 
         const updateTime = data[0]?.ask; // เวลาที่แสดงในดัชนีที่ [0] และคีย์ 'ask'
@@ -542,8 +540,6 @@ router.post('/save_goldtags', async (req, res) => {
       res.status(500).send('Internal Server Error');
     }
   });
-
-
 
   // GET route เพื่อดึงข้อมูลทองคำที่ต้องการแก้ไข
   router.get('/edit_dataform', async (req, res) => {
@@ -591,6 +587,142 @@ router.post('/save_goldtags', async (req, res) => {
         res.status(500).send('Internal Server Error');
     }
   });
+
+  router.get('/gold_sales', async (req, res) => {
+    try {
+        let goldsales = [];
+        let rfidTags = rfidModule.getRfidTags(); // Retrieve RFID tags
+
+        // Fetch gold sales data from database
+        goldsales = await GoldTag.find({ gold_id: { $in: rfidTags } });
+
+        // Add tray information
+        goldsales = goldsales.map(tag => ({
+            ...tag._doc,
+            gold_tray: assignTray(tag.gold_type) // Function to assign tray based on gold type
+        }));
+
+        // Sort gold sales by tray
+        goldsales.sort((a, b) => {
+            const trayOrder = {
+                'ถาดที่ 1': 1,
+                'ถาดที่ 2': 2,
+                'ถาดที่ 3': 3,
+                'ถาดที่ 4': 4,
+                'ถาดที่ 5': 5,
+                'ถาดอื่นๆ': 6
+            };
+            return trayOrder[a.gold_tray] - trayOrder[b.gold_tray];
+        });
+
+        // Fetch the latest gold price
+        const dataUrl = 'http://www.thaigold.info/RealTimeDataV2/gtdata_.txt';
+        const response = await axios.get(dataUrl);
+        const data = response.data;
+        const pricePerGram = parseFloat(data[5]?.bid);
+
+        if (isNaN(pricePerGram)) {
+            console.error('pricePerGram is not a valid number:', pricePerGram);
+            res.status(500).send('Invalid price data from API');
+            return;
+        }
+
+        // Calculate gold prices
+        const prices = {
+            halfSalung: (pricePerGram * 3.81 / 15.244 / 2) + 400,
+            oneSalung: (pricePerGram * 3.81 / 15.244) + 400,
+            twoSalung: (pricePerGram * 3.81 * 2 / 15.244) + 400,
+            oneBaht: (pricePerGram) + 400,
+            twoBaht: (pricePerGram * 2) + 400,
+            threeBaht: (pricePerGram * 3) + 400
+        };
+
+        // Calculate total price
+        let totalGoldPrice = 0;
+        goldsales.forEach(item => {
+            if (item.gold_size === 'ครึ่งสลึง') {
+                totalGoldPrice += prices.halfSalung;
+            } else if (item.gold_size === '1 สลึง') {
+                totalGoldPrice += prices.oneSalung;
+            } else if (item.gold_size === '2 สลึง') {
+                totalGoldPrice += prices.twoSalung;
+            } else if (item.gold_size === '1 บาท') {
+                totalGoldPrice += prices.oneBaht;
+            } else if (item.gold_size === '2 บาท') {
+                totalGoldPrice += prices.twoBaht;
+            } else if (item.gold_size === '3 บาท') {
+                totalGoldPrice += prices.threeBaht;
+            }
+        });
+
+        const updateTime = data[0]?.ask; // Time of the price update
+
+        // Render the EJS template with gold sales data and updated prices
+        res.render('gold_sales', {
+            goldsales,
+            dayjs,
+            currentUrl: req.originalUrl,
+            prices,
+            updateTime,
+            totalGoldPrice
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+// router.post('/update_goldstatus', async (req, res) => {
+//     try {
+//         const { gold_ids, customer_name, customer_surname, customer_phone, gold_sales } = req.body;
+//         const currentTimestamp = dayjs().locale('th').format('YYYY-MM-DD HH:mm:ss');
+
+//         // Update gold_status and gold_outDateTime in Goldtagscount collection
+//         await Goldtagscount.updateMany(
+//             { gold_id: { $in: gold_ids } },
+//             {
+//                 $set: {
+//                     gold_status: 'out of stock',
+//                     gold_outDateTime: currentTimestamp
+//                 },
+//             }
+//         );
+
+//         // Update or create documents in Goldhistory
+//         for (const gold of gold_sales) {
+//             let existingGold = await Goldhistory.findOne({ gold_id: gold.gold_id }).sort({ gold_timestamp: -1 });
+
+//             if (existingGold) {
+//                 // Update existing document
+//                 existingGold.customer_name = customer_name;
+//                 existingGold.customer_surname = customer_surname;
+//                 existingGold.customer_phone = customer_phone;
+//                 existingGold.gold_status = 'out of stock';
+//                 existingGold.gold_price = gold.gold_price;
+//                 existingGold.gold_outDateTime = currentTimestamp;
+//                 await existingGold.save();
+//             } else {
+//                 // Create new document in Goldhistory
+//                 await Goldhistory.create({
+//                     gold_id: gold.gold_id,
+//                     gold_status: 'out of stock',
+//                     gold_outDateTime: currentTimestamp,
+//                     customer_name: customer_name,
+//                     customer_surname: customer_surname,
+//                     customer_phone: customer_phone,
+//                     gold_price: gold.gold_price,
+//                     gold_timestamp: currentTimestamp,
+//                 });
+//             }
+//         }
+
+//         res.json({ message: 'Data saved successfully' });
+
+//     } catch (error) {
+//         console.error(error);
+//         res.status(500).send('Internal Server Error');
+//     }
+// });
 
   const ITEMS_PER_PAGE = 15;
 
