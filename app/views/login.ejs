@@ -1,0 +1,60 @@
+<%-  include('header') %>
+
+<div class="text-center h3 text-info"></div>
+<form method="post" action="/login">
+    <div class="card mt-3">
+        <div class="card-body">
+            <div class="card-title h4">
+                <span class="material-symbols-outlined material-icons">
+                    key
+                </span>
+                Login เข้าระบบหลังบ้าน
+            </div>
+            <div class="mt-3">Username</div>
+            <div><input name="user" type="text" class="form-control" /></div>
+            <div class="mt-3">Password</div>
+            <div><input name="pwd" type="password" class="form-control" /></div>
+            <div class="mt-3">
+                <button type="submit" class="btn btn-info">
+                    <span class="material-symbols-outlined material-icons">
+                        login
+                    </span>
+                    Login
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+
+<%-  include('footer') %>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+<style>
+    .flex-container {
+      display: flex;
+      flex-wrap: wrap; /* ช่วยให้มีการเลื่อนลงเมื่อหน้าจอเล็ก */
+      justify-content: space-between; /* จัดระยะห่างระหว่างกล่อง */
+    }
+  
+    .flex-item {
+      flex: 1.5;
+      margin: 10px; /* ระยะห่างระหว่างกล่อง */
+      min-width: 300px; /* ความกว้างขั้นต่ำเพื่อไม่ให้บีบเกินไป */
+    }
+  
+    .table-container {
+      flex: 0.5;
+      margin: 10px;
+    }
+  
+    table {
+      width: 100%;
+    }
+  
+    .custom-padding-bottom {
+    padding-bottom: 0.5px !important;
+    }
+  </style>
