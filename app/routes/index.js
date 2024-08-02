@@ -328,56 +328,56 @@ router.post('/save_goldtags', async (req, res) => {
     }
   });
   
-  router.post('/update_goldstatus', async (req, res) => {
-    try {
-        const { gold_id, gold_price, customer_name, customer_surname, customer_phone } = req.body;
-        const currentTimestamp = dayjs().locale('th').format('YYYY-MM-DD HH:mm:ss');
+//   router.post('/update_goldstatus', async (req, res) => {
+//     try {
+//         const { gold_id, gold_price, customer_name, customer_surname, customer_phone } = req.body;
+//         const currentTimestamp = dayjs().locale('th').format('YYYY-MM-DD HH:mm:ss');
 
-        // Update gold_status and gold_outDateTime in Goldtagscount collection
-        const result = await Goldtagscount.updateOne(
-          { gold_id: gold_id },
-          {
-              $set: {
-                  gold_status: 'out of stock',
-                  gold_price: gold_price,
-                  gold_outDateTime: currentTimestamp
-              },
-          }
-      );
+//         // Update gold_status and gold_outDateTime in Goldtagscount collection
+//         const result = await Goldtagscount.updateOne(
+//           { gold_id: gold_id },
+//           {
+//               $set: {
+//                   gold_status: 'out of stock',
+//                   gold_price: gold_price,
+//                   gold_outDateTime: currentTimestamp
+//               },
+//           }
+//       );
 
-        // Find the most recent Goldhistory document for the given gold_id
-        let existingGold = await Goldhistory.findOne({ gold_id: gold_id }).sort({ gold_timestamp: -1 });
+//         // Find the most recent Goldhistory document for the given gold_id
+//         let existingGold = await Goldhistory.findOne({ gold_id: gold_id }).sort({ gold_timestamp: -1 });
 
-        if (existingGold) {
-            // Update existing document
-            existingGold.customer_name = customer_name;
-            existingGold.customer_surname = customer_surname;
-            existingGold.customer_phone = customer_phone;
-            existingGold.gold_status = 'out of stock';
-            existingGold.gold_price = gold_price;
-            existingGold.gold_outDateTime = currentTimestamp;
-            await existingGold.save();
-        } else {
-            // Create new document in Goldhistory
-            await Goldhistory.create({
-                gold_id: gold_id,
-                gold_status: 'out of stock',
-                gold_outDateTime: currentTimestamp,
-                customer_name: customer_name,
-                customer_surname: customer_surname,
-                customer_phone: customer_phone,
-                gold_price: gold_price,
-                gold_timestamp: currentTimestamp,
-            });
-        }
-        console.log(existingGold);
-        res.redirect('/gold_list'); // Redirect to the gold list page after updating
+//         if (existingGold) {
+//             // Update existing document
+//             existingGold.customer_name = customer_name;
+//             existingGold.customer_surname = customer_surname;
+//             existingGold.customer_phone = customer_phone;
+//             existingGold.gold_status = 'out of stock';
+//             existingGold.gold_price = gold_price;
+//             existingGold.gold_outDateTime = currentTimestamp;
+//             await existingGold.save();
+//         } else {
+//             // Create new document in Goldhistory
+//             await Goldhistory.create({
+//                 gold_id: gold_id,
+//                 gold_status: 'out of stock',
+//                 gold_outDateTime: currentTimestamp,
+//                 customer_name: customer_name,
+//                 customer_surname: customer_surname,
+//                 customer_phone: customer_phone,
+//                 gold_price: gold_price,
+//                 gold_timestamp: currentTimestamp,
+//             });
+//         }
+//         console.log(existingGold);
+//         res.redirect('/gold_list'); // Redirect to the gold list page after updating
 
-    } catch (error) {
-        console.error(error);
-        res.status(500).send('Internal Server Error');
-    }
-});
+//     } catch (error) {
+//         console.error(error);
+//         res.status(500).send('Internal Server Error');
+//     }
+// });
 
 
   // //mockup id for test
@@ -657,7 +657,6 @@ router.post('/save_goldtags', async (req, res) => {
 
         const updateTime = data[0]?.ask; // Time of the price update
 
-        // Render the EJS template with gold sales data and updated prices
         res.render('gold_sales', {
             goldsales,
             dayjs,
@@ -672,57 +671,98 @@ router.post('/save_goldtags', async (req, res) => {
     }
 });
 
-// router.post('/update_goldstatus', async (req, res) => {
-//     try {
-//         const { gold_ids, customer_name, customer_surname, customer_phone, gold_sales } = req.body;
-//         const currentTimestamp = dayjs().locale('th').format('YYYY-MM-DD HH:mm:ss');
 
-//         // Update gold_status and gold_outDateTime in Goldtagscount collection
-//         await Goldtagscount.updateMany(
-//             { gold_id: { $in: gold_ids } },
-//             {
-//                 $set: {
-//                     gold_status: 'out of stock',
-//                     gold_outDateTime: currentTimestamp
-//                 },
-//             }
-//         );
+router.post('/update_goldstatus', async (req, res) => {
+  try {
+      const { gold_ids, customer_name, customer_surname, customer_phone, gold_sales } = req.body;
+      const currentTimestamp = dayjs().locale('th').format('YYYY-MM-DD HH:mm:ss');
+      
+      // Fetch the latest gold price
+      const dataUrl = 'http://www.thaigold.info/RealTimeDataV2/gtdata_.txt';
+      const response = await axios.get(dataUrl);
+      const data = response.data;
+      const pricePerGram = parseFloat(data[5]?.bid);
 
-//         // Update or create documents in Goldhistory
-//         for (const gold of gold_sales) {
-//             let existingGold = await Goldhistory.findOne({ gold_id: gold.gold_id }).sort({ gold_timestamp: -1 });
+      if (isNaN(pricePerGram)) {
+          console.error('pricePerGram is not a valid number:', pricePerGram);
+          res.status(500).send('Invalid price data from API');
+          return;
+      }
 
-//             if (existingGold) {
-//                 // Update existing document
-//                 existingGold.customer_name = customer_name;
-//                 existingGold.customer_surname = customer_surname;
-//                 existingGold.customer_phone = customer_phone;
-//                 existingGold.gold_status = 'out of stock';
-//                 existingGold.gold_price = gold.gold_price;
-//                 existingGold.gold_outDateTime = currentTimestamp;
-//                 await existingGold.save();
-//             } else {
-//                 // Create new document in Goldhistory
-//                 await Goldhistory.create({
-//                     gold_id: gold.gold_id,
-//                     gold_status: 'out of stock',
-//                     gold_outDateTime: currentTimestamp,
-//                     customer_name: customer_name,
-//                     customer_surname: customer_surname,
-//                     customer_phone: customer_phone,
-//                     gold_price: gold.gold_price,
-//                     gold_timestamp: currentTimestamp,
-//                 });
-//             }
-//         }
+      // Calculate gold prices
+      const prices = {
+          halfSalung: (pricePerGram * 3.81 / 15.244 / 2) + 400,
+          oneSalung: (pricePerGram * 3.81 / 15.244) + 400,
+          twoSalung: (pricePerGram * 3.81 * 2 / 15.244) + 400,
+          oneBaht: (pricePerGram) + 400,
+          twoBaht: (pricePerGram * 2) + 400,
+          threeBaht: (pricePerGram * 3) + 400
+      };
 
-//         res.json({ message: 'Data saved successfully' });
+      // Update gold_status and gold_outDateTime in Goldtagscount collection
+      await Goldtagscount.updateMany(
+          { gold_id: { $in: gold_ids } },
+          {
+              $set: {
+                  gold_status: 'out of stock',
+                  gold_outDateTime: currentTimestamp
+              }
+          }
+      );
 
-//     } catch (error) {
-//         console.error(error);
-//         res.status(500).send('Internal Server Error');
-//     }
-// });
+      // Update or create documents in Goldhistory
+      for (const gold of gold_sales) {
+          let goldPrice;
+          if (gold.gold_size === 'ครึ่งสลึง') {
+              goldPrice = prices.halfSalung;
+          } else if (gold.gold_size === '1 สลึง') {
+              goldPrice = prices.oneSalung;
+          } else if (gold.gold_size === '2 สลึง') {
+              goldPrice = prices.twoSalung;
+          } else if (gold.gold_size === '1 บาท') {
+              goldPrice = prices.oneBaht;
+          } else if (gold.gold_size === '2 บาท') {
+              goldPrice = prices.twoBaht;
+          } else if (gold.gold_size === '3 บาท') {
+              goldPrice = prices.threeBaht;
+          } else {
+              goldPrice = 0; // Default if size not matched
+          }
+          
+          let existingGold = await Goldhistory.findOne({ gold_id: gold.gold_id }).sort({ gold_timestamp: -1 });
+
+          if (existingGold) {
+              // Update existing document
+              existingGold.customer_name = customer_name;
+              existingGold.customer_surname = customer_surname;
+              existingGold.customer_phone = customer_phone;
+              existingGold.gold_status = 'out of stock';
+              existingGold.gold_price = goldPrice.toFixed(2);
+              existingGold.gold_outDateTime = currentTimestamp;
+              await existingGold.save();
+          } else {
+              // Create new document in Goldhistory
+              await Goldhistory.create({
+                  gold_id: gold.gold_id,
+                  gold_status: 'out of stock',
+                  gold_outDateTime: currentTimestamp,
+                  customer_name: customer_name,
+                  customer_surname: customer_surname,
+                  customer_phone: customer_phone,
+                  gold_price: goldPrice,
+                  gold_timestamp: currentTimestamp,
+              });
+          }
+      }
+
+      res.json({ message: 'Data saved successfully' });
+
+  } catch (error) {
+      console.error('Error:', error);
+      res.status(500).send('Internal Server Error');
+  }
+});
+
 
   const ITEMS_PER_PAGE = 15;
 

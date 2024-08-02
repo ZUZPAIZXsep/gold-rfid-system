@@ -1,7 +1,7 @@
 <%- include('header') %>
 
 <div class="container-fluid mt-3">
-    <div><h3 style="font-weight: bold;">การขายทองคำ</h3></div>
+    <div><h3 style="font-weight: bold;">หน้าการขายทองคำ</h3></div>
     
     <!-- Success message container -->
     <div class="row">
@@ -96,48 +96,49 @@
     </div>
 </div>
 
-
-
 <%- include('footer') %>
 
 <!-- Modal -->
 <div class="modal fade" id="confirmSellModal" tabindex="-1" aria-labelledby="confirmSellModalLabel" aria-hidden="true">
     <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="confirmSellModalLabel">กรุณากรอกข้อมูลของผู้ซื้อ</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmSellModalLabel">กรุณากรอกข้อมูลของผู้ซื้อ</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="customerForm">
+                    <div class="mb-3">
+                        <label for="customerName" class="form-label">ชื่อ</label>
+                        <input type="text" class="form-control" id="customerName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="customerSurname" class="form-label">นามสกุล</label>
+                        <input type="text" class="form-control" id="customerSurname" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="customerPhone" class="form-label">เบอร์โทรศัพท์</label>
+                        <input type="text" class="form-control" id="customerPhone" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="goldItems" class="form-label">รายการทองคำที่ขาย</label>
+                        <textarea class="form-control" id="goldItems" rows="5" readonly></textarea>
+                    </div>
+                    <input type="hidden" id="goldIds" name="goldIds">
+                </form>
+                <div class="mt-3">
+                    <h5>ราคารวม : <%= totalGoldPrice.toFixed(2) %> บาท</h5>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="confirmButton">บันทึก</button>
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">ยกเลิก</button>
+            </div>
         </div>
-        <div class="modal-body">
-          <form id="customerForm">
-            <div class="mb-3">
-              <label for="customerName" class="form-label">ชื่อ</label>
-              <input type="text" class="form-control" id="customerName" required>
-            </div>
-            <div class="mb-3">
-              <label for="customerSurname" class="form-label">นามสกุล</label>
-              <input type="text" class="form-control" id="customerSurname" required>
-            </div>
-            <div class="mb-3">
-              <label for="customerPhone" class="form-label">เบอร์โทรศัพท์</label>
-              <input type="text" class="form-control" id="customerPhone" required>
-            </div>
-            <div class="mb-3">
-              <label for="goldItems" class="form-label">รายการทองคำที่ขาย</label>
-              <textarea class="form-control" id="goldItems" rows="4" readonly></textarea>
-            </div>
-            <input type="hidden" id="goldIds" name="goldIds">
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-success" id="confirmButton">บันทึก</button>
-          <button type="button" class="btn btn-danger" data-bs-dismiss="modal">ยกเลิก</button>
-        </div>
-      </div>
     </div>
-  </div>
+</div>
 
-  <script>
+<script>
     window.goldsales = JSON.parse('<%- JSON.stringify(goldsales) %>');
     const prices = JSON.parse('<%- JSON.stringify(prices) %>'); // Fetch prices from the backend
 
@@ -158,80 +159,80 @@
     }
 
     document.getElementById('saveBtn').addEventListener('click', () => {
-        const goldsales = window.goldsales;
-        const goldItemsTextarea = document.getElementById('goldItems');
-        const goldIdsInput = document.getElementById('goldIds');
-        let goldItemsText = '';
-        let goldIds = [];
-        let totalGoldPrice = 0;
+    const goldsales = window.goldsales;
+    const goldItemsTextarea = document.getElementById('goldItems');
+    const goldIdsInput = document.getElementById('goldIds');
+    let goldItemsText = '';
+    let goldIds = [];
+    let totalGoldPrice = 0;
 
-        goldsales.forEach(item => {
-            let goldPrice = 0;
-            if (item.gold_size === 'ครึ่งสลึง') {
-                goldPrice = prices.halfSalung;
-            } else if (item.gold_size === '1 สลึง') {
-                goldPrice = prices.oneSalung;
-            } else if (item.gold_size === '2 สลึง') {
-                goldPrice = prices.twoSalung;
-            } else if (item.gold_size === '1 บาท') {
-                goldPrice = prices.oneBaht;
-            } else if (item.gold_size === '2 บาท') {
-                goldPrice = prices.twoBaht;
-            } else if (item.gold_size === '3 บาท') {
-                goldPrice = prices.threeBaht;
-            }
-            
-            goldItemsText += `ประเภท: ${item.gold_type}, ขนาด: ${item.gold_size}, น้ำหนัก: ${item.gold_weight} กรัม, ราคา: ${goldPrice.toFixed(2)} บาท\n`;
-            goldIds.push(item.gold_id);
-            totalGoldPrice += goldPrice;
-        });
-
-        goldItemsTextarea.value = goldItemsText;
-        goldIdsInput.value = JSON.stringify(goldIds);
+    goldsales.forEach(item => {
+        let goldPrice = 0;
+        if (item.gold_size === 'ครึ่งสลึง') {
+            goldPrice = prices.halfSalung;
+        } else if (item.gold_size === '1 สลึง') {
+            goldPrice = prices.oneSalung;
+        } else if (item.gold_size === '2 สลึง') {
+            goldPrice = prices.twoSalung;
+        } else if (item.gold_size === '1 บาท') {
+            goldPrice = prices.oneBaht;
+        } else if (item.gold_size === '2 บาท') {
+            goldPrice = prices.twoBaht;
+        } else if (item.gold_size === '3 บาท') {
+            goldPrice = prices.threeBaht;
+        }
         
-        // Show total price
-        const totalPriceElement = document.getElementById('totalPrice');
-        totalPriceElement.textContent = `ราคารวม: ${totalGoldPrice.toFixed(2)} บาท`;
+        goldItemsText += `ประเภท: ${item.gold_type}, ขนาด: ${item.gold_size}, น้ำหนัก: ${item.gold_weight} กรัม, ราคา: ${goldPrice.toFixed(2)} บาท\n`;
+        goldIds.push(item.gold_id);
+        totalGoldPrice += goldPrice;
     });
 
-    document.getElementById('confirmButton').addEventListener('click', () => {
-        const customerForm = document.getElementById('customerForm');
-        const goldIds = document.getElementById('goldIds').value;
-        const customerName = document.getElementById('customerName').value;
-        const customerSurname = document.getElementById('customerSurname').value;
-        const customerPhone = document.getElementById('customerPhone').value;
+    goldItemsTextarea.value = goldItemsText;
+    goldIdsInput.value = JSON.stringify(goldIds);
+    
+    // Show total price
+    const totalPriceElement = document.getElementById('totalPrice');
+    totalPriceElement.textContent = `ราคารวม: ${totalGoldPrice.toFixed(2)} บาท`;
+});
 
-        const data = {
-            gold_ids: JSON.parse(goldIds),
-            customer_name: customerName,
-            customer_surname: customerSurname,
-            customer_phone: customerPhone,
-            gold_sales: window.goldsales
-        };
+document.getElementById('confirmButton').addEventListener('click', () => {
+    const customerForm = document.getElementById('customerForm');
+    const goldIds = document.getElementById('goldIds').value;
+    const customerName = document.getElementById('customerName').value;
+    const customerSurname = document.getElementById('customerSurname').value;
+    const customerPhone = document.getElementById('customerPhone').value;
 
-        fetch('/update_goldstatus', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log(data);
-            if (data.message) {
-                const successMessage = document.getElementById('successMessage');
-                successMessage.classList.remove('d-none');
-                setTimeout(() => {
-                    successMessage.classList.add('d-none');
-                    window.location.reload(true);
-                }, 3000);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
+    const data = {
+        gold_ids: JSON.parse(goldIds),
+        customer_name: customerName,
+        customer_surname: customerSurname,
+        customer_phone: customerPhone,
+        gold_sales: window.goldsales
+    };
+
+    fetch('/update_goldstatus', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log(data);
+        if (data.message) {
+            const successMessage = document.getElementById('successMessage');
+            successMessage.classList.remove('d-none');
+            setTimeout(() => {
+                successMessage.classList.add('d-none');
+                window.location.reload(true);
+            }, 500);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
     });
+});
 
     function clearGoldtagsCount() {
         fetch('/clear_goldtags_count')
@@ -245,4 +246,5 @@
             });
     }
 </script>
+
 
