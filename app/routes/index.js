@@ -180,6 +180,77 @@ router.post('/', async (req, res) => {
   }
 });
 
+function isLogin(req, res, next) {
+  if (req.session.token != undefined) {
+    next();
+  } else {
+    res.redirect('/login');
+  }
+}
+
+router.get('/home', isLogin,async (req, res, next) => {
+  try {
+    let condition = { gold_status: 'in stock' };
+    const golds = await Goldtagscount.find(condition);
+
+    const dataUrl = 'http://www.thaigold.info/RealTimeDataV2/gtdata_.txt';
+
+        const response = await axios.get(dataUrl);
+        const data = response.data;
+
+        // console.log('Data from API:', data);
+
+        const pricePerGram = parseFloat(data[5]?.bid); // ราคาเสนอซื้อของทองคำ 96.5%
+
+        if (isNaN(pricePerGram)) {
+            console.error('pricePerGram is not a valid number:', pricePerGram);
+            res.status(500).send('Invalid price data from API');
+            return;
+        }
+
+        // คำนวณราคาทองคำตามน้ำหนักต่างๆ
+        const prices = {
+            halfSalung: pricePerGram * 3.81 / 15.244 / 2,
+            oneSalung: pricePerGram * 3.81 / 15.244,
+            twoSalung: pricePerGram * 3.81 * 2 / 15.244,
+            oneBaht: pricePerGram,
+            twoBaht: pricePerGram * 2,
+            threeBaht: pricePerGram * 3
+        };
+
+        const updateTime = data[0]?.ask; // เวลาที่แสดงในดัชนีที่ [0] และคีย์ 'ask'
+
+    // เรียงข้อมูลตามลำดับถาด
+      golds.sort((a, b) => {
+      const trayOrder = {
+        'ถาดที่ 1': 1,
+        'ถาดที่ 2': 2,
+        'ถาดที่ 3': 3,
+        'ถาดที่ 4': 4,
+        'ถาดที่ 5': 5,
+        'ถาดอื่นๆ': 6
+      };
+
+      return trayOrder[a.gold_tray] - trayOrder[b.gold_tray];
+    });
+
+    res.render('index', { 
+      golds: golds, 
+      dayjs: dayjs, 
+      currentUrl: req.originalUrl, 
+      prices, 
+      updateTime});
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+router.get('/logout', isLogin, (req, res) => {
+  req.session.destroy();
+  res.redirect('/login');
+})
+
 /* GET home page. 
 router.get('/', async (req, res, next) => {
   try {
