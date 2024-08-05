@@ -79,6 +79,22 @@ const goldTagsCountSchema = new mongoose.Schema({
 
 const Goldtagscount = mongoose.model('Goldtagscount', goldTagsCountSchema);
 
+// สร้างโครงสร้างข้อมูล goldtags_count
+const goldUserSchema = new mongoose.Schema({
+
+  usr_id: ObjectId,
+  usr: String,
+  pwd: String,
+  email: String,
+  name: String,
+  role: String
+  
+},{ 
+  collection: 'gold_user'
+});
+
+const Golduser = mongoose.model('Golduser', goldUserSchema);
+
 // ฟังก์ชันสำหรับจัดถาด
 function assignTray(gold_type) {
   switch(gold_type) {
@@ -156,12 +172,12 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-router.post('/', async (req, res) => {
+router.post('/login', async (req, res) => {
   try {
-    const { user, pwd } = req.body;
+    const { usr, pwd } = req.body;
     
     // Find user in MongoDB
-    const foundUser = await User.findOne({ usr: user, pwd: pwd });
+    const foundUser = await Golduser.findOne({ usr: usr, pwd: pwd });
     
     if (foundUser) {
       // Login successful
@@ -172,7 +188,7 @@ router.post('/', async (req, res) => {
 
       res.redirect('/home');
     } else {
-      res.send('username or password invalid');
+      res.status(401).send('username or password invalid');
     }
   } catch (err) {
     console.error(err);
@@ -180,11 +196,15 @@ router.post('/', async (req, res) => {
   }
 });
 
+router.get('/login', (req, res) => {
+  res.render('login');
+});
+
 function isLogin(req, res, next) {
   if (req.session.token != undefined) {
     next();
   } else {
-    res.redirect('/login');
+    res.redirect('/');
   }
 }
 
