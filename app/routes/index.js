@@ -181,10 +181,11 @@ router.post('/login', async (req, res) => {
     
     if (foundUser) {
       // Login successful
-      const token = jwt.sign({ id: foundUser._id, name: foundUser.name }, secretCode);
+      const token = jwt.sign({ id: foundUser._id, name: foundUser.name, role: foundUser.role }, secretCode);
 
       req.session.token = token;
       req.session.name = foundUser.name;
+      req.session.role = foundUser.role;
 
       res.redirect('/home');
     } else {
@@ -268,7 +269,7 @@ router.get('/home', isLogin,async (req, res, next) => {
 
 router.get('/logout', isLogin, (req, res) => {
   req.session.destroy();
-  res.redirect('/login');
+  res.redirect('/');
 })
 
 /* GET home page. 
