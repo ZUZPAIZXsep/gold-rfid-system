@@ -36,11 +36,13 @@
           <table style="width: 100%; border-collapse: collapse; margin: 10px auto; table-layout: fixed; ">
             <!-- Row 1: Total gold count (No border) -->
             <tr>
-              <th colspan="5" style="color: white; background-color: #4CAF50; padding: 25px; border-radius: 5px; font-size: 24px; text-align: center;">
+              <th colspan="5" style="color: white; background-color: #4CAF50; padding: 25px; border-radius: 5px; font-size: 28px; text-align: center;">
                 จำนวนทองคำในระบบ<br>
                 <span style="font-size: 48px;"><%= totalGold %></span><br>
-                รายการ
+                รายการ<br>
+                <p> </p>
               </th>
+              <p> </p>
             </tr>
     
             <!-- Row 2: Tray names and icons (With border) -->
@@ -104,36 +106,45 @@
             <thead>
               <tr class="table-warning">
                 <th>น้ำหนัก</th>
-                <th>ราคา (บาท)</th>
+                <th>ราคาต้น (บาท)</th>
+                <th>ราคาขาย (บาท)</th>
               </tr>
             </thead>
             <tbody>
               <tr class="table-light">
                 <td>ครึ่งสลึง</td>
+                <td><%= cost_prices.cost_halfSalung.toFixed(2) %></td>
                 <td><%= prices.halfSalung.toFixed(2) %></td>
               </tr>
               <tr class="table-light">
                 <td>1 สลึง</td>
+                <td><%= cost_prices.cost_oneSalung.toFixed(2) %></td>
                 <td><%= prices.oneSalung.toFixed(2) %></td>
               </tr>
               <tr class="table-light">
                 <td>2 สลึง</td>
+                <td><%= cost_prices.cost_twoSalung.toFixed(2) %></td>
                 <td><%= prices.twoSalung.toFixed(2) %></td>
               </tr>
               <tr class="table-light">
                 <td>1 บาท</td>
+                <td><%= cost_prices.cost_oneBaht.toFixed(2) %></td>
                 <td><%= prices.oneBaht.toFixed(2) %></td>
               </tr>
               <tr class="table-light">
                 <td>2 บาท</td>
+                <td><%= cost_prices.cost_twoBaht.toFixed(2) %></td>
                 <td><%= prices.twoBaht.toFixed(2) %></td>
               </tr>
               <tr class="table-light">
                 <td>3 บาท</td>
+                <td><%= cost_prices.cost_threeBaht.toFixed(2) %></td>
                 <td><%= prices.threeBaht.toFixed(2) %></td>
+              </tr>
               </tr>
             </tbody>
           </table>
+          <p style="font-size: 13px;">*อ้างอิงจาก www.thaigold.info</p>
         </div>
       </div>
     </div>

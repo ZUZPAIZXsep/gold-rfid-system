@@ -117,13 +117,24 @@ router.get('/', async (req, res, next) => {
         }
 
         // คำนวณราคาทองคำตามน้ำหนักต่างๆ
+        //ราคาต้นทุน
+        const cost_prices = {
+          cost_halfSalung: pricePerGram * 3.81 / 15.244 / 2,
+          cost_oneSalung: pricePerGram * 3.81 / 15.244,
+          cost_twoSalung: pricePerGram * 3.81 * 2 / 15.244,
+          cost_oneBaht: pricePerGram,
+          cost_twoBaht: pricePerGram * 2,
+          cost_threeBaht: pricePerGram * 3
+        };
+
+        //ราคาขายออก
         const prices = {
-            halfSalung: pricePerGram * 3.81 / 15.244 / 2,
-            oneSalung: pricePerGram * 3.81 / 15.244,
-            twoSalung: pricePerGram * 3.81 * 2 / 15.244,
-            oneBaht: pricePerGram,
-            twoBaht: pricePerGram * 2,
-            threeBaht: pricePerGram * 3
+          halfSalung: (pricePerGram * 3.81 / 15.244 / 2) + 400,
+          oneSalung: (pricePerGram * 3.81 / 15.244) + 400,
+          twoSalung: (pricePerGram * 3.81 * 2 / 15.244) + 400,
+          oneBaht: (pricePerGram) + 400,
+          twoBaht: (pricePerGram * 2) + (400*2),
+          threeBaht: (pricePerGram * 3) + (400*3)
         };
 
         const updateTime = data[0]?.ask; // เวลาที่แสดงในดัชนีที่ [0] และคีย์ 'ask'
@@ -146,7 +157,8 @@ router.get('/', async (req, res, next) => {
       golds: golds, 
       dayjs: dayjs, 
       currentUrl: req.originalUrl, 
-      prices, 
+      cost_prices, 
+      prices,
       updateTime});
   } catch (error) {
     console.error(error);
@@ -300,13 +312,14 @@ router.post('/save_goldtags', async (req, res) => {
         }
 
         // คำนวณราคาทองคำตามน้ำหนักต่างๆ
+        //ราคาขายออก
         const prices = {
-            halfSalung: pricePerGram * 3.81 / 15.244 / 2,
-            oneSalung: pricePerGram * 3.81 / 15.244,
-            twoSalung: pricePerGram * 3.81 * 2 / 15.244,
-            oneBaht: pricePerGram,
-            twoBaht: pricePerGram * 2,
-            threeBaht: pricePerGram * 3
+          halfSalung: (pricePerGram * 3.81 / 15.244 / 2) + 400,
+          oneSalung: (pricePerGram * 3.81 / 15.244) + 400,
+          twoSalung: (pricePerGram * 3.81 * 2 / 15.244) + 400,
+          oneBaht: (pricePerGram) + 400,
+          twoBaht: (pricePerGram * 2) + (400*2),
+          threeBaht: (pricePerGram * 3) + (400*3)
         };
 
         const updateTime = data[0]?.ask; // เวลาที่แสดงในดัชนีที่ [0] และคีย์ 'ask'
@@ -515,13 +528,14 @@ router.post('/save_goldtags', async (req, res) => {
         }
 
         // คำนวณราคาทองคำตามน้ำหนักต่างๆ
+        //ราคาขายออก
         const prices = {
-            halfSalung: (pricePerGram * 3.81 / 15.244 / 2)+400,
-            oneSalung: (pricePerGram * 3.81 / 15.244)+400,
-            twoSalung: (pricePerGram * 3.81 * 2 / 15.244)+400,
-            oneBaht: (pricePerGram)+400,
-            twoBaht: (pricePerGram * 2)+400,
-            threeBaht: (pricePerGram * 3)+400
+          halfSalung: (pricePerGram * 3.81 / 15.244 / 2) + 400,
+          oneSalung: (pricePerGram * 3.81 / 15.244) + 400,
+          twoSalung: (pricePerGram * 3.81 * 2 / 15.244) + 400,
+          oneBaht: (pricePerGram) + 400,
+          twoBaht: (pricePerGram * 2) + (400*2),
+          threeBaht: (pricePerGram * 3) + (400*3)
         };
 
         const updateTime = data[0]?.ask; // เวลาที่แสดงในดัชนีที่ [0] และคีย์ 'ask'
@@ -628,13 +642,14 @@ router.post('/save_goldtags', async (req, res) => {
         }
 
         // Calculate gold prices
+        //ราคาขายออก
         const prices = {
-            halfSalung: (pricePerGram * 3.81 / 15.244 / 2) + 400,
-            oneSalung: (pricePerGram * 3.81 / 15.244) + 400,
-            twoSalung: (pricePerGram * 3.81 * 2 / 15.244) + 400,
-            oneBaht: (pricePerGram) + 400,
-            twoBaht: (pricePerGram * 2) + 400,
-            threeBaht: (pricePerGram * 3) + 400
+          halfSalung: (pricePerGram * 3.81 / 15.244 / 2) + 400,
+          oneSalung: (pricePerGram * 3.81 / 15.244) + 400,
+          twoSalung: (pricePerGram * 3.81 * 2 / 15.244) + 400,
+          oneBaht: (pricePerGram) + 400,
+          twoBaht: (pricePerGram * 2) + (400*2),
+          threeBaht: (pricePerGram * 3) + (400*3)
         };
 
         // Calculate total price
@@ -690,13 +705,14 @@ router.post('/update_goldstatus', async (req, res) => {
       }
 
       // Calculate gold prices
+      //ราคาขายออก
       const prices = {
-          halfSalung: (pricePerGram * 3.81 / 15.244 / 2) + 400,
-          oneSalung: (pricePerGram * 3.81 / 15.244) + 400,
-          twoSalung: (pricePerGram * 3.81 * 2 / 15.244) + 400,
-          oneBaht: (pricePerGram) + 400,
-          twoBaht: (pricePerGram * 2) + 400,
-          threeBaht: (pricePerGram * 3) + 400
+        halfSalung: (pricePerGram * 3.81 / 15.244 / 2) + 400,
+        oneSalung: (pricePerGram * 3.81 / 15.244) + 400,
+        twoSalung: (pricePerGram * 3.81 * 2 / 15.244) + 400,
+        oneBaht: (pricePerGram) + 400,
+        twoBaht: (pricePerGram * 2) + (400*2),
+        threeBaht: (pricePerGram * 3) + (400*3)
       };
 
       // Update gold_status and gold_outDateTime in Goldtagscount collection
