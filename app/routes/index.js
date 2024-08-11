@@ -7,7 +7,8 @@ const localizedFormat = require('dayjs/plugin/localizedFormat');
 dayjs.extend(localizedFormat);
 const { ObjectId } = require('mongoose').Types;
 const rfidModule = require('../rfid_module/rfidReader');
-
+const jwt = require('jsonwebtoken');
+const secretCode = 'your_secret_code';
 
 // เชื่อมต่อกับ MongoDB
 mongoose.connect('mongodb+srv://admin:1234@goldcluster.nf1xhez.mongodb.net/GoldRfid', {
@@ -77,6 +78,23 @@ const goldTagsCountSchema = new mongoose.Schema({
 
 const Goldtagscount = mongoose.model('Goldtagscount', goldTagsCountSchema);
 
+// สร้างโครงสร้างข้อมูล gold_user
+const goldUserSchema = new mongoose.Schema({
+
+  usr_id: ObjectId,
+  usr: String,
+  pwd: String,
+  email: String,
+  phone: String,
+  name: String,
+  role: String
+  
+},{ 
+  collection: 'gold_user'
+});
+
+const Golduser = mongoose.model('Golduser', goldUserSchema);
+
 // ฟังก์ชันสำหรับจัดถาด
 function assignTray(gold_type) {
   switch(gold_type) {
@@ -95,8 +113,69 @@ function assignTray(gold_type) {
   }
 }
 
+/* GET login page. */
+router.get('/', isnotLogin, async (req, res, next) => {
+  try {
+    res.render('login', { errorMessage: '' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+router.post('/login', isnotLogin , async (req, res) => {
+  try {
+    const { usr, pwd } = req.body;
+    
+    // Find user in MongoDB
+    const foundUser = await Golduser.findOne({ usr: usr, pwd: pwd });
+    
+    if (foundUser) {
+      // Login successful
+      const token = jwt.sign({ id: foundUser._id, name: foundUser.name, role: foundUser.role }, secretCode);
+
+      req.session.token = token;
+      req.session.name = foundUser.name;
+      req.session.role = foundUser.role;
+
+      res.redirect('/home');
+    } else {
+      res.render('login', { errorMessage: 'Incorrect username or password' });
+      /*res.status(401).send('username or password invalid');*/
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server error');
+  }
+});
+
+router.get('/login', isnotLogin, (req, res) => {
+  res.render('login', { errorMessage: '' });
+});
+
+function isLogin(req, res, next) {
+  if (req.session.token != undefined) {
+    next();
+  } else {
+    res.redirect('/');
+  }
+}
+
+function isnotLogin(req, res, next) {
+  if (req.session.token != undefined) {
+    res.redirect('/home');
+  } else {
+    next();
+  }
+}
+
+router.get('/logout', isLogin, (req, res) => {
+  req.session.destroy();
+  res.redirect('/');
+});
+
 /* GET home page. */
-router.get('/', async (req, res, next) => {
+router.get('/home', async (req, res, next) => {
   try {
     let condition = { gold_status: 'in stock' };
     const golds = await Goldtagscount.find(condition);

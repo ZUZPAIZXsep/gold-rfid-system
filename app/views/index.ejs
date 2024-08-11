@@ -2,6 +2,7 @@
   <div class="container-fluid mt-3">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <h3 style="font-weight: bold;">ระบบตรวจนับทองคำรูปพรรณ</h3>
+        <% if (session.role != "Admin"){ %>
         <a type="button" class="btn btn-success" style="margin-left: 4px;" href="/gold_sales">
           <span class="material-icon material-symbols-outlined">shopping_cart</span> ไปยังหน้าการขาย
         </a>
@@ -14,6 +15,7 @@
         <a type="button" class="btn btn-secondary mt-2" style="margin-left: 4px;" href="/gold_list">
           <span class="material-icon material-symbols-outlined">inventory_2</span> รายการทองคำ
         </a>
+        <% if (session.role != "Employee"){ %>
         <a type="button" class="btn btn-success mt-2" style="margin-left: 4px;" href="/add_golddata">
           <span class="material-icon material-symbols-outlined">add</span> เพิ่มข้อมูลแท็กทองคำ
         </a>
@@ -26,6 +28,8 @@
         <a type="button" class="btn btn-info mt-2" style="margin-left: 4px;" href="/gold_history">
           <span class="material-icon material-symbols-outlined">schedule</span> ประวัติ
         </a>
+        <% } %>
+        <% } %>
     </div>
     <%
       let totalGold = golds.length;
