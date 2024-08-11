@@ -114,7 +114,7 @@ function assignTray(gold_type) {
 }
 
 /* GET home page. */
-router.get('/', async (req, res, next) => {
+router.get('/', isnotLogin, async (req, res, next) => {
   try {
     let condition = { gold_status: 'in stock' };
     const golds = await Goldtagscount.find(condition);
@@ -160,19 +160,14 @@ router.get('/', async (req, res, next) => {
       return trayOrder[a.gold_tray] - trayOrder[b.gold_tray];
     });
 
-    res.render('login', { 
-      golds: golds, 
-      dayjs: dayjs, 
-      currentUrl: req.originalUrl, 
-      prices, 
-      updateTime});
+    res.render('login', { errorMessage: '' });
   } catch (error) {
     console.error(error);
     res.status(500).send('Internal Server Error');
   }
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', isnotLogin , async (req, res) => {
   try {
     const { usr, pwd } = req.body;
     
@@ -189,7 +184,8 @@ router.post('/login', async (req, res) => {
 
       res.redirect('/home');
     } else {
-      res.status(401).send('username or password invalid');
+      res.render('login', { errorMessage: 'Incorrect username or password' });
+      /*res.status(401).send('username or password invalid');*/
     }
   } catch (err) {
     console.error(err);
@@ -197,8 +193,8 @@ router.post('/login', async (req, res) => {
   }
 });
 
-router.get('/login', (req, res) => {
-  res.render('login');
+router.get('/login', isnotLogin, (req, res) => {
+  res.render('login', { errorMessage: '' });
 });
 
 function isLogin(req, res, next) {
@@ -209,7 +205,15 @@ function isLogin(req, res, next) {
   }
 }
 
-router.get('/home', isLogin,async (req, res, next) => {
+function isnotLogin(req, res, next) {
+  if (req.session.token != undefined) {
+    res.redirect('/home');
+  } else {
+    next();
+  }
+}
+
+router.get('/home', isLogin, async (req, res, next) => {
   try {
     let condition = { gold_status: 'in stock' };
     const golds = await Goldtagscount.find(condition);

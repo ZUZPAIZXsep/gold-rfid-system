@@ -43,7 +43,7 @@
     <div class="container-fluid">
       <div class="gold-icon">
         <img src="/images/gold-bars.png" alt="icon" style="height: 48px; width: 48px; margin-right: 10px;"/>
-        <h2 style="font-weight: bold;">Gold Inventory System (เจ้าของร้าน)</h2>
+        <h2 style="font-weight: bold;">Gold Inventory System</h2>
       </div>
       <nav class="navbar navbar-expand-lg navbar-light mt-2" style="background-color: #D1F2EB;">
         <div class="container-fluid">
@@ -55,6 +55,7 @@
           </button>
           <div class="collapse navbar-collapse" id="navbarText">
             <ul class="navbar-nav">
+              <% if (session.role != "Admin"){ %>
               <li class="nav-item">
                 <a class="nav-link" href="/count_goldtags">
                   <span class="material-icon material-symbols-outlined">inventory</span> ระบบตรวจนับ
@@ -65,6 +66,7 @@
                   <span class="material-icon material-symbols-outlined">inventory_2</span> รายการทองคำ
                 </a>
               </li>
+              <% if (session.role != "Employee"){ %>
               <li class="nav-item">
                 <a class="nav-link" href="/add_golddata">
                   <span class="material-icon material-symbols-outlined">add</span> เพิ่มข้อมูลแท็กทองคำ
@@ -89,6 +91,8 @@
                   <span class="material-icon material-symbols-outlined">schedule</span> หน้าขาย
                 </a>
               </li>
+              <% } %>
+              <% } %>
               <li class="nav-item"></li>
                 <a class="nav-link" href="/logout" onclick="return confirm('Are you sure?')">
                   <span class="material-symbols-outlined material-icon">logout</span> ออกจากระบบ

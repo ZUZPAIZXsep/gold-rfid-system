@@ -2,6 +2,12 @@
 
 <div class="text-center h3 text-info"></div>
 
+<% if (errorMessage) { %>
+  <script>
+    alert('<%= errorMessage %>');
+  </script>
+  <% } %>
+
 <form method="post" action="/login" class="login-form">
     <div class="card mt-3">
         <div class="card-body">

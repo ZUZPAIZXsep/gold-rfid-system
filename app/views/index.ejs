@@ -1,6 +1,7 @@
 <%-  include('header') %>
   <div class="container-fluid mt-3">
     <div><h3 style="font-weight: bold;">ระบบตรวจนับทองคำรูปพรรณ</h3></div>
+    <% if (session.role != "Admin"){ %>
       <div>
         <a type="button" class="btn btn-primary mt-2" style="margin-left: 4px;" href="/count_goldtags">
           <span class="material-icon material-symbols-outlined">inventory</span> 
@@ -9,6 +10,7 @@
         <a type="button" class="btn btn-secondary mt-2" style="margin-left: 4px;" href="/gold_list">
           <span class="material-icon material-symbols-outlined">inventory_2</span> รายการทองคำ
         </a>
+        <% if (session.role != "Employee"){ %>
         <a type="button" class="btn btn-success mt-2" style="margin-left: 4px;" href="/add_golddata">
           <span class="material-icon material-symbols-outlined">add</span> เพิ่มข้อมูลแท็กทองคำ
         </a>
@@ -21,6 +23,7 @@
         <a type="button" class="btn btn-info mt-2" style="margin-left: 4px;" href="/gold_history">
           <span class="material-icon material-symbols-outlined">schedule</span> ประวัติ
         </a>
+        <% } %>
     </div>
     <%
       let totalGold = golds.length;
@@ -132,6 +135,7 @@
         </div>
       </div>
     </div>
+    <% if (session.role != "Employee"){ %>
     <div>
       <table class="table table-bordered">
         <thead class="table-success">
@@ -175,6 +179,8 @@
               <td><%= dayjs(gold.gold_timestamp).locale('th').format('DD-MM-YYYY HH:mm:ss') %></td>
             </tr>
           <% }); %>
+          <% } %>
+          <% } %>
         </tbody>
       </table>
     </div>
