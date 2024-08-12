@@ -245,6 +245,108 @@ router.get('/home', async (req, res, next) => {
   }
 });
 
+router.get('/count_page', async (req, res) => {
+  try {
+    res.render('count_page');
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+router.get('/count_tosellpage', async (req, res) => {
+  try {
+    let countgoldtags = [];
+    let rfidTags = rfidModule.getRfidTags(); // เรียกใช้งาน rfidTags จาก rfidModule
+    
+    // ดึงข้อมูลจาก database ที่มี gold_id ตรงกับ rfidTags
+    countgoldtags = await GoldTag.find({ gold_id: { $in: rfidTags } });
+
+    // เพิ่มการจัดถาดให้กับทองคำแต่ละชนิด
+    countgoldtags = countgoldtags.map(tag => {
+      return {
+        ...tag._doc,
+        gold_tray: assignTray(tag.gold_type)
+      };
+    });
+
+    // เรียงข้อมูลตามลำดับถาด
+    countgoldtags.sort((a, b) => {
+      const trayOrder = {
+        'ถาดที่ 1': 1,
+        'ถาดที่ 2': 2,
+        'ถาดที่ 3': 3,
+        'ถาดที่ 4': 4,
+        'ถาดที่ 5': 5,
+        'ถาดอื่นๆ': 6
+      };
+
+      return trayOrder[a.gold_tray] - trayOrder[b.gold_tray];
+    });
+
+    res.render('count_tosellpage', {
+      countgoldtags: countgoldtags,
+      dayjs: dayjs, 
+      currentUrl: req.originalUrl
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+router.post('/ready_to_sell', async (req, res) => {
+  try {
+    let rfidTags = rfidModule.getRfidTags(); // เรียกใช้งาน rfidTags จาก rfidModule
+    let countgoldtags = await GoldTag.find({ gold_id: { $in: rfidTags } });
+
+    // สร้าง object ที่จะบันทึกลงใน collection `goldtags_count`
+    let newGoldtagscount = countgoldtags.map(count_tag => ({
+      gold_id: count_tag.gold_id,
+      gold_type: count_tag.gold_type,
+      gold_size: count_tag.gold_size,
+      gold_weight: count_tag.gold_weight,
+      gold_tray: assignTray(count_tag.gold_type),
+      gold_timestamp: dayjs().locale('th').format('YYYY-MM-DD HH:mm:ss'), // Timestamp ปัจจุบัน (รูปแบบวันที่และเวลาไทย)
+      gold_status: 'ready to sell' // เปลี่ยนสถานะเป็น ready to sell
+    }));
+
+    // อัปเดตข้อมูล สถานะใน collection `Goldtagscount` สำหรับตัวที่อ่านได้
+    await Goldtagscount.updateMany(
+      {
+        gold_id: { $in: rfidTags }, // เฉพาะรายการที่อ่านได้จาก rfidTags
+        gold_status: 'in stock' // เปลี่ยนจากสถานะ 'in stock' เท่านั้น
+      },
+      {
+        $set: { gold_status: 'ready to sell' } // เปลี่ยนสถานะเป็น 'ready to sell'
+      }
+    );
+
+    // อัปเดตข้อมูล สถานะใน collection `Goldhistory` สำหรับตัวที่อ่านได้ในวันเดียวกัน
+    let currentDate = dayjs().locale('th').startOf('day').toDate(); // เริ่มต้นวันปัจจุบัน
+    let endOfCurrentDate = dayjs().locale('th').endOf('day').toDate(); // สิ้นสุดวันปัจจุบัน
+
+    await Goldhistory.updateMany(
+      {
+        gold_timestamp: {
+          $gte: currentDate,
+          $lte: endOfCurrentDate
+        },
+        gold_id: { $in: rfidTags }, // เฉพาะรายการที่อ่านได้จาก rfidTags
+        gold_status: 'in stock' // เปลี่ยนจากสถานะ 'in stock' เท่านั้น
+      },
+      {
+        $set: { gold_status: 'ready to sell' } // เปลี่ยนสถานะเป็น 'ready to sell'
+      }
+    );
+
+    res.json({ message: 'บันทึกข้อมูลเรียบร้อยแล้ว' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 router.get('/count_goldtags', async (req, res) => {
   try {
     let countgoldtags = [];
@@ -288,47 +390,100 @@ router.get('/count_goldtags', async (req, res) => {
 
 router.post('/save_goldtags', async (req, res) => {
   try {
-      // ดึงข้อมูลจาก database ที่มี gold_id ตรงกับ rfidTags
-      let rfidTags = rfidModule.getRfidTags(); // เรียกใช้งาน rfidTags จาก rfidModule
+      let rfidTags = rfidModule.getRfidTags(); // Get RFID tags
       let countgoldtags = await GoldTag.find({ gold_id: { $in: rfidTags } });
 
-      // สร้าง object ที่จะบันทึกลงใน collection `goldtags_count`
+      // Create objects to be inserted into `goldtags_count`
       let newGoldtagscount = countgoldtags.map(count_tag => ({
           gold_id: count_tag.gold_id,
           gold_type: count_tag.gold_type,
           gold_size: count_tag.gold_size,
           gold_weight: count_tag.gold_weight,
           gold_tray: assignTray(count_tag.gold_type),
-          gold_timestamp: dayjs().locale('th').format('YYYY-MM-DD HH:mm:ss'), // Timestamp ปัจจุบัน (รูปแบบวันที่และเวลาไทย)
-          gold_status: 'in stock' // เพิ่มสถานะ
+          gold_timestamp: dayjs().locale('th').format('YYYY-MM-DD HH:mm:ss'), // Current timestamp (Thai date and time format)
+          gold_status: 'in stock' // Change status to 'in stock'
       }));
 
-      // ลบข้อมูลเก่าออกก่อน
+      // Delete old records first
       await Goldtagscount.deleteMany({});
-      // บันทึกข้อมูลใน collection `goldtags_count`
+      // Insert new records into `goldtags_count`
       await Goldtagscount.insertMany(newGoldtagscount);
 
-      // เพิ่มฟังก์ชันในการบันทึกลงใน collection `goldhistory`
-      let currentDate = dayjs().locale('th').startOf('day').toDate(); // เริ่มต้นวันปัจจุบัน
-      let endOfCurrentDate = dayjs().locale('th').endOf('day').toDate(); // สิ้นสุดวันปัจจุบัน
+      let currentDate = dayjs().locale('th').startOf('day').toDate(); // Start of the current day
+      let endOfCurrentDate = dayjs().locale('th').endOf('day').toDate(); // End of the current day
 
-      // ลบข้อมูลเก่าที่เป็นวันเดียวกันทั้งหมดก่อน
-      await Goldhistory.deleteMany({
+      // Update the status in `Goldhistory` for records read on the same day
+      await Goldhistory.updateMany(
+        {
           gold_timestamp: {
-              $gte: currentDate,
-              $lte: endOfCurrentDate
-          }
-      });
+            $gte: currentDate,
+            $lte: endOfCurrentDate
+          },
+          gold_id: { $in: rfidTags } // Only update records matching the RFID tags
+        },
+        {
+          $set: { gold_status: 'in stock' } // Change status to 'in stock'
+        }
+      );
 
-      // เพิ่มข้อมูลใหม่
-      await Goldhistory.insertMany(newGoldtagscount);
-
-      res.json({ message: 'บันทึกรายการเรียบร้อยแล้ว' });
+      res.json({ message: 'Records updated successfully' });
   } catch (error) {
       console.error(error);
       res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+// router.post('/save_goldtags', async (req, res) => {
+//   try {
+//       let rfidTags = rfidModule.getRfidTags(); // Get RFID tags
+//       let countgoldtags = await GoldTag.find({ gold_id: { $in: rfidTags } });
+
+//       // Create objects to be inserted into `goldtags_count`
+//       let newGoldtagscount = countgoldtags.map(count_tag => ({
+//           gold_id: count_tag.gold_id,
+//           gold_type: count_tag.gold_type,
+//           gold_size: count_tag.gold_size,
+//           gold_weight: count_tag.gold_weight,
+//           gold_tray: assignTray(count_tag.gold_type),
+//           gold_timestamp: dayjs().locale('th').format('YYYY-MM-DD HH:mm:ss'), // Current timestamp (Thai date and time format)
+//           gold_status: 'in stock' // Change status to 'in stock'
+//       }));
+
+//       // อัปเดตข้อมูล สถานะใน collection `Goldtagscount` สำหรับตัวที่อ่านได้
+//       await Goldtagscount.updateMany(
+//         {
+//           gold_id: { $in: rfidTags }, // เฉพาะรายการที่อ่านได้จาก rfidTags
+//           gold_status: 'ready to sell' // เปลี่ยนจากสถานะ 'ready to sell' เท่านั้น
+//         },
+//         {
+//           $set: { gold_status: 'in stock' } // เปลี่ยนสถานะเป็น 'in stock'
+//         }
+//       );
+
+//       let currentDate = dayjs().locale('th').startOf('day').toDate(); // Start of the current day
+//       let endOfCurrentDate = dayjs().locale('th').endOf('day').toDate(); // End of the current day
+
+//       // Update the status in `Goldhistory` for records read on the same day
+//       await Goldhistory.updateMany(
+//         {
+//           gold_timestamp: {
+//             $gte: currentDate,
+//             $lte: endOfCurrentDate
+//           },
+//           gold_id: { $in: rfidTags } // Only update records matching the RFID tags
+//         },
+//         {
+//           $set: { gold_status: 'in stock' } // Change status to 'in stock'
+//         }
+//       );
+
+//       res.json({ message: 'Records updated successfully' });
+//   } catch (error) {
+//       console.error(error);
+//       res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// });
+
 
   router.get('/clear_goldtags_count', async (req, res) => {
     try {
@@ -404,6 +559,86 @@ router.post('/save_goldtags', async (req, res) => {
         const updateTime = data[0]?.ask; // เวลาที่แสดงในดัชนีที่ [0] และคีย์ 'ask'
         
         res.render('gold_list', { 
+          goldslist: goldslist, 
+          dayjs: dayjs, 
+          select_goldType: req.query.select_goldType, 
+          select_goldSize: req.query.select_goldSize,
+          _id: req.query._id,
+          gold_id: req.query.gold_id, 
+          currentUrl: req.originalUrl,
+          prices,
+          updateTime
+         });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Internal Server Error');
+    }
+  });
+
+  router.get('/goldsell_list', async (req, res, next) => {
+    try {
+        let condition = { gold_status: 'ready to sell' }; // เพิ่มเงื่อนไขการกรองโดย gold_status
+  
+        // ถ้ามีการเลือกประเภททองคำ
+        if (req.query.select_goldType && req.query.select_goldType !== 'เลือกประเภททองคำ') {
+            condition.gold_type = req.query.select_goldType;
+        }
+  
+        // ถ้ามีการเลือกขนาดทองคำ
+        if (req.query.select_goldSize && req.query.select_goldSize !== 'เลือกขนาดทองคำ') {
+            condition.gold_size = req.query.select_goldSize;
+        }
+  
+        // ถ้ามีการกรอกเลข Gold ID
+        if (req.query.gold_id) {
+          condition.gold_id = req.query.gold_id;
+        }
+        
+        const goldslist = await Goldtagscount.find(condition);
+  
+        // เรียงข้อมูลตามลำดับถาด
+        goldslist.sort((a, b) => {
+        const trayOrder = {
+          'ถาดที่ 1': 1,
+          'ถาดที่ 2': 2,
+          'ถาดที่ 3': 3,
+          'ถาดที่ 4': 4,
+          'ถาดที่ 5': 5,
+          'ถาดอื่นๆ': 6
+        };
+  
+        return trayOrder[a.gold_tray] - trayOrder[b.gold_tray];
+      });
+
+        const dataUrl = 'http://www.thaigold.info/RealTimeDataV2/gtdata_.txt';
+
+        const response = await axios.get(dataUrl);
+        const data = response.data;
+
+        // console.log('Data from API:', data);
+
+        const pricePerGram = parseFloat(data[5]?.bid); // ราคาเสนอซื้อของทองคำ 96.5%
+
+        if (isNaN(pricePerGram)) {
+            console.error('pricePerGram is not a valid number:', pricePerGram);
+            res.status(500).send('Invalid price data from API');
+            return;
+        }
+
+        // คำนวณราคาทองคำตามน้ำหนักต่างๆ
+        //ราคาขายออก
+        const prices = {
+          halfSalung: (pricePerGram * 3.81 / 15.244 / 2) + 400,
+          oneSalung: (pricePerGram * 3.81 / 15.244) + 400,
+          twoSalung: (pricePerGram * 3.81 * 2 / 15.244) + 400,
+          oneBaht: (pricePerGram) + 400,
+          twoBaht: (pricePerGram * 2) + (400*2),
+          threeBaht: (pricePerGram * 3) + (400*3)
+        };
+
+        const updateTime = data[0]?.ask; // เวลาที่แสดงในดัชนีที่ [0] และคีย์ 'ask'
+        
+        res.render('goldsell_list', { 
           goldslist: goldslist, 
           dayjs: dayjs, 
           select_goldType: req.query.select_goldType, 

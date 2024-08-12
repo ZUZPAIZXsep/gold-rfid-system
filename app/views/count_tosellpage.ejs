@@ -1,0 +1,134 @@
+<%- include('header') %>
+
+<div class="container-fluid mt-3">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="font-weight: bold;">ระบบตรวจนับทองคำรูปพรรณ</h3>
+        <a type="button" class="btn btn-success" style="margin-left: 4px;" href="/gold_sales">
+          <span class="material-icon material-symbols-outlined">shopping_cart</span> ไปยังหน้าการขาย
+        </a>
+    </div> 
+    <!-- Success message container -->
+    <div class="row">
+        <div class="col-2">
+            <div id="successMessage" class="alert alert-success d-none" role="alert">
+                บันทึกข้อมูลเรียบร้อยแล้ว
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-2">
+        <button id="saveBtn" class="btn btn-success" style="margin-right: 4px;">
+            <span class="material-icon material-symbols-outlined">
+                save
+            </span>
+            บันทึกรายการ
+        </button>        
+    </div>
+    <div class="mt-2">
+        <button class="btn btn-primary" style="margin-right: 4px;" onclick="reloadAddTags()">
+            <span class="material-icon material-symbols-outlined">
+                refresh
+            </span>
+            รีเฟรช
+        </button>
+        <button class="btn btn-danger" onclick="clearRfidTags()">
+            <span class="material-icon material-symbols-outlined">
+                clear
+            </span>
+            ล้างค่า RFID Tags
+        </button>
+    </div>
+    <%
+      let totalTags = countgoldtags.length;
+    %>
+    <div class="mt-4">
+        <h3>จำนวนทองคำที่นับได้ : <%= totalTags %> รายการ</h3>
+        <ul>
+            <% const trays = { 'ถาดที่ 1': 'สร้อยคอ', 'ถาดที่ 2': 'แหวน', 'ถาดที่ 3': 'กำไลข้อมือ', 'ถาดที่ 4': 'สร้อยข้อมือ', 'ถาดที่ 5': 'ต่างหู' }; %>
+            <% Object.keys(trays).forEach(tray => {
+                const count = countgoldtags.filter(tag => tag.gold_tray === tray).length;
+                if (count > 0) { %>
+                    <li><%= tray %> มี <%= trays[tray] %> <%= count %> ชิ้น</li>
+                <% }
+            }); %>
+        </ul> 
+    </div>
+    <table class="table table-bordered">
+        <thead class="table-success">
+            <tr>
+                <th width="40px">ลำดับที่</th>
+                <th width="100px">Gold_Tag_id</th>
+                <th width="75px">ถาด</th>
+                <th width="100px">ประเภท</th>
+                <th width="100px">ขนาด</th>
+                <th width="100px">น้ำหนัก</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% countgoldtags.forEach((count_tag, index) => { %>
+                <tr>
+                    <td><%= index + 1 %></td>
+                    <td><%= count_tag.gold_id %></td>
+                    <td><%= count_tag.gold_tray %></td>
+                    <td><%= count_tag.gold_type %></td>
+                    <td><%= count_tag.gold_size %></td>
+                    <td><%= count_tag.gold_weight %> กรัม</td>
+                </tr>
+            <% }); %>
+        </tbody>
+    </table>
+</div>
+
+<%- include('footer') %>
+
+<script>
+    function reloadAddTags(){
+        window.location.reload(true); //รีหน้าเว็บ
+    }
+    function clearRfidTags() {
+        fetch('/clear_rfid_tags') // เรียกใช้งานเมื่อคลิกที่ปุ่มล้างค่า
+            .then(response => response.json())
+            .then(data => {
+                console.log(data); // แสดงข้อมูลที่ได้รับกลับมาใน console
+                window.location.reload(true); //รีหน้าเว็บ
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+
+    document.getElementById('saveBtn').addEventListener('click', saveGoldTags);
+    
+    function saveGoldTags() {
+        fetch('/ready_to_sell', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                if (data.message) {
+                    // Show success message
+                    const successMessage = document.getElementById('successMessage');
+                    successMessage.classList.remove('d-none');
+                    // Hide the message after 3 seconds
+                    setTimeout(() => {
+                        successMessage.classList.add('d-none');
+                        window.location.reload(true); // Refresh the page
+                    }, 3000);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+
+    function clearGoldtagsCount() {
+        fetch('/clear_goldtags_count') // เรียกใช้งานเมื่อคลิกที่ปุ่มลบข้อมูลการนับ
+            .then(response => response.json())
+            .then(data => {
+                console.log(data); // แสดงข้อมูลที่ได้รับกลับมาใน console
+                window.location.reload(true); //รีหน้าเว็บ
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+</script>

@@ -1,0 +1,34 @@
+<%- include('header') %>
+
+<div class="container-fluid mt-4 d-flex justify-content-center">
+  <a type="button" class="btn btn-secondary square-btn" style="margin-right: 10px;" href="/count_tosellpage">
+    ระบบตรวจนับเพื่อ<br>
+    นำออกจากคลัง<br>
+    <span class="material-icon material-symbols-outlined">output</span> 
+  </a>
+  <a type="button" class="btn btn-success square-btn" style="margin-left: 10px;" href="/count_goldtags">
+    ระบบตรวจนับเพื่อ<br>
+    เก็บเข้าสู่คลัง<br>
+    <span class="material-icon material-symbols-outlined">inventory_2</span>
+  </a>
+</div>
+
+<%- include('footer') %>
+
+<style>
+    .square-btn {
+      width: 275px; /* กำหนดความกว้างของปุ่ม */
+      height: 275px; /* กำหนดความสูงของปุ่ม */
+      font-size: 1.5rem; /* ปรับขนาดฟอนต์ */
+      display: flex; /* ใช้ Flexbox */
+      flex-direction: column; /* จัดเรียงองค์ประกอบในแนวตั้ง */
+      justify-content: center; /* จัดกึ่งกลางในแนวตั้ง */
+      align-items: center; /* จัดกึ่งกลางในแนวนอน */
+      text-align: center; /* จัดข้อความให้อยู่กึ่งกลาง */
+    }
+  
+    .square-btn .material-icon {
+      font-size: 5rem; /* ปรับขนาดไอคอน */
+      margin-top: 10px; /* เพิ่มระยะห่างระหว่างข้อความและไอคอน */
+    }
+</style>
