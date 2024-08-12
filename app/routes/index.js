@@ -79,13 +79,14 @@ const goldTagsCountSchema = new mongoose.Schema({
 
 const Goldtagscount = mongoose.model('Goldtagscount', goldTagsCountSchema);
 
-// สร้างโครงสร้างข้อมูล goldtags_count
+// สร้างโครงสร้างข้อมูล gold_user
 const goldUserSchema = new mongoose.Schema({
 
   usr_id: ObjectId,
   usr: String,
   pwd: String,
   email: String,
+  phone: String,
   name: String,
   role: String
   
@@ -274,7 +275,7 @@ router.get('/home', isLogin, async (req, res, next) => {
 router.get('/logout', isLogin, (req, res) => {
   req.session.destroy();
   res.redirect('/');
-})
+});
 
 /* GET home page. 
 router.get('/', async (req, res, next) => {
