@@ -29,7 +29,6 @@
           <span class="material-icon material-symbols-outlined">schedule</span> ประวัติ
         </a>
         <% } %>
-        <% } %>
     </div>
     <%
       let totalGold = golds.length;
@@ -70,7 +69,7 @@
                 
                 Object.keys(trays).forEach(tray => {
                   const count = golds.filter(tag => tag.gold_tray === tray).length;
-                  if (count > 0) { 
+                  if (count >= 0) { 
               %>
                   <td style="padding: 10px; background-color: #f0f8ff; border-radius: 5px; text-align: center; border: 1px solid black; width: 20%;">
                     <span style="font-weight: bold; color: green;font-size: 20px;"><%= tray %></span><br>
@@ -88,7 +87,7 @@
               <% 
                 Object.keys(trays).forEach(tray => {
                   const count = golds.filter(tag => tag.gold_tray === tray).length;
-                  if (count > 0) { 
+                  if (count >= 0) { 
               %>
                   <td style="padding: 10px; text-align: center; border: 1px solid black; width: 20%;background-color: white;">
                     <span style="color: black; font-size: 20px;"><%= count %> ชิ้น</span>
@@ -152,6 +151,7 @@
         </div>
       </div>
     </div>
+    <% if (session.role != "Employee"){ %>
     <div>
       <table class="table table-bordered">
         <thead class="table-success">
@@ -195,6 +195,8 @@
               <td><%= dayjs(gold.gold_timestamp).locale('th').format('DD-MM-YYYY HH:mm:ss') %></td>
             </tr>
           <% }); %>
+          <% } %>
+          <% } %>
         </tbody>
       </table>
     </div>
