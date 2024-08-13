@@ -318,7 +318,10 @@ router.post('/ready_to_sell', async (req, res) => {
         gold_status: 'in stock' // เปลี่ยนจากสถานะ 'in stock' เท่านั้น
       },
       {
-        $set: { gold_status: 'ready to sell' } // เปลี่ยนสถานะเป็น 'ready to sell'
+        $set: { 
+          gold_status: 'ready to sell',
+          gold_timestamp: dayjs().locale('th').format('YYYY-MM-DD HH:mm:ss') // เปลี่ยนเวลาตามสถานะใหม่
+        } 
       }
     );
 
@@ -336,7 +339,9 @@ router.post('/ready_to_sell', async (req, res) => {
         gold_status: 'in stock' // เปลี่ยนจากสถานะ 'in stock' เท่านั้น
       },
       {
-        $set: { gold_status: 'ready to sell' } // เปลี่ยนสถานะเป็น 'ready to sell'
+        $set: { 
+          gold_status: 'ready to sell', // เปลี่ยนสถานะเป็น 'ready to sell'
+        }
       }
     );
 
@@ -346,6 +351,7 @@ router.post('/ready_to_sell', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 
 router.get('/count_goldtags', async (req, res) => {
   try {
@@ -388,51 +394,6 @@ router.get('/count_goldtags', async (req, res) => {
   }
 });
 
-router.post('/save_goldtags', async (req, res) => {
-  try {
-      let rfidTags = rfidModule.getRfidTags(); // Get RFID tags
-      let countgoldtags = await GoldTag.find({ gold_id: { $in: rfidTags } });
-
-      // Create objects to be inserted into `goldtags_count`
-      let newGoldtagscount = countgoldtags.map(count_tag => ({
-          gold_id: count_tag.gold_id,
-          gold_type: count_tag.gold_type,
-          gold_size: count_tag.gold_size,
-          gold_weight: count_tag.gold_weight,
-          gold_tray: assignTray(count_tag.gold_type),
-          gold_timestamp: dayjs().locale('th').format('YYYY-MM-DD HH:mm:ss'), // Current timestamp (Thai date and time format)
-          gold_status: 'in stock' // Change status to 'in stock'
-      }));
-
-      // Delete old records first
-      await Goldtagscount.deleteMany({});
-      // Insert new records into `goldtags_count`
-      await Goldtagscount.insertMany(newGoldtagscount);
-
-      let currentDate = dayjs().locale('th').startOf('day').toDate(); // Start of the current day
-      let endOfCurrentDate = dayjs().locale('th').endOf('day').toDate(); // End of the current day
-
-      // Update the status in `Goldhistory` for records read on the same day
-      await Goldhistory.updateMany(
-        {
-          gold_timestamp: {
-            $gte: currentDate,
-            $lte: endOfCurrentDate
-          },
-          gold_id: { $in: rfidTags } // Only update records matching the RFID tags
-        },
-        {
-          $set: { gold_status: 'in stock' } // Change status to 'in stock'
-        }
-      );
-
-      res.json({ message: 'Records updated successfully' });
-  } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
-
 // router.post('/save_goldtags', async (req, res) => {
 //   try {
 //       let rfidTags = rfidModule.getRfidTags(); // Get RFID tags
@@ -449,16 +410,10 @@ router.post('/save_goldtags', async (req, res) => {
 //           gold_status: 'in stock' // Change status to 'in stock'
 //       }));
 
-//       // อัปเดตข้อมูล สถานะใน collection `Goldtagscount` สำหรับตัวที่อ่านได้
-//       await Goldtagscount.updateMany(
-//         {
-//           gold_id: { $in: rfidTags }, // เฉพาะรายการที่อ่านได้จาก rfidTags
-//           gold_status: 'ready to sell' // เปลี่ยนจากสถานะ 'ready to sell' เท่านั้น
-//         },
-//         {
-//           $set: { gold_status: 'in stock' } // เปลี่ยนสถานะเป็น 'in stock'
-//         }
-//       );
+//       // Delete old records first
+//       await Goldtagscount.deleteMany({});
+//       // Insert new records into `goldtags_count`
+//       await Goldtagscount.insertMany(newGoldtagscount);
 
 //       let currentDate = dayjs().locale('th').startOf('day').toDate(); // Start of the current day
 //       let endOfCurrentDate = dayjs().locale('th').endOf('day').toDate(); // End of the current day
@@ -483,6 +438,87 @@ router.post('/save_goldtags', async (req, res) => {
 //       res.status(500).json({ error: 'Internal Server Error' });
 //   }
 // });
+
+router.post('/save_goldtags', async (req, res) => {
+  try {
+    let rfidTags = rfidModule.getRfidTags(); // Get RFID tags
+    let countgoldtags = await GoldTag.find({ gold_id: { $in: rfidTags } });
+    let currentDate = dayjs().locale('th').startOf('day').toDate(); // Start of the current day
+    let endOfCurrentDate = dayjs().locale('th').endOf('day').toDate(); // End of the current day
+    let newTimestamp = dayjs().locale('th').format('YYYY-MM-DD HH:mm:ss'); // Current timestamp (Thai date and time format)
+
+    // Create or update records in `Goldtagscount`
+    for (let tag of countgoldtags) {
+      await Goldtagscount.updateOne(
+        { gold_id: tag.gold_id },
+        {
+          $set: {
+            gold_id: tag.gold_id,
+            gold_type: tag.gold_type,
+            gold_size: tag.gold_size,
+            gold_weight: tag.gold_weight,
+            gold_tray: assignTray(tag.gold_type),
+            gold_status: 'in stock',
+            gold_timestamp: newTimestamp // Update the timestamp
+          }
+        },
+        { upsert: true } // Create new if it doesn't exist
+      );
+    }
+
+    // Update status from `ready to sell` to `in stock` in `Goldtagscount`
+    await Goldtagscount.updateMany(
+      {
+        gold_id: { $in: rfidTags },
+        gold_status: 'ready to sell'
+      },
+      {
+        $set: { 
+          gold_status: 'in stock',
+          gold_timestamp: newTimestamp // Update timestamp to current time
+        }
+      }
+    );
+
+    // Update status from `out of stock` to `in stock` if the timestamp is not the current day
+    await Goldtagscount.updateMany(
+      {
+        gold_id: { $in: rfidTags },
+        gold_status: 'out of stock',
+        gold_timestamp: { $lt: currentDate } // If timestamp is before the current day
+      },
+      {
+        $set: {
+          gold_status: 'in stock',
+          gold_timestamp: newTimestamp // Update timestamp to current time
+        }
+      }
+    );
+
+    // Update `Goldhistory` for records read on the current day
+    await Goldhistory.updateMany(
+      {
+        gold_timestamp: {
+          $gte: currentDate,
+          $lte: endOfCurrentDate
+        },
+        gold_id: { $in: rfidTags },
+        gold_status: 'ready to sell'
+      },
+      {
+        $set: {
+          gold_status: 'in stock',
+          gold_timestamp: newTimestamp // Update timestamp to current time
+        }
+      }
+    );
+
+    res.json({ message: 'Records updated successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 
   router.get('/clear_goldtags_count', async (req, res) => {
