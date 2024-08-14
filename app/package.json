@@ -7,6 +7,7 @@
   },
   "dependencies": {
     "axios": "^1.7.2",
+    "bcrypt": "^5.1.1",
     "bootstrap-icons": "^1.11.3",
     "cookie-parser": "~1.4.4",
     "dayjs": "^1.11.10",

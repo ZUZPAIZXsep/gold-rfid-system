@@ -9,6 +9,7 @@ const { ObjectId } = require('mongoose').Types;
 const rfidModule = require('../rfid_module/rfidReader');
 const jwt = require('jsonwebtoken');
 const secretCode = 'your_secret_code';
+const bcrypt = require('bcrypt');
 
 // เชื่อมต่อกับ MongoDB
 mongoose.connect('mongodb+srv://admin:1234@goldcluster.nf1xhez.mongodb.net/GoldRfid', {
@@ -81,7 +82,7 @@ const Goldtagscount = mongoose.model('Goldtagscount', goldTagsCountSchema);
 // สร้างโครงสร้างข้อมูล gold_user
 const goldUserSchema = new mongoose.Schema({
 
-  usr_id: ObjectId,
+  usr_id: Number,
   usr: String,
   pwd: String,
   email: String,
@@ -113,6 +114,16 @@ function assignTray(gold_type) {
   }
 }
 
+async function hashPassword(password) {
+  const saltRounds = 10; // Salt rounds determine the complexity
+  return await bcrypt.hash(password, saltRounds);
+}
+
+// Function to compare a password with a hash
+async function comparePassword(password, hash) {
+  return await bcrypt.compare(password, hash);
+}
+
 /* GET login page. */
 router.get('/', isnotLogin, async (req, res, next) => {
   try {
@@ -126,22 +137,28 @@ router.get('/', isnotLogin, async (req, res, next) => {
 router.post('/login', isnotLogin , async (req, res) => {
   try {
     const { usr, pwd } = req.body;
-    
+
     // Find user in MongoDB
-    const foundUser = await Golduser.findOne({ usr: usr, pwd: pwd });
+    const foundUser = await Golduser.findOne({ usr: usr });
     
     if (foundUser) {
-      // Login successful
-      const token = jwt.sign({ id: foundUser._id, name: foundUser.name, role: foundUser.role }, secretCode);
+      // Compare provided password with stored hash
+      const isMatch = await comparePassword(pwd, foundUser.pwd);
 
-      req.session.token = token;
-      req.session.name = foundUser.name;
-      req.session.role = foundUser.role;
+      if (isMatch) {
+        // Login successful
+        const token = jwt.sign({ id: foundUser._id, name: foundUser.name, role: foundUser.role }, secretCode);
 
-      res.redirect('/home');
+        req.session.token = token;
+        req.session.name = foundUser.name;
+        req.session.role = foundUser.role;
+
+        res.redirect('/home');
+      } else {
+        res.render('login', { errorMessage: 'Incorrect username or password' });
+      }
     } else {
       res.render('login', { errorMessage: 'Incorrect username or password' });
-      /*res.status(401).send('username or password invalid');*/
     }
   } catch (err) {
     console.error(err);
@@ -151,6 +168,11 @@ router.post('/login', isnotLogin , async (req, res) => {
 
 router.get('/login', isnotLogin, (req, res) => {
   res.render('login', { errorMessage: '' });
+});
+
+router.get('/logout', isLogin, (req, res) => {
+  req.session.destroy();
+  res.redirect('/');
 });
 
 function isLogin(req, res, next) {
@@ -169,10 +191,17 @@ function isnotLogin(req, res, next) {
   }
 }
 
-router.get('/logout', isLogin, (req, res) => {
-  req.session.destroy();
-  res.redirect('/');
-});
+(async () => {
+  const users = await Golduser.find({});
+
+  users.forEach(async (user) => {
+    if (!user.pwd.startsWith('$2b$')) { // Check if the password is already hashed
+      const hashedPassword = await hashPassword(user.pwd);
+      user.pwd = hashedPassword;
+      await user.save();
+    }
+  });
+})();
 
 /* GET home page. */
 router.get('/home', async (req, res, next) => {
