@@ -11,6 +11,8 @@ const jwt = require('jsonwebtoken');
 const secretCode = 'your_secret_code';
 const bcrypt = require('bcrypt');
 const cron = require('node-cron');
+const timezone = require('dayjs/plugin/timezone');
+const utc = require('dayjs/plugin/utc');
 
 
 // เชื่อมต่อกับ MongoDB
@@ -127,27 +129,41 @@ async function comparePassword(password, hash) {
   return await bcrypt.compare(password, hash);
 }
 
-// Function to copy previous day records
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
 async function copyPreviousDayRecords() {
   try {
-    let currentDate = dayjs().locale('th').startOf('day').toDate();
-    let previousDate = dayjs(currentDate).subtract(1, 'day').startOf('day').toDate(); // Calculate the previous day
-    let newDatetime = dayjs().locale('th').startOf('day').toDate(); // Current date for `gold_datetime`
+    // กำหนดวันที่ปัจจุบันและวันก่อนหน้า
+    let currentDate = dayjs().tz('Asia/Bangkok').startOf('day').toDate();
+    let previousDateStart = dayjs(currentDate).subtract(1, 'day').tz('Asia/Bangkok').startOf('day').toDate();
+    let previousDateEnd = dayjs(previousDateStart).tz('Asia/Bangkok').endOf('day').toDate();
+    
+    // ตรวจสอบว่ามี records ที่เป็นของวันที่ปัจจุบันอยู่แล้วหรือไม่
+    let existingRecords = await Goldhistory.findOne({ gold_Datetime: currentDate });
+    
+    if (existingRecords) {
+      console.log('Records for the current day already exist, skipping copy');
+      return;
+    }
 
-    // Fetch records from the previous day
+    // ดึงข้อมูลจากวันที่ก่อนหน้า
     let previousDayRecords = await Goldhistory.find({
-      gold_Datetime: previousDate
+      gold_Datetime: {
+        $gte: previousDateStart,
+        $lte: previousDateEnd
+      }
     });
 
     if (previousDayRecords.length > 0) {
-      // Copy records to the current day with updated `gold_Datetime`
+      // ทำการ copy records แล้วเปลี่ยน gold_Datetime เป็นวันที่ปัจจุบัน
       let newRecords = previousDayRecords.map(record => ({
-        ...record._doc, // Copy all fields
-        _id: mongoose.Types.ObjectId(), // Generate a new ObjectId
-        gold_Datetime: newDatetime // Update to current day
+        ...record._doc, // คัดลอกข้อมูลทั้งหมด
+        _id: new mongoose.Types.ObjectId(), // สร้าง ObjectId ใหม่
+        gold_Datetime: currentDate // อัพเดตเป็นวันที่ปัจจุบัน
       }));
 
-      // Insert new records for the current day
+      // แทรกข้อมูลใหม่เข้าไปใน collection
       await Goldhistory.insertMany(newRecords);
       console.log('Previous day records copied to the current day successfully');
     } else {
@@ -158,14 +174,15 @@ async function copyPreviousDayRecords() {
   }
 }
 
-// Schedule the task to run every day at midnight (00:00)
+// ตั้ง schedule ให้ทำงานทุกวันเวลาเที่ยงคืน
 cron.schedule('0 0 * * *', () => {
   copyPreviousDayRecords();
   console.log('Scheduled task executed: Previous day records copied');
 });
 
-// Alternatively, run it once when the server starts
+// หรือรันฟังก์ชันเมื่อเริ่มต้นเซิร์ฟเวอร์
 copyPreviousDayRecords();
+
 
 /* GET login page. */
 router.get('/', isnotLogin, async (req, res, next) => {
@@ -591,6 +608,20 @@ router.post('/save_goldtags', async (req, res) => {
         { upsert: true } // Create new if it doesn't exist
       );
     }
+
+    // Update status from `ready to sell` to `in stock` in `Goldhistory`
+    await Goldhistory.updateMany(
+      {
+        gold_id: { $in: rfidTags },
+        gold_status: 'ready to sell'
+      },
+      {
+        $set: { 
+          gold_status: 'in stock',
+          gold_timestamp: newTimestamp // Update timestamp to current time
+        }
+      }
+    );
 
     // Update `Goldhistory` for records read on the current day, change `ready to sell` to `in stock`
     await Goldhistory.updateMany(

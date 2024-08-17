@@ -66,6 +66,7 @@
                 <table class="table table-bordered mt-3">
                     <thead class="table-success">
                         <tr>
+                            <th width="200px">ทดสอบวันที่</th>
                             <th width="250px">วันที่บันทึกเข้าระบบ</th>
                             <th width="150px">ถาด</th>
                             <th>ชนิด</th>
@@ -79,6 +80,7 @@
                     <tbody>
                         <% goldshistory.forEach((gold_history, index) => { %>
                             <tr>
+                                <td><%= dayjs(gold_history.gold_Datetime).locale('th').format('DD-MM-YYYY') %></td>
                                 <td><%= dayjs(gold_history.gold_timestamp).locale('th').format('DD-MM-YYYY HH:mm:ss') %></td>
                                 <td><%= gold_history.gold_tray %></td>
                                 <td><%= gold_history.gold_type %></td>
