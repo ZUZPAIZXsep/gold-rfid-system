@@ -22,6 +22,7 @@
     "mongoose": "^8.3.2",
     "morgan": "~1.9.1",
     "mysql": "^2.18.1",
+    "node-cron": "^3.0.3",
     "node-hid": "^3.0.0",
     "nodemon": "^3.1.0"
   }
