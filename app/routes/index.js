@@ -93,7 +93,11 @@ const goldUserSchema = new mongoose.Schema({
   email: String,
   phone: String,
   name: String,
-  role: String
+  role: String,
+  day_sale: Number,
+  week_sale: Number,
+  month_sale: Number,
+  total_sale: Number
   
 },{ 
   collection: 'gold_user'
@@ -217,6 +221,7 @@ router.post('/login', isnotLogin , async (req, res) => {
         const token = jwt.sign({ id: foundUser._id, name: foundUser.name, role: foundUser.role }, secretCode);
 
         req.session.token = token;
+        req.session.usr = foundUser.usr;
         req.session.name = foundUser.name;
         req.session.role = foundUser.role;
 

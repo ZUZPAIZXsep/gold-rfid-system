@@ -101,8 +101,12 @@
                   <span class="material-symbols-outlined ms-1">arrow_drop_down</span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                  <li class="text-center">
+                    <strong><%= session.usr %></strong>
+                  </li>
+                  <hr class="dropdown-divider my-2">
                   <li>
-                    <a class="dropdown-item" href="/logout" onclick="return confirm('Are you sure?')">
+                    <a class="dropdown-item text-center" href="/logout" onclick="return confirm('Are you sure?')">
                       ออกจากระบบ
                     </a>
                   </li>
