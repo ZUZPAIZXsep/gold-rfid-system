@@ -147,14 +147,14 @@ async function copyPreviousDayRecords() {
     }
 
     // ค้นหาวันที่ล่าสุดก่อนหน้าวันปัจจุบัน
-    let latestPreviousRecord = await Goldhistory.findOne({
+    let latestPreviousDateRecord = await Goldhistory.findOne({
       gold_Datetime: { $lt: currentDate }
     }).sort({ gold_Datetime: -1 }); // เรียงลำดับจากล่าสุดไปหาเก่าสุด
 
-    if (latestPreviousRecord) {
-      let latestPreviousDate = latestPreviousRecord.gold_Datetime;
+    if (latestPreviousDateRecord) {
+      let latestPreviousDate = latestPreviousDateRecord.gold_Datetime;
 
-      // ดึงข้อมูลจากวันที่ล่าสุดก่อนวันปัจจุบัน
+      // ดึงข้อมูลทั้งหมดที่มี gold_Datetime เป็นวันที่ล่าสุดก่อนวันปัจจุบัน
       let previousDayRecords = await Goldhistory.find({
         gold_Datetime: latestPreviousDate
       });
@@ -189,7 +189,6 @@ cron.schedule('0 0 * * *', () => {
 
 // หรือรันฟังก์ชันเมื่อเริ่มต้นเซิร์ฟเวอร์
 copyPreviousDayRecords();
-
 
 
 /* GET login page. */
@@ -441,6 +440,7 @@ router.post('/ready_to_sell', async (req, res) => {
       {
         $set: { 
           gold_status: 'ready to sell', // เปลี่ยนสถานะเป็น 'ready to sell'
+          gold_timestamp: dayjs().locale('th').format('YYYY-MM-DD HH:mm:ss') // เปลี่ยนเวลาตามสถานะใหม่
         }
       }
     );
