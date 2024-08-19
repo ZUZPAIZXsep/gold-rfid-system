@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Delete Goldhistory Data</title>
+</head>
+<body>
+  <h1>Delete All Goldhistory Records</h1>
+  <form id="deleteForm" action="/delete_goldhistory" method="POST">
+    <button type="submit" onclick="return confirm('Are you sure you want to delete all records in Goldhistory?');">
+      Delete All Records
+    </button>
+  </form>
+
+  <script>
+    document.getElementById('deleteForm').addEventListener('submit', function(e) {
+      e.preventDefault(); // Prevent the default form submission
+
+      fetch('/delete_goldhistory', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        alert(data.message);
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to delete records');
+      });
+    });
+  </script>
+</body>
+</html>

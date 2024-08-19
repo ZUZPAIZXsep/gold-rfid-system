@@ -129,45 +129,52 @@ async function comparePassword(password, hash) {
   return await bcrypt.compare(password, hash);
 }
 
+
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
 async function copyPreviousDayRecords() {
   try {
-    // กำหนดวันที่ปัจจุบันและวันก่อนหน้า
+    // กำหนดวันที่ปัจจุบัน
     let currentDate = dayjs().tz('Asia/Bangkok').startOf('day').toDate();
-    let previousDateStart = dayjs(currentDate).subtract(1, 'day').tz('Asia/Bangkok').startOf('day').toDate();
-    let previousDateEnd = dayjs(previousDateStart).tz('Asia/Bangkok').endOf('day').toDate();
-    
+
     // ตรวจสอบว่ามี records ที่เป็นของวันที่ปัจจุบันอยู่แล้วหรือไม่
     let existingRecords = await Goldhistory.findOne({ gold_Datetime: currentDate });
-    
+
     if (existingRecords) {
       console.log('Records for the current day already exist, skipping copy');
       return;
     }
 
-    // ดึงข้อมูลจากวันที่ก่อนหน้า
-    let previousDayRecords = await Goldhistory.find({
-      gold_Datetime: {
-        $gte: previousDateStart,
-        $lte: previousDateEnd
+    // ค้นหาวันที่ล่าสุดก่อนหน้าวันปัจจุบัน
+    let latestPreviousRecord = await Goldhistory.findOne({
+      gold_Datetime: { $lt: currentDate }
+    }).sort({ gold_Datetime: -1 }); // เรียงลำดับจากล่าสุดไปหาเก่าสุด
+
+    if (latestPreviousRecord) {
+      let latestPreviousDate = latestPreviousRecord.gold_Datetime;
+
+      // ดึงข้อมูลจากวันที่ล่าสุดก่อนวันปัจจุบัน
+      let previousDayRecords = await Goldhistory.find({
+        gold_Datetime: latestPreviousDate
+      });
+
+      if (previousDayRecords.length > 0) {
+        // ทำการ copy records แล้วเปลี่ยน gold_Datetime เป็นวันที่ปัจจุบัน
+        let newRecords = previousDayRecords.map(record => ({
+          ...record._doc, // คัดลอกข้อมูลทั้งหมด
+          _id: new mongoose.Types.ObjectId(), // สร้าง ObjectId ใหม่
+          gold_Datetime: currentDate // อัพเดตเป็นวันที่ปัจจุบัน
+        }));
+
+        // แทรกข้อมูลใหม่เข้าไปใน collection
+        await Goldhistory.insertMany(newRecords);
+        console.log('Previous day records copied to the current day successfully');
+      } else {
+        console.log('No records found for the previous day');
       }
-    });
-
-    if (previousDayRecords.length > 0) {
-      // ทำการ copy records แล้วเปลี่ยน gold_Datetime เป็นวันที่ปัจจุบัน
-      let newRecords = previousDayRecords.map(record => ({
-        ...record._doc, // คัดลอกข้อมูลทั้งหมด
-        _id: new mongoose.Types.ObjectId(), // สร้าง ObjectId ใหม่
-        gold_Datetime: currentDate // อัพเดตเป็นวันที่ปัจจุบัน
-      }));
-
-      // แทรกข้อมูลใหม่เข้าไปใน collection
-      await Goldhistory.insertMany(newRecords);
-      console.log('Previous day records copied to the current day successfully');
     } else {
-      console.log('No records found for the previous day');
+      console.log('No previous records found');
     }
   } catch (error) {
     console.error('Error copying previous day records:', error);
@@ -182,6 +189,7 @@ cron.schedule('0 0 * * *', () => {
 
 // หรือรันฟังก์ชันเมื่อเริ่มต้นเซิร์ฟเวอร์
 copyPreviousDayRecords();
+
 
 
 /* GET login page. */
@@ -1607,3 +1615,25 @@ module.exports = router;
 //       res.status(500).send('Internal Server Error');
 //   }
 // });
+
+router.get('/delete_history', async (req, res) => {
+  try {
+    res.render('delete_history');
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+// Route to handle deletion of all records in Goldhistory
+router.post('/delete_goldhistory', async (req, res) => {
+  try {
+    await Goldtagscount.deleteMany({});
+    await Goldhistory.deleteMany({}); // Deletes all records in the collection
+    console.log('All records in Goldhistory have been deleted');
+    res.json({ message: 'All records in Goldhistory have been deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting records:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
