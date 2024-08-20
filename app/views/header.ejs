@@ -104,7 +104,21 @@
                   <li class="text-center">
                     <strong><%= session.usr %></strong>
                   </li>
-                  <hr class="dropdown-divider my-2">
+                  <hr class="dropdown-divider">
+                  <% if (session.role == "Owner"){ %>
+                  <li>
+                    <a class="dropdown-item text-center" href="/gold_sales_summary">
+                      รายงานยอดขาย
+                    </a>
+                  </li>
+                  <% } %>
+                  <% if (session.role == "Employee"){ %>
+                    <li>
+                      <a class="dropdown-item text-center" href="/gold_sales_employee">
+                        รายงานยอดขาย
+                      </a>
+                    </li>
+                  <% } %>
                   <li>
                     <a class="dropdown-item text-center" href="/logout" onclick="return confirm('Are you sure?')">
                       ออกจากระบบ

@@ -1,0 +1,32 @@
+<%- include('header') %>
+<form method="GET">
+    <div>
+        <table class="table table-bordered mt-4">
+            <thead class="table-success">
+                <tr>
+                    <th width="40px">ลำดับที่</th>
+                    <th width="160px">ชื่อในระบบ</th>
+                    <th width="320px">ชื่อพนักงาน</th>
+                    <th width="160px">ยอดขายรายวัน</th>
+                    <th width="160px">ยอดขายรายสัปดาห์</th>
+                    <th width="160px">ยอดขายรายเดือน</th>
+                    <th width="160px">ยอดขายรวม</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% users.forEach((user, index) => { %>
+                    <tr>
+                        <td><%= index + 1 %></td>
+                        <td><%= user.usr %></td>
+                        <td><%= user.name %></td>
+                        <td><%= user.day_sale.toFixed(2) %></td>
+                        <td><%= user.week_sale.toFixed(2) %></td>
+                        <td><%= user.month_sale.toFixed(2) %></td>                                    
+                        <td><%= user.total_sale.toFixed(2) %></td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+</form>
+<%- include('footer') %>

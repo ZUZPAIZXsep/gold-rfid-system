@@ -1642,3 +1642,25 @@ router.post('/delete_goldhistory', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+router.get('/gold_sales_summary', async (req, res) => {
+  try {
+    // Fetch all users except those with the role "Admin"
+    const users = await Golduser.find({ role: { $ne: 'Admin' } });
+
+    // Pass the users data to the template
+    res.render('gold_salesSummary', { users });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+router.get('/gold_sales_employee', async (req, res) => {
+  try {
+    res.render('gold_salesEmployee');
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
