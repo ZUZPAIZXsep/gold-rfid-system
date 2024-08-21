@@ -139,11 +139,12 @@ dayjs.extend(timezone);
 
 async function copyPreviousDayRecords() {
   try {
-    // กำหนดวันที่ปัจจุบัน
+    // กำหนดวันที่ปัจจุบัน (เริ่มต้นที่ 00:00:00 ของวัน)
     let currentDate = dayjs().tz('Asia/Bangkok').startOf('day').toDate();
 
     // ตรวจสอบว่ามี records ที่เป็นของวันที่ปัจจุบันอยู่แล้วหรือไม่
     let existingRecords = await Goldhistory.findOne({ gold_Datetime: currentDate });
+    console.log('Current Date:', currentDate);
 
     if (existingRecords) {
       console.log('Records for the current day already exist, skipping copy');
@@ -156,19 +157,23 @@ async function copyPreviousDayRecords() {
     }).sort({ gold_Datetime: -1 }); // เรียงลำดับจากล่าสุดไปหาเก่าสุด
 
     if (latestPreviousDateRecord) {
-      let latestPreviousDate = latestPreviousDateRecord.gold_Datetime;
+      let latestPreviousDate = dayjs(latestPreviousDateRecord.gold_Datetime).tz('Asia/Bangkok').startOf('day').toDate();
+      let latestPreviousDateEnd = dayjs(latestPreviousDateRecord.gold_Datetime).tz('Asia/Bangkok').endOf('day').toDate();
 
-      // ดึงข้อมูลทั้งหมดที่มี gold_Datetime เป็นวันที่ล่าสุดก่อนวันปัจจุบัน
+      // ดึงข้อมูลทั้งหมดที่มี gold_Datetime อยู่ในช่วงของวันที่ล่าสุดก่อนวันปัจจุบัน
       let previousDayRecords = await Goldhistory.find({
-        gold_Datetime: latestPreviousDate
+        gold_Datetime: {
+          $gte: latestPreviousDate,
+          $lte: latestPreviousDateEnd
+        }
       });
 
       if (previousDayRecords.length > 0) {
-        // ทำการ copy records แล้วเปลี่ยน gold_Datetime เป็นวันที่ปัจจุบัน
+        // ทำการ copy records แล้วเปลี่ยน gold_Datetime เป็น 00:00:00 ของวันที่ปัจจุบัน
         let newRecords = previousDayRecords.map(record => ({
           ...record._doc, // คัดลอกข้อมูลทั้งหมด
           _id: new mongoose.Types.ObjectId(), // สร้าง ObjectId ใหม่
-          gold_Datetime: currentDate // อัพเดตเป็นวันที่ปัจจุบัน
+          gold_Datetime: currentDate // อัพเดตเป็น 00:00:00 ของวันที่ปัจจุบัน
         }));
 
         // แทรกข้อมูลใหม่เข้าไปใน collection
@@ -180,15 +185,23 @@ async function copyPreviousDayRecords() {
     } else {
       console.log('No previous records found');
     }
+
+    // อัปเดต gold_Datetime ใน Goldtagscount ให้เป็นวันที่ปัจจุบัน
+    await Goldtagscount.updateMany(
+      {},
+      { $set: { gold_Datetime: currentDate } }
+    );
+    console.log('Goldtagscount records updated with the current date');
+
   } catch (error) {
-    console.error('Error copying previous day records:', error);
+    console.error('Error copying previous day records and updating Goldtagscount:', error);
   }
 }
 
 // ตั้ง schedule ให้ทำงานทุกวันเวลาเที่ยงคืน
 cron.schedule('0 0 * * *', () => {
   copyPreviousDayRecords();
-  console.log('Scheduled task executed: Previous day records copied');
+  console.log('Scheduled task executed: Previous day records copied and Goldtagscount updated');
 });
 
 // หรือรันฟังก์ชันเมื่อเริ่มต้นเซิร์ฟเวอร์
@@ -423,8 +436,7 @@ router.post('/ready_to_sell', async (req, res) => {
       },
       {
         $set: { 
-          gold_status: 'ready to sell',
-          gold_timestamp: dayjs().locale('th').format('YYYY-MM-DD HH:mm:ss') // เปลี่ยนเวลาตามสถานะใหม่
+          gold_status: 'ready to sell'
         } 
       }
     );
@@ -435,7 +447,7 @@ router.post('/ready_to_sell', async (req, res) => {
 
     await Goldhistory.updateMany(
       {
-        gold_timestamp: {
+        gold_Datetime: {
           $gte: currentDate,
           $lte: endOfCurrentDate
         },
@@ -445,12 +457,12 @@ router.post('/ready_to_sell', async (req, res) => {
       {
         $set: { 
           gold_status: 'ready to sell', // เปลี่ยนสถานะเป็น 'ready to sell'
-          gold_timestamp: dayjs().locale('th').format('YYYY-MM-DD HH:mm:ss') // เปลี่ยนเวลาตามสถานะใหม่
         }
       }
     );
 
     res.json({ message: 'บันทึกข้อมูลเรียบร้อยแล้ว' });
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -548,12 +560,14 @@ router.post('/save_goldtags', async (req, res) => {
   try {
     let rfidTags = rfidModule.getRfidTags(); // Get RFID tags
     let countgoldtags = await GoldTag.find({ gold_id: { $in: rfidTags } });
-    let currentDate = dayjs().locale('th').startOf('day').toDate(); // Start of the current day
-    let endOfCurrentDate = dayjs().locale('th').endOf('day').toDate(); // End of the current day
-    let newTimestamp = dayjs().locale('th').format('YYYY-MM-DD HH:mm:ss'); // Current timestamp (Thai date and time format)
-    let goldDatetime = dayjs().locale('th').format('YYYY-MM-DD'); // Current date for `gold_datetime`
 
-    // Create or update records in `Goldtagscount`
+    // Use dayjs to get the start and end of the current day in local time and convert to UTC
+    let startOfCurrentDay = dayjs().tz('Asia/Bangkok').startOf('day').utc().toDate(); // Start of the current day in UTC
+    let endOfCurrentDay = dayjs().tz('Asia/Bangkok').endOf('day').utc().toDate(); // End of the current day in UTC
+    let newTimestamp = dayjs().locale('th').format('YYYY-MM-DD HH:mm:ss'); // Current timestamp
+    let goldDatetime = dayjs().tz('Asia/Bangkok').startOf('day').utc().format('YYYY-MM-DDTHH:mm:ss.SSS[Z]'); // Current date in UTC format
+
+    // Update records in `Goldtagscount`
     for (let tag of countgoldtags) {
       await Goldtagscount.updateOne(
         { gold_id: tag.gold_id },
@@ -566,7 +580,7 @@ router.post('/save_goldtags', async (req, res) => {
             gold_tray: assignTray(tag.gold_type),
             gold_status: 'in stock',
             gold_timestamp: newTimestamp, // Update the timestamp
-            gold_Datetime: goldDatetime
+            gold_Datetime: goldDatetime // Ensure `gold_Datetime` is set to the start of the current day in UTC
           }
         },
         { upsert: true } // Create new if it doesn't exist
@@ -592,7 +606,7 @@ router.post('/save_goldtags', async (req, res) => {
       {
         gold_id: { $in: rfidTags },
         gold_status: 'out of stock',
-        gold_timestamp: { $lt: currentDate } // If timestamp is before the current day
+        gold_timestamp: { $lt: startOfCurrentDay } // If timestamp is before the current day
       },
       {
         $set: {
@@ -604,44 +618,48 @@ router.post('/save_goldtags', async (req, res) => {
 
     // Create or update records in `Goldhistory`
     for (let tag of countgoldtags) {
-      await Goldhistory.updateOne(
-        { gold_id: tag.gold_id },
-        {
-          $set: {
-            gold_id: tag.gold_id,
-            gold_type: tag.gold_type,
-            gold_size: tag.gold_size,
-            gold_weight: tag.gold_weight,
-            gold_tray: assignTray(tag.gold_type),
-            gold_status: 'in stock',
-            gold_timestamp: newTimestamp, // Update the timestamp
-            gold_Datetime: goldDatetime
+      // Check if a record with the same gold_id and gold_Datetime exists
+      let existingRecord = await Goldhistory.findOne({
+        gold_id: tag.gold_id,
+        gold_Datetime: goldDatetime
+      });
+
+      if (existingRecord) {
+        // If the record exists and gold_Datetime matches, update the record
+        await Goldhistory.updateOne(
+          { gold_id: tag.gold_id, gold_Datetime: goldDatetime },
+          {
+            $set: {
+              gold_type: tag.gold_type,
+              gold_size: tag.gold_size,
+              gold_weight: tag.gold_weight,
+              gold_tray: assignTray(tag.gold_type),
+              gold_status: 'in stock',
+              gold_timestamp: newTimestamp // Update the timestamp
+            }
           }
-        },
-        { upsert: true } // Create new if it doesn't exist
-      );
+        );
+      } else {
+        // If no matching record exists, insert a new one
+        await Goldhistory.create({
+          gold_id: tag.gold_id,
+          gold_type: tag.gold_type,
+          gold_size: tag.gold_size,
+          gold_weight: tag.gold_weight,
+          gold_tray: assignTray(tag.gold_type),
+          gold_status: 'in stock',
+          gold_timestamp: newTimestamp, // Set the timestamp
+          gold_Datetime: goldDatetime // Set to the start of the current day in UTC
+        });
+      }
     }
 
     // Update status from `ready to sell` to `in stock` in `Goldhistory`
     await Goldhistory.updateMany(
       {
-        gold_id: { $in: rfidTags },
-        gold_status: 'ready to sell'
-      },
-      {
-        $set: { 
-          gold_status: 'in stock',
-          gold_timestamp: newTimestamp // Update timestamp to current time
-        }
-      }
-    );
-
-    // Update `Goldhistory` for records read on the current day, change `ready to sell` to `in stock`
-    await Goldhistory.updateMany(
-      {
-        gold_timestamp: {
-          $gte: currentDate,
-          $lte: endOfCurrentDate
+        gold_Datetime: {
+          $gte: startOfCurrentDay,
+          $lte: endOfCurrentDay
         },
         gold_id: { $in: rfidTags },
         gold_status: 'ready to sell'
@@ -649,8 +667,7 @@ router.post('/save_goldtags', async (req, res) => {
       {
         $set: {
           gold_status: 'in stock',
-          gold_timestamp: newTimestamp, // Update timestamp to current time
-          gold_datetime: goldDatetime // Set the `gold_datetime` to current date
+          gold_timestamp: newTimestamp // Update timestamp to current time
         }
       }
     );
@@ -661,7 +678,6 @@ router.post('/save_goldtags', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
 
 // router.post('/copy_previous_day', async (req, res) => {
 //   try {
