@@ -1664,8 +1664,22 @@ router.get('/gold_sales_summary', async (req, res) => {
     // Fetch all users except those with the role "Admin"
     const users = await Golduser.find({ role: { $ne: 'Admin' } });
 
-    // Pass the users data to the template
-    res.render('gold_salesSummary', { users });
+    // Calculate totals
+    const totals = users.reduce((acc, user) => {
+      acc.day_sale += user.day_sale || 0;
+      acc.week_sale += user.week_sale || 0;
+      acc.month_sale += user.month_sale || 0;
+      acc.total_sale += user.total_sale || 0;
+      return acc;
+    }, {
+      day_sale: 0,
+      week_sale: 0,
+      month_sale: 0,
+      total_sale: 0
+    });
+
+    // Pass the users and totals data to the template
+    res.render('gold_salesSummary', { users, totals });
   } catch (error) {
     console.error(error);
     res.status(500).send('Internal Server Error');
@@ -1674,7 +1688,21 @@ router.get('/gold_sales_summary', async (req, res) => {
 
 router.get('/gold_sales_employee', async (req, res) => {
   try {
-    res.render('gold_salesEmployee');
+    const currentUser = await Golduser.findOne({ usr: req.session.usr });
+
+    if (!currentUser) {
+      return res.status(404).send('User not found');
+    }
+
+    // Calculate totals for the current user
+    const totals = {
+      day_sale: currentUser.day_sale,
+      week_sale: currentUser.week_sale,
+      month_sale: currentUser.month_sale,
+      total_sale: currentUser.total_sale
+    };
+
+    res.render('gold_salesEmployee', { currentUser, totals });
   } catch (error) {
     console.error(error);
     res.status(500).send('Internal Server Error');
