@@ -1,8 +1,8 @@
 <%-  include('header') %>
   <div class="container-fluid mt-3">
       <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h3 style="font-weight: bold;">ระบบตรวจนับทองคำรูปพรรณ</h3>
         <% if (session.role != "Admin"){ %>
+        <h3 style="font-weight: bold;">ระบบตรวจนับทองคำรูปพรรณ</h3>
         <a type="button" class="btn btn-success" style="margin-left: 4px;" href="/gold_sales">
           <span class="material-icon material-symbols-outlined">shopping_cart</span> ไปยังหน้าการขาย
         </a>
@@ -199,6 +199,39 @@
           <% } %>
         </tbody>
       </table>
+      <% if (session.role == "Admin"){ %>
+        <div style="text-align: center; width: 100%; margin: auto;">
+          <h3 style="font-weight: bold;">
+            ระบบจัดการสมาชิก
+          </h3>
+          <table class="table table-bordered" style="width: 100%;">
+            <thead class="table-success">
+              <tr>
+                <th width="80px">ลำดับที่</th>
+                <th width="160px">ชื่อในระบบ</th>
+                <th width="320px">ชื่อพนักงาน</th>
+                <th width="160px">ตำแหน่ง</th>
+                <th width="160px">โทรศัพท์</th>
+                <th width="320px">อีเมล</th>
+                <th width="80px">*ปุ่ม*</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% users.forEach((user, index) => { %>
+                <tr>
+                  <td><%= index + 1 %></td>
+                  <td><%= user.usr %></td>
+                  <td><%= user.name %></td>
+                  <td><%= user.role %></td>
+                  <td><%= user.phone %></td>
+                  <td><%= user.email %></td>
+                  <td></td>                                    
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
     </div>
   </div>
 

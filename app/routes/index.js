@@ -293,6 +293,7 @@ router.get('/home', async (req, res, next) => {
   try {
     let condition = { gold_status: 'in stock' };
     const golds = await Goldtagscount.find(condition);
+    const users = await Golduser.find({ role: { $ne: 'Admin' } });
 
     const dataUrl = 'http://www.thaigold.info/RealTimeDataV2/gtdata_.txt';
 
@@ -347,6 +348,7 @@ router.get('/home', async (req, res, next) => {
     });
 
     res.render('index', { 
+      users,
       golds: golds, 
       dayjs: dayjs, 
       currentUrl: req.originalUrl, 
