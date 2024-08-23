@@ -1418,12 +1418,12 @@ router.get('/gold_history', async (req, res, next) => {
   try {
     let condition = {};
 
-    // Filter by gold type
+    // ถ้ามีการเลือกประเภททองคำ
     if (req.query.select_goldType && req.query.select_goldType !== 'เลือกประเภททองคำ') {
         condition.gold_type = req.query.select_goldType;
     }
 
-    // Filter by gold size
+    // ถ้ามีการเลือกขนาดทองคำ
     if (req.query.select_goldSize && req.query.select_goldSize !== 'เลือกขนาดทองคำ') {
         condition.gold_size = req.query.select_goldSize;
     }
@@ -1433,6 +1433,7 @@ router.get('/gold_history', async (req, res, next) => {
     }
 
     // Filter by start and end date
+     // ถ้ามีการเลือกวันที่เริ่มต้นและสิ้นสุด
     if (req.query.start_date && req.query.end_date) {
         const startDate = dayjs(req.query.start_date).startOf('day').utc().toDate();
         const endDate = dayjs(req.query.end_date).endOf('day').utc().toDate();
@@ -1441,9 +1442,11 @@ router.get('/gold_history', async (req, res, next) => {
             $gte: startDate,
             $lt: endDate
         };
+      // ถ้ามีการเลือกแค่วันที่เริ่มต้น
     } else if (req.query.start_date) {
         const startDate = dayjs(req.query.start_date).startOf('day').utc().toDate();
         condition.gold_Datetime = { $gte: startDate };
+      // ถ้ามีการเลือกแค่วันที่สิ้นสุด
     } else if (req.query.end_date) {
         const endDate = dayjs(req.query.end_date).endOf('day').utc().toDate();
         condition.gold_Datetime = { $lt: endDate };
