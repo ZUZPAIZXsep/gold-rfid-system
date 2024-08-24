@@ -62,14 +62,25 @@
                 </a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="/gold_list">
-                  <span class="material-icon material-symbols-outlined">inventory_2</span> รายการทองคำ
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="/goldsell_list">
-                  <span class="material-icon material-symbols-outlined">inventory_2</span> รายการทองคำขายวันนี้
-                </a>
+                <div class="dropdown">
+                  <a  class="nav-link" href="#" class="dropdown-toggle text-decoration-none text-dark d-flex align-items-center" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span class="material-icon material-symbols-outlined">inventory_2</span>
+                    รายการทองคำ
+                    <span class="material-symbols-outlined">arrow_drop_down</span>
+                  </a>
+                  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                    <li class="nav-item">
+                      <a class="nav-link" href="/gold_list">
+                        <span class="material-icon material-symbols-outlined">inventory_2</span> รายการทองคำในระบบ
+                      </a>
+                    </li>
+                    <li class="nav-item">
+                      <a class="nav-link" href="/goldsell_list">
+                        <span class="material-icon material-symbols-outlined">inventory_2</span> รายการทองคำขายวันนี้
+                      </a>
+                    </li>
+                  </ul>
+                </div>
               </li>
               <% if (session.role != "Employee"){ %>
               <li class="nav-item">
@@ -83,13 +94,24 @@
                 </a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="/gold_salesHistory">
-                  <span class="material-icon material-symbols-outlined">sell</span> ประวัติการซื้อขาย</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="/gold_history">
-                  <span class="material-icon material-symbols-outlined">schedule</span> ประวัติ
-                </a>
+                <div class="dropdown">
+                  <a  class="nav-link" href="#" class="dropdown-toggle text-decoration-none text-dark d-flex align-items-center" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span class="material-icon material-symbols-outlined">schedule</span>
+                    ประวัติ
+                    <span class="material-symbols-outlined">arrow_drop_down</span>
+                  </a>
+                  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                    <li class="nav-item">
+                      <a class="nav-link" href="/gold_salesHistory">
+                        <span class="material-icon material-symbols-outlined">sell</span> ประวัติการซื้อขาย</a>
+                    </li>
+                    <li class="nav-item">
+                      <a class="nav-link" href="/gold_history">
+                        <span class="material-icon material-symbols-outlined">schedule</span> ประวัติ
+                      </a>
+                    </li>
+                  </ul>
+                </div>
               </li>
               <% } %>
               <% } %>
