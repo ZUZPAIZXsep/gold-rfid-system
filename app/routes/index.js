@@ -586,6 +586,9 @@ router.post('/save_goldtags', async (req, res) => {
             gold_status: 'in stock',
             gold_timestamp: newTimestamp, // Update the timestamp
             gold_Datetime: goldDatetime // Ensure `gold_Datetime` is set to the start of the current day in UTC
+          },
+          $unset: {
+            gold_outDateTime: 1,  // Remove `gold_outDateTime`
           }
         },
         { upsert: true } // Create new if it doesn't exist
@@ -606,17 +609,19 @@ router.post('/save_goldtags', async (req, res) => {
       }
     );
 
-    // Update status from `out of stock` to `in stock` if the timestamp is not the current day
+    // Update status from `out of stock` to `in stock` in `Goldtagscount` and remove `gold_outDateTime`
     await Goldtagscount.updateMany(
       {
         gold_id: { $in: rfidTags },
-        gold_status: 'out of stock',
-        gold_timestamp: { $lt: startOfCurrentDay } // If timestamp is before the current day
+        gold_status: 'out of stock'
       },
       {
         $set: {
           gold_status: 'in stock',
           gold_timestamp: newTimestamp // Update timestamp to current time
+        },
+        $unset: {
+          gold_outDateTime: "" // Remove the `gold_outDateTime` field
         }
       }
     );
@@ -641,6 +646,13 @@ router.post('/save_goldtags', async (req, res) => {
               gold_tray: assignTray(tag.gold_type),
               gold_status: 'in stock',
               gold_timestamp: newTimestamp // Update the timestamp
+            },
+            $unset: {
+              gold_outDateTime: 1,  // Remove `gold_outDateTime`
+              customer_name: 1,     // Remove `customer_name`
+              customer_surname: 1,  // Remove `customer_surname`
+              customer_phone: 1,    // Remove `customer_phone`
+              gold_price: 1         // Remove `gold_price`
             }
           }
         );
@@ -659,23 +671,31 @@ router.post('/save_goldtags', async (req, res) => {
       }
     }
 
-    // Update status from `ready to sell` to `in stock` in `Goldhistory`
-    await Goldhistory.updateMany(
-      {
-        gold_Datetime: {
-          $gte: startOfCurrentDay,
-          $lte: endOfCurrentDay
-        },
-        gold_id: { $in: rfidTags },
-        gold_status: 'ready to sell'
-      },
-      {
-        $set: {
-          gold_status: 'in stock',
-          gold_timestamp: newTimestamp // Update timestamp to current time
-        }
-      }
-    );
+    // // Update status to `in stock` and remove customer-related fields for records that are not `in stock`
+    // await Goldhistory.updateMany(
+    //   {
+    //     gold_Datetime: {
+    //       $gte: startOfCurrentDay,
+    //       $lte: endOfCurrentDay
+    //     },
+    //     gold_id: { $in: rfidTags },
+    //     gold_status: { $ne: 'in stock' } // Check if status is not `in stock`
+    //   },
+    //   {
+    //     $set: {
+    //       gold_status: 'in stock',
+    //       gold_timestamp: newTimestamp // Update timestamp to current time
+    //     },
+    //     $unset: {
+    //       gold_outDateTime: 1,  // Explicitly unset `gold_outDateTime`
+    //       customer_name: 1,     // Explicitly unset `customer_name`
+    //       customer_surname: 1,  // Explicitly unset `customer_surname`
+    //       customer_phone: 1,    // Explicitly unset `customer_phone`
+    //       gold_price: 1         // Explicitly unset `gold_price`
+    //     }
+    //   }
+    // );
+
 
     res.json({ message: 'Records updated successfully' });
   } catch (error) {
@@ -683,6 +703,7 @@ router.post('/save_goldtags', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 
 // router.post('/copy_previous_day', async (req, res) => {
 //   try {
