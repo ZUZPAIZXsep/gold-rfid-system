@@ -609,23 +609,6 @@ router.post('/save_goldtags', async (req, res) => {
       }
     );
 
-    // Update status from `out of stock` to `in stock` in `Goldtagscount` and remove `gold_outDateTime`
-    await Goldtagscount.updateMany(
-      {
-        gold_id: { $in: rfidTags },
-        gold_status: 'out of stock'
-      },
-      {
-        $set: {
-          gold_status: 'in stock',
-          gold_timestamp: newTimestamp // Update timestamp to current time
-        },
-        $unset: {
-          gold_outDateTime: "" // Remove the `gold_outDateTime` field
-        }
-      }
-    );
-
     // Create or update records in `Goldhistory`
     for (let tag of countgoldtags) {
       // Check if a record with the same gold_id and gold_Datetime exists
