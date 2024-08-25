@@ -109,39 +109,53 @@
             <thead>
               <tr class="table-warning">
                 <th>น้ำหนัก</th>
+                <% if (session.role != "Employee"){ %>
                 <th>ราคาต้น (บาท)</th>
+                <% } %>
                 <th>ราคาขาย (บาท)</th>
               </tr>
             </thead>
             <tbody>
               <tr class="table-light">
                 <td>ครึ่งสลึง</td>
+                <% if (session.role != "Employee"){ %>
                 <td><%= cost_prices.cost_halfSalung.toFixed(2) %></td>
+                <% } %>
                 <td><%= prices.halfSalung.toFixed(2) %></td>
               </tr>
               <tr class="table-light">
                 <td>1 สลึง</td>
+                <% if (session.role != "Employee"){ %>
                 <td><%= cost_prices.cost_oneSalung.toFixed(2) %></td>
+                <% } %>
                 <td><%= prices.oneSalung.toFixed(2) %></td>
               </tr>
               <tr class="table-light">
                 <td>2 สลึง</td>
+                <% if (session.role != "Employee"){ %>
                 <td><%= cost_prices.cost_twoSalung.toFixed(2) %></td>
+                <% } %>
                 <td><%= prices.twoSalung.toFixed(2) %></td>
               </tr>
               <tr class="table-light">
                 <td>1 บาท</td>
+                <% if (session.role != "Employee"){ %>
                 <td><%= cost_prices.cost_oneBaht.toFixed(2) %></td>
+                <% } %>
                 <td><%= prices.oneBaht.toFixed(2) %></td>
               </tr>
               <tr class="table-light">
                 <td>2 บาท</td>
+                <% if (session.role != "Employee"){ %>
                 <td><%= cost_prices.cost_twoBaht.toFixed(2) %></td>
+                <% } %>
                 <td><%= prices.twoBaht.toFixed(2) %></td>
               </tr>
               <tr class="table-light">
                 <td>3 บาท</td>
+                <% if (session.role != "Employee"){ %>
                 <td><%= cost_prices.cost_threeBaht.toFixed(2) %></td>
+                <% } %>
                 <td><%= prices.threeBaht.toFixed(2) %></td>
               </tr>
               </tr>
