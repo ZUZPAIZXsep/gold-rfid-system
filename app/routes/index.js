@@ -57,7 +57,9 @@ const goldCountHistorySchema = new mongoose.Schema({
   customer_surname: String,
   customer_phone: String,
   gold_price: String,
-  gold_Datetime: { type: Date, default: Date.now }
+  gold_Datetime: { type: Date, default: Date.now },
+  seller_username: String,
+  seller_role: String
 },{ 
   collection: 'goldcount_history'
 });
@@ -1301,6 +1303,8 @@ router.post('/update_goldstatus', async (req, res) => {
               existingGold.gold_status = 'out of stock';
               existingGold.gold_price = goldPrice.toFixed(2);
               existingGold.gold_outDateTime = currentTimestamp;
+              existingGold.seller_username = req.session.usr;
+              existingGold.seller_role = req.session.role;
               await existingGold.save();
           } else {
               // Create new document in Goldhistory
@@ -1313,6 +1317,8 @@ router.post('/update_goldstatus', async (req, res) => {
                   customer_phone: customer_phone,
                   gold_price: goldPrice,
                   gold_timestamp: currentTimestamp,
+                  seller_username: req.session.usr,
+                  seller_role: req.session.role,
               });
           }
       }
