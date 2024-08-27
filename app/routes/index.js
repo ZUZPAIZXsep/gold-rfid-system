@@ -1715,3 +1715,12 @@ router.get('/gold_sales_employee', async (req, res) => {
     res.status(500).send('Internal Server Error');
   }
 });
+
+router.get('/create_user', async (req, res) => {
+  try {
+    res.render('create_user');
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
