@@ -1724,3 +1724,36 @@ router.get('/create_user', async (req, res) => {
     res.status(500).send('Internal Server Error');
   }
 });
+
+router.post('/create_user', async (req, res) => {
+  const { usr, pwd, email, phone, name, role } = req.body;
+
+  try {
+    // เข้ารหัสรหัสผ่าน
+    const hashedPwd = await hashPassword(pwd);
+
+    // หาล่าสุดของ usr_id
+    const lastUser = await Golduser.findOne().sort('-usr_id').exec();
+
+    const newUser = new Golduser({
+      usr_id: lastUser ? lastUser.usr_id + 1 : 1, // กำหนด usr_id ให้เป็น +1 จาก usr_id ล่าสุด
+      usr,
+      pwd: hashedPwd, // ใช้รหัสผ่านที่ถูกเข้ารหัสแล้ว
+      email,
+      phone,
+      name,
+      role,
+      day_sale: 0,
+      week_sale: 0,
+      month_sale: 0,
+      total_sale: 0
+    });
+
+    await newUser.save(); // บันทึก user ใหม่ลงในฐานข้อมูล
+    res.redirect('/home'); // เปลี่ยนเส้นทางไปยังหน้าจัดการสมาชิก
+  } catch (err) {
+    console.log(err);
+    res.status(500).send('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+  }
+});
+
