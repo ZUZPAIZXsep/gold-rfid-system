@@ -233,7 +233,7 @@
                 <th width="160px">ตำแหน่ง</th>
                 <th width="160px">โทรศัพท์</th>
                 <th width="320px">อีเมล</th>
-                <th width="80px">*ปุ่ม*</th>
+                <th width="160px">การจัดการ</th> <!-- เปลี่ยนชื่อคอลัมน์ -->
               </tr>
             </thead>
             <tbody>
@@ -245,13 +245,24 @@
                   <td><%= user.role %></td>
                   <td><%= user.phone %></td>
                   <td><%= user.email %></td>
-                  <td></td>                                    
+                  <td>
+                    <!-- ปุ่มแก้ไข -->
+                    <a href="/edit_user/<%= user._id %>" class="btn btn-warning btn-sm">
+                      <span class="material-icon material-symbols-outlined">edit</span> แก้ไข
+                    </a>
+                    <!-- ปุ่มลบ -->
+                    <form action="/delete_user/<%= user._id %>" method="POST" style="display:inline;">
+                      <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('คุณแน่ใจหรือว่าต้องการลบผู้ใช้นี้?');">
+                        <span class="material-icon material-symbols-outlined">delete</span> ลบ
+                      </button>
+                    </form>
+                  </td>                                    
                 </tr>
               <% }); %>
             </tbody>
           </table>
         </div>
-      <% } %>      
+      <% } %>          
     </div>
   </div>
 

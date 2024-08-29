@@ -294,7 +294,7 @@ function isnotLogin(req, res, next) {
 })();
 
 /* GET home page. */
-router.get('/home', async (req, res, next) => {
+router.get('/home', isLogin, async (req, res, next) => {
   try {
     let condition = { gold_status: 'in stock' };
     const golds = await Goldtagscount.find(condition);
@@ -366,7 +366,7 @@ router.get('/home', async (req, res, next) => {
   }
 });
 
-router.get('/count_page', async (req, res) => {
+router.get('/count_page', isLogin, async (req, res) => {
   try {
     res.render('count_page');
   } catch (error) {
@@ -375,7 +375,7 @@ router.get('/count_page', async (req, res) => {
   }
 });
 
-router.get('/count_tosellpage', async (req, res) => {
+router.get('/count_tosellpage', isLogin, async (req, res) => {
   try {
     let countgoldtags = [];
     let rfidTags = rfidModule.getRfidTags(); // เรียกใช้งาน rfidTags จาก rfidModule
@@ -416,7 +416,7 @@ router.get('/count_tosellpage', async (req, res) => {
   }
 });
 
-router.post('/ready_to_sell', async (req, res) => {
+router.post('/ready_to_sell', isLogin, async (req, res) => {
   try {
     let rfidTags = rfidModule.getRfidTags(); // เรียกใช้งาน rfidTags จาก rfidModule
     let countgoldtags = await GoldTag.find({ gold_id: { $in: rfidTags } });
@@ -477,7 +477,7 @@ router.post('/ready_to_sell', async (req, res) => {
 });
 
 
-router.get('/count_goldtags', async (req, res) => {
+router.get('/count_goldtags', isLogin, async (req, res) => {
   try {
     let countgoldtags = [];
     let rfidTags = rfidModule.getRfidTags(); // เรียกใช้งาน rfidTags จาก rfidModule
@@ -563,7 +563,7 @@ router.get('/count_goldtags', async (req, res) => {
 //   }
 // });
 
-router.post('/save_goldtags', async (req, res) => {
+router.post('/save_goldtags', isLogin, async (req, res) => {
   try {
     let rfidTags = rfidModule.getRfidTags(); // Get RFID tags
     let countgoldtags = await GoldTag.find({ gold_id: { $in: rfidTags } });
@@ -719,7 +719,7 @@ router.post('/save_goldtags', async (req, res) => {
 // });
 
 
-  router.get('/clear_goldtags_count', async (req, res) => {
+  router.get('/clear_goldtags_count', isLogin, async (req, res) => {
     try {
         await Goldtagscount.deleteMany({}); // ลบข้อมูลทั้งหมดใน collection `goldtags_count`
         res.json({ message: 'ลบข้อมูลการนับทั้งหมดเรียบร้อยแล้ว' });
@@ -729,7 +729,7 @@ router.post('/save_goldtags', async (req, res) => {
     }
   });
 
-  router.get('/gold_list', async (req, res, next) => {
+  router.get('/gold_list', isLogin, async (req, res, next) => {
     try {
         let condition = { gold_status: 'in stock' }; // เพิ่มเงื่อนไขการกรองโดย gold_status
   
@@ -809,7 +809,7 @@ router.post('/save_goldtags', async (req, res) => {
     }
   });
 
-  router.get('/goldsell_list', async (req, res, next) => {
+  router.get('/goldsell_list', isLogin, async (req, res, next) => {
     try {
         let condition = { gold_status: 'ready to sell' }; // เพิ่มเงื่อนไขการกรองโดย gold_status
   
@@ -960,7 +960,7 @@ router.post('/save_goldtags', async (req, res) => {
   //   }
   // });
 
-  router.get('/add_golddata', async (req, res) => {
+  router.get('/add_golddata', isLogin, async (req, res) => {
     try {
       let addgoldsdata = [];
       let rfidTags = rfidModule.getRfidTags(); // เรียกใช้งาน rfidTags จาก rfidReader.js
@@ -984,7 +984,7 @@ router.post('/save_goldtags', async (req, res) => {
     }
   });
 
-  router.get('/add_dataform', async (req, res) => {
+  router.get('/add_dataform', isLogin, async (req, res) => {
     try {
         // ดึงค่า Gold_Tag_id จาก query string
         const goldId = req.query.gold_id;
@@ -996,7 +996,7 @@ router.post('/save_goldtags', async (req, res) => {
     }
   });
 
-  router.post('/add_dataform', async (req, res) => {
+  router.post('/add_dataform', isLogin, async (req, res) => {
     try {
         // ดึงค่า Gold_Tag_id จาก body ของการส่งข้อมูลแบบ POST
         const goldId = req.body.gold_id;
@@ -1028,7 +1028,7 @@ router.post('/save_goldtags', async (req, res) => {
     }
   });
 
-  router.get('/clear_rfid_tags', (req, res) => {
+  router.get('/clear_rfid_tags', isLogin, (req, res) => {
     try {
         rfidModule.resetRfidTags(); // เรียกใช้งานฟังก์ชัน resetRfidTags() เพื่อล้างค่า rfidTags
         res.json({ message: 'RFID Tags cleared successfully' }); // ส่งข้อความกลับไปยัง client เพื่อแสดงว่าล้างค่าสำเร็จ
@@ -1039,7 +1039,7 @@ router.post('/save_goldtags', async (req, res) => {
     }
   });
 
-  router.get('/edit_goldTagData', async (req, res) => {
+  router.get('/edit_goldTagData', isLogin, async (req, res) => {
     try {
       let condition = {};
 
@@ -1104,7 +1104,7 @@ router.post('/save_goldtags', async (req, res) => {
   });
 
   // GET route เพื่อดึงข้อมูลทองคำที่ต้องการแก้ไข
-  router.get('/edit_dataform', async (req, res) => {
+  router.get('/edit_dataform', isLogin, async (req, res) => {
       try {
           const goldId = req.query.gold_id; // รับ Gold_Tag_id ที่ต้องการแก้ไขจาก query parameter
           const goldData = await GoldTag.findOne({ gold_id: goldId }); // ค้นหาข้อมูลทองคำที่ต้องการแก้ไขในฐานข้อมูล
@@ -1123,7 +1123,7 @@ router.post('/save_goldtags', async (req, res) => {
   });
 
   // POST route เพื่ออัปเดตข้อมูลทองคำ
-  router.post('/update_data', async (req, res) => {
+  router.post('/update_data', isLogin, async (req, res) => {
       try {
           const { gold_id, gold_type, gold_size, gold_weight } = req.body; // รับข้อมูลที่แก้ไขจากฟอร์ม
 
@@ -1150,7 +1150,7 @@ router.post('/save_goldtags', async (req, res) => {
     }
   });
 
-  router.get('/gold_sales', async (req, res) => {
+  router.get('/gold_sales', isLogin, async (req, res) => {
     try {
         let goldsales = [];
         let rfidTags = rfidModule.getRfidTags(); // Retrieve RFID tags
@@ -1235,7 +1235,7 @@ router.post('/save_goldtags', async (req, res) => {
 });
 
 
-router.post('/update_goldstatus', async (req, res) => {
+router.post('/update_goldstatus', isLogin, async (req, res) => {
   try {
       const { gold_ids, customer_name, customer_surname, customer_phone, gold_sales } = req.body;
       const currentTimestamp = dayjs().locale('th').format('YYYY-MM-DD HH:mm:ss');
@@ -1334,7 +1334,7 @@ router.post('/update_goldstatus', async (req, res) => {
 
   const ITEMS_PER_PAGE = 15;
 
-  router.get('/gold_salesHistory', async (req, res, next) => {
+  router.get('/gold_salesHistory', isLogin, async (req, res, next) => {
     try {
         let condition = { gold_status: 'out of stock' }; // Initial condition for out of stock items
 
@@ -1398,7 +1398,7 @@ router.post('/update_goldstatus', async (req, res) => {
     }
 });
 
-router.get('/gold_saleDetails', async (req, res, next) => {
+router.get('/gold_saleDetails', isLogin, async (req, res, next) => {
   try {
       const goldId = req.query.gold_id;
       console.log("Gold ID:", goldId);  // ตรวจสอบว่า gold_id ถูกส่งมาถูกต้องหรือไม่
@@ -1424,7 +1424,7 @@ router.get('/gold_saleDetails', async (req, res, next) => {
   }
 });
 
-router.get('/gold_history', async (req, res, next) => {
+router.get('/gold_history', isLogin, async (req, res, next) => {
   try {
     let condition = {};
 
@@ -1644,7 +1644,7 @@ module.exports = router;
 //   }
 // });
 
-router.get('/delete_history', async (req, res) => {
+router.get('/delete_history', isLogin, async (req, res) => {
   try {
     res.render('delete_history');
   } catch (error) {
@@ -1666,7 +1666,7 @@ router.post('/delete_goldhistory', async (req, res) => {
   }
 });
 
-router.get('/gold_sales_summary', async (req, res) => {
+router.get('/gold_sales_summary', isLogin, async (req, res) => {
   try {
     // Fetch all users except those with the role "Admin"
     const users = await Golduser.find({ role: { $ne: 'Admin' } });
@@ -1693,7 +1693,7 @@ router.get('/gold_sales_summary', async (req, res) => {
   }
 });
 
-router.get('/gold_sales_employee', async (req, res) => {
+router.get('/gold_sales_employee', isLogin, async (req, res) => {
   try {
     const currentUser = await Golduser.findOne({ usr: req.session.usr });
 
@@ -1716,7 +1716,7 @@ router.get('/gold_sales_employee', async (req, res) => {
   }
 });
 
-router.get('/create_user', async (req, res) => {
+router.get('/create_user', isLogin, async (req, res) => {
   try {
     res.render('create_user');
   } catch (error) {
@@ -1725,7 +1725,7 @@ router.get('/create_user', async (req, res) => {
   }
 });
 
-router.post('/create_user', async (req, res) => {
+router.post('/create_user', isLogin, async (req, res) => {
   const { usr, pwd, email, phone, name, role } = req.body;
 
   try {
