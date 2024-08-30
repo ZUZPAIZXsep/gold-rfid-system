@@ -141,7 +141,6 @@ dayjs.extend(timezone);
 dayjs.extend(localizedFormat);
 dayjs.tz.setDefault("Asia/Bangkok");
 
-
 async function copyPreviousDayRecords() {
   try {
     // กำหนดวันที่ปัจจุบัน (เริ่มต้นที่ 00:00:00 ของวัน)
@@ -165,12 +164,13 @@ async function copyPreviousDayRecords() {
       let latestPreviousDate = dayjs(latestPreviousDateRecord.gold_Datetime).tz('Asia/Bangkok').startOf('day').toDate();
       let latestPreviousDateEnd = dayjs(latestPreviousDateRecord.gold_Datetime).tz('Asia/Bangkok').endOf('day').toDate();
 
-      // ดึงข้อมูลทั้งหมดที่มี gold_Datetime อยู่ในช่วงของวันที่ล่าสุดก่อนวันปัจจุบัน
+      // ดึงข้อมูลทั้งหมดที่มี gold_Datetime อยู่ในช่วงของวันที่ล่าสุดก่อนวันปัจจุบัน และกรองสถานะ `out of stock`
       let previousDayRecords = await Goldhistory.find({
         gold_Datetime: {
           $gte: latestPreviousDate,
           $lte: latestPreviousDateEnd
-        }
+        },
+        gold_status: { $ne: 'out of stock' } // เพิ่มเงื่อนไขเพื่อไม่รวม `out of stock`
       });
 
       if (previousDayRecords.length > 0) {
@@ -191,22 +191,21 @@ async function copyPreviousDayRecords() {
       console.log('No previous records found');
     }
 
-    // อัปเดต gold_Datetime ใน Goldtagscount ให้เป็นวันที่ปัจจุบัน
+    // อัปเดต gold_Datetime ใน Goldtagscount ให้เป็นวันที่ปัจจุบัน เฉพาะรายการที่ไม่ใช่ `out of stock`
     await Goldtagscount.updateMany(
-      {},
+      { gold_status: { $ne: 'out of stock' } }, // เพิ่มเงื่อนไขเพื่อไม่รวม `out of stock`
       { $set: { gold_Datetime: currentDate } }
     );
-    console.log('Goldtagscount records updated with the current date');
 
   } catch (error) {
-    console.error('Error copying previous day records and updating Goldtagscount:', error);
+    console.error('Error copying previous day records', error);
   }
 }
 
 // ตั้ง schedule ให้ทำงานทุกวันเวลาเที่ยงคืน
 cron.schedule('0 0 * * *', () => {
   copyPreviousDayRecords();
-  console.log('Scheduled task executed: Previous day records copied and Goldtagscount updated');
+  console.log('Scheduled task executed: Previous day records copied');
 });
 
 // หรือรันฟังก์ชันเมื่อเริ่มต้นเซิร์ฟเวอร์
@@ -1428,12 +1427,10 @@ router.get('/gold_history', isLogin, async (req, res, next) => {
   try {
     let condition = {};
 
-    // ถ้ามีการเลือกประเภททองคำ
     if (req.query.select_goldType && req.query.select_goldType !== 'เลือกประเภททองคำ') {
         condition.gold_type = req.query.select_goldType;
     }
 
-    // ถ้ามีการเลือกขนาดทองคำ
     if (req.query.select_goldSize && req.query.select_goldSize !== 'เลือกขนาดทองคำ') {
         condition.gold_size = req.query.select_goldSize;
     }
@@ -1442,73 +1439,43 @@ router.get('/gold_history', isLogin, async (req, res, next) => {
         condition.gold_id = req.query.gold_id.trim();
     }
 
-    // Filter by start and end date
-     // ถ้ามีการเลือกวันที่เริ่มต้นและสิ้นสุด
     if (req.query.start_date && req.query.end_date) {
         const startDate = dayjs(req.query.start_date).startOf('day').utc().toDate();
         const endDate = dayjs(req.query.end_date).endOf('day').utc().toDate();
-
-        condition.gold_Datetime = {
-            $gte: startDate,
-            $lt: endDate
-        };
-      // ถ้ามีการเลือกแค่วันที่เริ่มต้น
+        condition.gold_Datetime = { $gte: startDate, $lt: endDate };
     } else if (req.query.start_date) {
         const startDate = dayjs(req.query.start_date).startOf('day').utc().toDate();
         condition.gold_Datetime = { $gte: startDate };
-      // ถ้ามีการเลือกแค่วันที่สิ้นสุด
     } else if (req.query.end_date) {
         const endDate = dayjs(req.query.end_date).endOf('day').utc().toDate();
         condition.gold_Datetime = { $lt: endDate };
     }
 
-      // Get the latest date in the database
-      const latestRecord = await Goldhistory.findOne().sort({ gold_Datetime: -1 }).exec();
-      const latestDate = latestRecord ? latestRecord.gold_Datetime : null;
+    const aggregatedRecords = await Goldhistory.aggregate([
+        { $match: condition },
+        { 
+            $group: {
+                _id: "$gold_Datetime",
+                goldRecords: { $push: "$$ROOT" }, // เก็บข้อมูลทั้งหมดของวันที่นั้น
+                totalInStock: { 
+                    $sum: { 
+                        $cond: [{ $eq: ["$gold_status", "in stock"] }, 1, 0] 
+                    } 
+                }
+            }
+        },
+        { $sort: { _id: -1 } } // เรียงตามวันที่ (จากมากไปน้อย)
+    ]);
 
-      // Pagination logic
-      const page = parseInt(req.query.page) || 1;
-      const skip = (page - 1) * ITEMS_PER_PAGE;
-
-      // เพิ่มการค้นหาทองที่มีสถานะเป็น in stock ในแต่ละวัน
-      const allRecords = await Goldhistory.find(condition)
-          .sort({ gold_Datetime: -1,gold_timestamp: -1, gold_tray: 1 })  // เรียงตาม gold_Datetime , gold_timestamp และ gold_tray
-          .skip(skip)
-          .limit(ITEMS_PER_PAGE);
-
-      const totalItems = await Goldhistory.countDocuments(condition);
-
-      // Create query parameters string without the page parameter
-      const queryParams = new URLSearchParams(req.query);
-      queryParams.delete('page');
-
-      // นับจำนวนทองคำที่มีสถานะเป็น in stock ในแต่ละวัน
-      const allInStockRecords = await Goldhistory.find({ gold_status: 'in stock' });
-
-      const dailyInStockMap = {};
-      allInStockRecords.forEach(item => {
-          const dateKey = `${item.gold_Datetime.getFullYear()}-${item.gold_Datetime.getMonth() + 1}-${item.gold_Datetime.getDate()}`;
-          if (!dailyInStockMap[dateKey]) {
-              dailyInStockMap[dateKey] = 0;
-          }
-          dailyInStockMap[dateKey] += 1;
-      });
-
-      res.render('gold_history', { 
-          goldshistory: allRecords, 
-          dayjs: dayjs, 
-          select_goldType: req.query.select_goldType, 
-          select_goldSize: req.query.select_goldSize,
-          gold_id: req.query.gold_id,
-          startDate: req.query.start_date,
-          endDate: req.query.end_date,
-          currentUrl: req.originalUrl,
-          totalPages: Math.ceil(totalItems / ITEMS_PER_PAGE),
-          currentPage: page,
-          latestDate: latestDate,
-          queryParams: queryParams.toString(),
-          dailyInStockMap: dailyInStockMap // ส่งข้อมูลจำนวนทองคำไปยัง EJS
-      });
+    res.render('gold_history', { 
+        aggregatedRecords: aggregatedRecords, 
+        dayjs: dayjs, 
+        select_goldType: req.query.select_goldType, 
+        select_goldSize: req.query.select_goldSize,
+        gold_id: req.query.gold_id,
+        startDate: req.query.start_date,
+        endDate: req.query.end_date
+    });
 
   } catch (error) {
       console.error(error);
@@ -1517,125 +1484,90 @@ router.get('/gold_history', isLogin, async (req, res, next) => {
 });
 
 
-module.exports = router;
-
-
-// router.get('/gold_history', async (req, res, next) => {
+// router.get('/gold_history', isLogin, async (req, res, next) => {
 //   try {
-//       let condition = {};
+//     let condition = {};
 
-//       // ถ้ามีการเลือกประเภททองคำ
-//       if (req.query.select_goldType && req.query.select_goldType !== 'เลือกประเภททองคำ') {
-//           condition.gold_type = req.query.select_goldType;
-//       }
+//     // ถ้ามีการเลือกประเภททองคำ
+//     if (req.query.select_goldType && req.query.select_goldType !== 'เลือกประเภททองคำ') {
+//         condition.gold_type = req.query.select_goldType;
+//     }
 
-//       // ถ้ามีการเลือกขนาดทองคำ
-//       if (req.query.select_goldSize && req.query.select_goldSize !== 'เลือกขนาดทองคำ') {
-//           condition.gold_size = req.query.select_goldSize;
-//       }
+//     // ถ้ามีการเลือกขนาดทองคำ
+//     if (req.query.select_goldSize && req.query.select_goldSize !== 'เลือกขนาดทองคำ') {
+//         condition.gold_size = req.query.select_goldSize;
+//     }
 
-//       // ถ้ามีการเลือกวันที่เริ่มต้นและสิ้นสุด
-//       if (req.query.start_date && req.query.end_date) {
-//           const startDate = new Date(req.query.start_date);
-//           const endDate = new Date(req.query.end_date);
+//     if (req.query.gold_id && req.query.gold_id.trim().length > 0) {
+//         condition.gold_id = req.query.gold_id.trim();
+//     }
 
-//           // ถ้าวันที่เริ่มต้นและสิ้นสุดเป็นวันเดียวกัน
-//           if (startDate.toDateString() === endDate.toDateString()) {
-//               condition.gold_timestamp = {
-//                   $gte: startDate,
-//                   $lt: dayjs(endDate).add(1, 'day').toDate() // เพิ่ม 1 วันเพื่อให้ครอบคลุมทั้งวัน
-//               };
-//           } else {
-//               // ถ้าวันที่เริ่มต้นและสิ้นสุดเป็นคนละวัน
-//               condition.gold_timestamp = {
-//                   $gte: startDate,
-//                   $lt: dayjs(endDate).add(1, 'day').toDate() // เพิ่ม 1 วันเพื่อให้ครอบคลุมทั้งวันสิ้นสุด
-//               };
+//     // Filter by start and end date
+//      // ถ้ามีการเลือกวันที่เริ่มต้นและสิ้นสุด
+//     if (req.query.start_date && req.query.end_date) {
+//         const startDate = dayjs(req.query.start_date).startOf('day').utc().toDate();
+//         const endDate = dayjs(req.query.end_date).endOf('day').utc().toDate();
+
+//         condition.gold_Datetime = {
+//             $gte: startDate,
+//             $lt: endDate
+//         };
+//       // ถ้ามีการเลือกแค่วันที่เริ่มต้น
+//     } else if (req.query.start_date) {
+//         const startDate = dayjs(req.query.start_date).startOf('day').utc().toDate();
+//         condition.gold_Datetime = { $gte: startDate };
+//       // ถ้ามีการเลือกแค่วันที่สิ้นสุด
+//     } else if (req.query.end_date) {
+//         const endDate = dayjs(req.query.end_date).endOf('day').utc().toDate();
+//         condition.gold_Datetime = { $lt: endDate };
+//     }
+
+//       // Get the latest date in the database
+//       const latestRecord = await Goldhistory.findOne().sort({ gold_Datetime: -1 }).exec();
+//       const latestDate = latestRecord ? latestRecord.gold_Datetime : null;
+
+//       // Pagination logic
+//       const page = parseInt(req.query.page) || 1;
+//       const skip = (page - 1) * ITEMS_PER_PAGE;
+
+//       // เพิ่มการค้นหาทองที่มีสถานะเป็น in stock ในแต่ละวัน
+//       const allRecords = await Goldhistory.find(condition)
+//           .sort({ gold_Datetime: -1,gold_timestamp: -1, gold_tray: 1 })  // เรียงตาม gold_Datetime , gold_timestamp และ gold_tray
+//           .skip(skip)
+//           .limit(ITEMS_PER_PAGE);
+
+//       const totalItems = await Goldhistory.countDocuments(condition);
+
+//       // Create query parameters string without the page parameter
+//       const queryParams = new URLSearchParams(req.query);
+//       queryParams.delete('page');
+
+//       // นับจำนวนทองคำที่มีสถานะเป็น in stock ในแต่ละวัน
+//       const allInStockRecords = await Goldhistory.find({ gold_status: 'in stock' });
+
+//       const dailyInStockMap = {};
+//       allInStockRecords.forEach(item => {
+//           const dateKey = `${item.gold_Datetime.getFullYear()}-${item.gold_Datetime.getMonth() + 1}-${item.gold_Datetime.getDate()}`;
+//           if (!dailyInStockMap[dateKey]) {
+//               dailyInStockMap[dateKey] = 0;
 //           }
-//       } else if (req.query.start_date) {
-//           // ถ้ามีการเลือกแค่วันที่เริ่มต้น
-//           const startDate = new Date(req.query.start_date);
-//           condition.gold_timestamp = { $gte: startDate };
-//       } else if (req.query.end_date) {
-//           // ถ้ามีการเลือกแค่วันที่สิ้นสุด
-//           const endDate = new Date(req.query.end_date);
-//           condition.gold_timestamp = { $lt: dayjs(endDate).add(1, 'day').toDate() };
-//       }
-
-//       const page = parseInt(req.query.page) || 1; // หากไม่ได้ระบุหน้า ให้เริ่มจากหน้าที่ 1
-//       const perPage = 15; // จำนวนรายการต่อหน้า
-//       const skip = (page - 1) * perPage; // คำนวณหาจำนวนรายการที่ต้องข้าม
-
-//       // ดึงข้อมูลทองคำจากฐานข้อมูลโดยใช้เงื่อนไข condition และจัดกลุ่มตามวันและถาด
-//       const aggregateQuery = [
-//           { $match: condition },
-//           { $sort: { gold_timestamp: -1, gold_tray: 1 } }, // เรียงลำดับจากวันที่ล่าสุดไปยังเก่าสุดและตามถาด
-//           {
-//               $group: {
-//                   _id: {
-//                       day: { $dayOfMonth: "$gold_timestamp" },
-//                       month: { $month: "$gold_timestamp" },
-//                       year: { $year: "$gold_timestamp" },
-//                       gold_tray: "$gold_tray"
-//                   },
-//                   records: { $push: "$$ROOT" },
-//                   trayCount: { $sum: 1 }
-//               }
-//           },
-//           {
-//               $group: {
-//                   _id: {
-//                       day: "$_id.day",
-//                       month: "$_id.month",
-//                       year: "$_id.year"
-//                   },
-//                   trays: { $push: "$$ROOT" },
-//                   totalCount: { $sum: "$trayCount" }
-//               }
-//           },
-//           { $sort: { "_id.year": -1, "_id.month": -1, "_id.day": -1 } },
-//       ];
-
-//       const allRecords = await Goldhistory.aggregate(aggregateQuery);
-
-//       // Flatten the grouped data into a single array
-//       let flatRecords = [];
-//       allRecords.forEach(group => {
-//           group.trays.forEach(tray => {
-//               tray.records.forEach(record => {
-//                   flatRecords.push({
-//                       ...record,
-//                       trayCount: tray.trayCount,
-//                       totalCount: group.totalCount,
-//                       groupDate: new Date(group._id.year, group._id.month - 1, group._id.day)
-//                   });
-//               });
-//           });
+//           dailyInStockMap[dateKey] += 1;
 //       });
-
-//       // Sorting flat records by date and tray within each day
-//       flatRecords.sort((a, b) => {
-//           if (a.groupDate > b.groupDate) return -1;
-//           if (a.groupDate < b.groupDate) return 1;
-//           if (a.gold_tray > b.gold_tray) return 1;
-//           if (a.gold_tray < b.gold_tray) return -1;
-//           return 0;
-//       });
-
-//       const totalRecords = flatRecords.length;
-//       const totalPages = Math.ceil(totalRecords / perPage);
-//       const paginatedRecords = flatRecords.slice(skip, skip + perPage);
 
 //       res.render('gold_history', { 
-//           goldshistory: paginatedRecords, 
+//           goldshistory: allRecords, 
 //           dayjs: dayjs, 
 //           select_goldType: req.query.select_goldType, 
 //           select_goldSize: req.query.select_goldSize,
+//           gold_id: req.query.gold_id,
 //           startDate: req.query.start_date,
 //           endDate: req.query.end_date,
+//           currentUrl: req.originalUrl,
+//           totalPages: Math.ceil(totalItems / ITEMS_PER_PAGE),
 //           currentPage: page,
-//           totalPages: totalPages, 
-//           currentUrl: req.originalUrl
+//           latestDate: latestDate,
+//           queryParams: queryParams.toString(),
+//           dailyInStockMap: dailyInStockMap // ส่งข้อมูลจำนวนทองคำไปยัง EJS
 //       });
 
 //   } catch (error) {
@@ -1643,6 +1575,10 @@ module.exports = router;
 //       res.status(500).send('Internal Server Error');
 //   }
 // });
+
+
+module.exports = router;
+
 
 router.get('/delete_history', isLogin, async (req, res) => {
   try {

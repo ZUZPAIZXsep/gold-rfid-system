@@ -5,7 +5,7 @@
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <h3 style="font-weight: bold;">ประวัติทองคำในแต่ละวัน</h3>
             <a type="button" class="btn btn-success" style="margin-left: 4px;" href="/gold_sales">
-              <span class="material-icon material-symbols-outlined">shopping_cart</span> ไปยังหน้าการขาย
+                <span class="material-icon material-symbols-outlined">shopping_cart</span> ไปยังหน้าการขาย
             </a>
         </div> 
         <div class="row">
@@ -19,33 +19,6 @@
                     <input type="date" class="form-control" id="end_date_input" name="end_date" value="<%= endDate %>" placeholder="ถึงวันที่">
                 </div>
             </div> 
-            <div class="col-2 mt-2">
-                <label style="font-weight: 600;">ประเภทของทองคำ</label>
-                <select class="form-select" name="select_goldType">
-                    <option value="">เลือกประเภททองคำ</option>
-                    <option value="สร้อยคอ" <%= select_goldType === 'สร้อยคอ' ? 'selected' : '' %>>สร้อยคอ</option>
-                    <option value="แหวน" <%= select_goldType === 'แหวน' ? 'selected' : '' %>>แหวน</option>
-                    <option value="กำไลข้อมือ" <%= select_goldType === 'กำไลข้อมือ' ? 'selected' : '' %>>กำไลข้อมือ</option>
-                    <option value="สร้อยข้อมือ" <%= select_goldType === 'สร้อยข้อมือ' ? 'selected' : '' %>>สร้อยข้อมือ</option>
-                    <option value="ต่างหู" <%= select_goldType === 'ต่างหู' ? 'selected' : '' %>>ต่างหู</option>
-                </select>                
-            </div>
-            <div class="col-2 mt-2">
-                <label style="font-weight: 600;">ขนาดของทองคำ</label>
-                <select class="form-select" name="select_goldSize">
-                    <option value="">เลือกขนาดทองคำ</option>
-                    <option value="ครึ่งสลึง" <%= select_goldSize === 'ครึ่งสลึง' ? 'selected' : '' %>>ครึ่งสลึง</option>
-                    <option value="1 สลึง" <%= select_goldSize === '1 สลึง' ? 'selected' : '' %>>1 สลึง</option>
-                    <option value="2 สลึง" <%= select_goldSize === '2 สลึง' ? 'selected' : '' %>>2 สลึง</option>
-                    <option value="1 บาท" <%= select_goldSize === '1 บาท' ? 'selected' : '' %>>1 บาท</option>
-                    <option value="2 บาท" <%= select_goldSize === '2 บาท' ? 'selected' : '' %>>2 บาท</option>
-                    <option value="3 บาท" <%= select_goldSize === '3 บาท' ? 'selected' : '' %>>3 บาท</option>
-                </select>
-            </div>
-            <div class="col-2 mt-2">
-                <label style="font-weight: 600;">ค้นหาด้วยเลข Gold_Tag_id</label>
-                <input type="text" class="form-control" name="gold_id" placeholder="กรอกเลข Gold_Tag_id" value="<%= gold_id %>">
-            </div>
         </div>       
         <div>
             <button type="submit" class="btn btn-primary mt-3">
@@ -62,75 +35,27 @@
             </a>
         </div>
         <div class="mt-3">
-            <% if (goldshistory.length > 0) { %>
+            <% if (aggregatedRecords.length > 0) { %>
                 <table class="table table-bordered mt-3">
                     <thead class="table-success">
                         <tr>
-                            <th width="200px">ทดสอบวันที่</th>
-                            <th width="250px">วันที่บันทึกเข้าระบบ</th>
-                            <th width="150px">ถาด</th>
-                            <th>ชนิด</th>
-                            <th>ขนาด</th>
-                            <th>น้ำหนัก</th>
-                            <th>Gold_Tag_id</th>
-                            <th width="160px" style="text-align: center;">สถานะ</th>
+                            <th width="200px">วันที่</th>
                             <th width="260px">จำนวนทองคำคงเหลือในวันนี้ (รายการ)</th>
+                            <th width="200px">ดูรายละเอียด</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <% goldshistory.forEach((gold_history, index) => { %>
+                        <% aggregatedRecords.forEach(record => { %>
                             <tr>
-                                <td><%= dayjs(gold_history.gold_Datetime).locale('th').format('DD-MM-YYYY') %></td>
-                                <td><%= dayjs(gold_history.gold_timestamp).locale('th').format('DD-MM-YYYY HH:mm:ss') %></td>
-                                <td><%= gold_history.gold_tray %></td>
-                                <td><%= gold_history.gold_type %></td>
-                                <td><%= gold_history.gold_size %></td>
-                                <td><%= gold_history.gold_weight %> กรัม</td>
-                                <td><%= gold_history.gold_id %></td>
-                                <td class="text-center" style="vertical-align: middle;">
-                                    <% if (gold_history.gold_timestamp.toDateString() === latestDate.toDateString()) { %>
-                                        <% if (gold_history.gold_status === 'in stock') { %>
-                                            <span class="badge bg-success">ยังไม่ถูกขาย</span>
-                                        <% } else { %>
-                                            <span class="badge bg-danger">ขายออกแล้ว</span>
-                                        <% } %>
-                                    <% } else { %>
-                                        <% if (gold_history.gold_status === 'in stock') { %>
-                                            <span class="badge bg-secondary">ข้อมูลเก่า</span>
-                                        <% } else { %>
-                                            <span class="badge bg-danger">ขายออกแล้ว</span>
-                                        <% } %>
-                                    <% } %>
-                                </td>
+                                <td><%= dayjs(record._id).locale('th').format('DD-MM-YYYY') %></td>
+                                <td style="text-align: center;"><%= record.totalInStock %></td>
                                 <td style="text-align: center;">
-                                    <%= dailyInStockMap[dayjs(gold_history.gold_Datetime).format('YYYY-M-D')] || 0 %>
-                                </td>                                
+                                    <button type="button" class="btn btn-primary" onclick="showDetails('<%= record._id %>')">ดูรายละเอียด</button>
+                                </td>
                             </tr>
                         <% }); %>
                     </tbody>
                 </table>
-                <!-- Pagination controls -->
-                <nav aria-label="Page navigation">
-                    <ul class="pagination justify-content-center mt-3">
-                        <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
-                            <a class="page-link" href="?page=1&<%= queryParams %>">หน้าแรก</a>
-                        </li>
-                        <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
-                            <a class="page-link" href="?page=<%= currentPage - 1 %>&<%= queryParams %>" aria-label="Next"><span aria-hidden="true">&laquo;</span></a>
-                        </li>
-                        <% for (let i = 1; i <= totalPages; i++) { %>
-                            <li class="page-item <%= currentPage === i ? 'active' : '' %>">
-                                <a class="page-link" href="?page=<%= i %>&<%= queryParams %>"><%= i %></a>
-                            </li>
-                        <% } %>
-                        <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
-                            <a class="page-link" href="?page=<%= currentPage + 1 %>&<%= queryParams %>" aria-label="Next"><span aria-hidden="true">&raquo;</span></a>
-                        </li>
-                        <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
-                            <a class="page-link" href="?page=<%= totalPages %>&<%= queryParams %>">หน้าสุดท้าย</a>
-                        </li>
-                    </ul>
-                </nav>
             <% } else { %>
                 <p>ไม่มีข้อมูลทองคำตรงกับเงื่อนไขที่คุณเลือก</p>
             <% } %>
@@ -138,46 +63,62 @@
     </div>
 </form>
 
+<!-- Modal สำหรับแสดงรายละเอียด -->
+<div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detailsModalLabel">รายละเอียดทองคำ</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-bordered">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th>ชนิด</th>
+                            <th>ขนาด</th>
+                            <th>น้ำหนัก</th>
+                            <th>Gold_Tag_id</th>
+                            <th>สถานะ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="detailsTableBody">
+                        <!-- รายการจะถูกแทรกที่นี่ -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
 <%- include('footer') %>
 
 <script>
-    // รอให้หน้าเว็บโหลดเสร็จก่อนที่จะทำงาน
-    document.addEventListener("DOMContentLoaded", function() {
-        // เลือก element ที่ต้องการกรองข้อมูล
-        const startDateInput = document.getElementById('start_date_input');
-        const endDateInput = document.getElementById('end_date_input');
-        const goldTypeSelect = document.querySelector('select[name="select_goldType"]');
-        const goldSizeSelect = document.querySelector('select[name="select_goldSize"]');
-        const form = document.querySelector('form');
-        form.addEventListener('submit', function(event) {
-            event.preventDefault(); // Prevent form submission
-            const formData = new FormData(form);
-            const queryString = new URLSearchParams(formData).toString();
-            window.location.href = `/gold_history?${queryString}`;
-        });
+    function showDetails(date) {
+        // หา record ที่ตรงกับวันที่ที่ต้องการ
+        const record = JSON.parse('<%- JSON.stringify(aggregatedRecords) %>').find(r => r._id === date);
+        const tableBody = document.getElementById('detailsTableBody');
+        tableBody.innerHTML = '';
 
-        // เพิ่ม event listener สำหรับ input date และ select
-        startDateInput.addEventListener('change', filterData);
-        endDateInput.addEventListener('change', filterData);
-        goldTypeSelect.addEventListener('change', filterData);
-        goldSizeSelect.addEventListener('change', filterData);
-        
-        // function สำหรับกรองข้อมูล
-        function filterData() {
-            // เก็บค่าที่กรองไว้
-            const startDate = startDateInput.value;
-            const endDate = endDateInput.value;
-            const goldType = goldTypeSelect.value;
-            const goldSize = goldSizeSelect.value;
-            
-            // สร้าง query string สำหรับส่งไปที่ server
-            let queryString = `?start_date=${startDate}&end_date=${endDate}&select_goldType=${goldType}&select_goldSize=${goldSize}`;
-            
-            // โหลดหน้าใหม่ด้วย query string ที่สร้างขึ้น
-            window.location.href = `/gold_history${queryString}`;
+        // เพิ่มข้อมูลทองคำลงใน modal
+        if (record && record.goldRecords) {
+            record.goldRecords.forEach(gold_history => {
+                const row = `<tr>
+                    <td>${gold_history.gold_type}</td>
+                    <td>${gold_history.gold_size}</td>
+                    <td>${gold_history.gold_weight} กรัม</td>
+                    <td>${gold_history.gold_id}</td>
+                    <td>${gold_history.gold_status === 'in stock' ? 'ยังไม่ถูกขาย' : (gold_history.gold_status === 'ready to sell' ? 'นำออกมาขาย' : 'ขายออกแล้ว')}</td>
+                </tr>`;
+                tableBody.innerHTML += row;
+            });
         }
-    });
+
+        // แสดง modal
+        new bootstrap.Modal(document.getElementById('detailsModal')).show();
+    }
 </script>
+
 
 <style>
     .page-item.active .page-link {
