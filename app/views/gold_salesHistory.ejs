@@ -193,6 +193,8 @@
                     goldOutDateTimeSpan.textContent = data.gold_outDateTime;
                     goldPriceSpan.textContent = data.gold_price;
                     sellerUsername.textContent = data.seller_username;
+                    sellerRole.textContent = data.seller_role;
+                    sellerName.textContent = data.seller_name;
                     // เปิด modal
                     const modal = new bootstrap.Modal(saleDetailsModal);
                     modal.show();
@@ -220,7 +222,8 @@
           <p><strong>เบอร์โทรศัพท์:</strong> <span id="customerPhone"></span></p>
           <p><strong>วันที่ขายออก:</strong> <span id="goldOutDateTime"></span></p>
           <p><strong>ราคาขาย:</strong> <span id="goldPrice"></span>  บาท</p>
-          <p><strong>ผู้ขาย:</strong> <span id="sellerUsername"></span></p>
+          <p><strong>รหัสผู้ขาย:</strong> <span id="sellerUsername"></span> (<span id="sellerRole"></span>)</p>
+          <p><strong>ชื่อผู้ขาย:</strong> <span id="sellerName"></span></p>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>

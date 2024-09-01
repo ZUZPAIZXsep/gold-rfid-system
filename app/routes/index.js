@@ -1423,7 +1423,9 @@ router.get('/gold_saleDetails', isLogin, async (req, res, next) => {
               customer_phone: saleDetails.customer_phone,
               gold_outDateTime: dayjs(saleDetails.gold_outDateTime).locale('th').format('DD-MM-YYYY HH:mm:ss'),
               gold_price: saleDetails.gold_price,
-              seller_username: saleDetails.seller_username
+              seller_username: saleDetails.seller_username,
+              seller_role: saleDetails.seller_role,
+              seller_name: saleDetails.seller_name
           });
       } else {
           res.status(404).json({ error: 'Sale details not found' });
