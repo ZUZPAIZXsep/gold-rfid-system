@@ -136,7 +136,6 @@ async function comparePassword(password, hash) {
   return await bcrypt.compare(password, hash);
 }
 
-
 dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.extend(localizedFormat);
@@ -194,9 +193,17 @@ async function copyPreviousDayRecords() {
 
     // อัปเดต gold_Datetime ใน Goldtagscount ให้เป็นวันที่ปัจจุบัน เฉพาะรายการที่ไม่ใช่ `out of stock`
     await Goldtagscount.updateMany(
-      { gold_status: { $ne: 'out of stock' } }, // เพิ่มเงื่อนไขเพื่อไม่รวม `out of stock`
-      { $set: { gold_Datetime: currentDate } }
+      { gold_status: { $ne: 'out of stock' } }, // กรองเฉพาะที่ไม่ใช่ `out of stock`
+      { $set: { gold_Datetime: currentDate } } // อัปเดตวันที่ใหม่
     );
+    console.log('Goldtagscount records updated with the current date');
+
+    // ลบข้อมูลที่มีสถานะ `out of stock` ของวันเก่าออก
+    await Goldtagscount.deleteMany({
+      gold_status: 'out of stock',
+      gold_Datetime: { $lt: currentDate } // ลบเฉพาะวันที่เก่ากว่า
+    });
+    console.log('Out of stock records from previous days deleted successfully');
 
   } catch (error) {
     console.error('Error copying previous day records', error);
@@ -1427,66 +1434,6 @@ router.get('/gold_saleDetails', isLogin, async (req, res, next) => {
   }
 });
 
-router.get('/gold_history', isLogin, async (req, res, next) => {
-  try {
-    let condition = {};
-
-    if (req.query.select_goldType && req.query.select_goldType !== 'เลือกประเภททองคำ') {
-        condition.gold_type = req.query.select_goldType;
-    }
-
-    if (req.query.select_goldSize && req.query.select_goldSize !== 'เลือกขนาดทองคำ') {
-        condition.gold_size = req.query.select_goldSize;
-    }
-
-    if (req.query.gold_id && req.query.gold_id.trim().length > 0) {
-        condition.gold_id = req.query.gold_id.trim();
-    }
-
-    if (req.query.start_date && req.query.end_date) {
-        const startDate = dayjs(req.query.start_date).startOf('day').utc().toDate();
-        const endDate = dayjs(req.query.end_date).endOf('day').utc().toDate();
-        condition.gold_Datetime = { $gte: startDate, $lt: endDate };
-    } else if (req.query.start_date) {
-        const startDate = dayjs(req.query.start_date).startOf('day').utc().toDate();
-        condition.gold_Datetime = { $gte: startDate };
-    } else if (req.query.end_date) {
-        const endDate = dayjs(req.query.end_date).endOf('day').utc().toDate();
-        condition.gold_Datetime = { $lt: endDate };
-    }
-
-    const aggregatedRecords = await Goldhistory.aggregate([
-        { $match: condition },
-        { 
-            $group: {
-                _id: "$gold_Datetime",
-                goldRecords: { $push: "$$ROOT" }, // เก็บข้อมูลทั้งหมดของวันที่นั้น
-                totalInStock: { 
-                    $sum: { 
-                        $cond: [{ $eq: ["$gold_status", "in stock"] }, 1, 0] 
-                    } 
-                }
-            }
-        },
-        { $sort: { _id: -1 } } // เรียงตามวันที่ (จากมากไปน้อย)
-    ]);
-
-    res.render('gold_history', { 
-        aggregatedRecords: aggregatedRecords, 
-        dayjs: dayjs, 
-        select_goldType: req.query.select_goldType, 
-        select_goldSize: req.query.select_goldSize,
-        gold_id: req.query.gold_id,
-        startDate: req.query.start_date,
-        endDate: req.query.end_date
-    });
-
-  } catch (error) {
-      console.error(error);
-      res.status(500).send('Internal Server Error');
-  }
-});
-
 
 // router.get('/gold_history', isLogin, async (req, res, next) => {
 //   try {
@@ -1580,8 +1527,100 @@ router.get('/gold_history', isLogin, async (req, res, next) => {
 //   }
 // });
 
+// Function to summarize the gold history by date
+function summarizeGoldHistory(data) {
+  const summary = data.reduce((acc, record) => {
+    const date = dayjs(record.gold_Datetime).startOf('day').format('YYYY-MM-DD');
+    if (!acc[date]) {
+      acc[date] = { date: date, count: 0 };
+    }
+    acc[date].count += 1;
+    return acc;
+  }, {});
 
-module.exports = router;
+  return Object.values(summary);
+}
+
+// Route to get gold history with summary and pagination
+router.get('/gold_history', isLogin, async (req, res, next) => {
+  try {
+    const { start_date, end_date, select_goldType, select_goldSize, gold_id, page = 1, limit = 10 } = req.query;
+    
+    const query = {};
+    if (start_date && end_date) {
+      query.gold_Datetime = {
+        $gte: new Date(start_date),
+        $lte: new Date(end_date)
+      };
+    }
+    if (select_goldType) query.gold_type = select_goldType;
+    if (select_goldSize) query.gold_size = select_goldSize;
+    if (gold_id) query.gold_id = gold_id;
+
+    const skip = (page - 1) * limit;
+    const [data, total] = await Promise.all([
+      Goldhistory.find(query).sort({ gold_Datetime: -1 }).skip(skip).limit(Number(limit)),
+      Goldhistory.countDocuments(query)
+    ]);
+
+    // Get the latest date in the database
+    const latestRecord = await Goldhistory.findOne().sort({ gold_Datetime: -1 }).exec();
+    const latestDate = latestRecord ? latestRecord.gold_Datetime : null;
+
+    const totalPages = Math.ceil(total / limit);
+    const summarizedGoldHistory = summarizeGoldHistory(data);
+
+    res.render('gold_history', {
+      summarizedGoldHistory,
+      dayjs: dayjs, // ส่ง dayjs ไปยัง EJS template
+      startDate: start_date || '',
+      endDate: end_date || '',
+      select_goldType: select_goldType || '',
+      select_goldSize: select_goldSize || '',
+      gold_id: gold_id || '',
+      currentPage: Number(page),
+      totalPages: totalPages,
+      latestDate: latestDate,
+      queryParams: new URLSearchParams(req.query).toString()
+    });    
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+router.get('/gold_history/details', isLogin, async (req, res, next) => {
+  try {
+    const dateParam = req.query.date;
+    // Get the latest date in the database
+    const latestRecord = await Goldhistory.findOne().sort({ gold_Datetime: -1 }).exec();
+    const latestDate = latestRecord ? latestRecord.gold_Datetime : null;
+    if (!dateParam) {
+      return res.status(400).send('Date parameter is required.');
+    }
+
+    const date = dayjs(dateParam).startOf('day').utc().toDate();
+    const endDate = dayjs(dateParam).endOf('day').utc().toDate();
+
+    const details = await Goldhistory.find({
+      gold_Datetime: {
+        $gte: date,
+        $lt: endDate
+      }
+    }).sort({ gold_timestamp: -1 });
+
+    res.render('gold_details', {
+      details: details,
+      dayjs: dayjs,
+      latestDate: latestDate,
+      
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
 
 
 router.get('/delete_history', isLogin, async (req, res) => {
@@ -1697,3 +1736,4 @@ router.post('/create_user', isLogin, async (req, res) => {
   }
 });
 
+module.exports = router;
