@@ -59,7 +59,8 @@ const goldCountHistorySchema = new mongoose.Schema({
   gold_price: String,
   gold_Datetime: { type: Date, default: Date.now },
   seller_username: String,
-  seller_role: String
+  seller_role: String,
+  seller_name: String,
 },{ 
   collection: 'goldcount_history'
 });
@@ -1304,6 +1305,7 @@ router.post('/update_goldstatus', isLogin, async (req, res) => {
               existingGold.gold_outDateTime = currentTimestamp;
               existingGold.seller_username = req.session.usr;
               existingGold.seller_role = req.session.role;
+              existingGold.seller_name = req.session.name;
               await existingGold.save();
           } else {
               // Create new document in Goldhistory
@@ -1318,6 +1320,7 @@ router.post('/update_goldstatus', isLogin, async (req, res) => {
                   gold_timestamp: currentTimestamp,
                   seller_username: req.session.usr,
                   seller_role: req.session.role,
+                  seller_name: req.session.name,
               });
           }
       }
@@ -1412,7 +1415,8 @@ router.get('/gold_saleDetails', isLogin, async (req, res, next) => {
               customer_surname: saleDetails.customer_surname,
               customer_phone: saleDetails.customer_phone,
               gold_outDateTime: dayjs(saleDetails.gold_outDateTime).locale('th').format('DD-MM-YYYY HH:mm:ss'),
-              gold_price: saleDetails.gold_price
+              gold_price: saleDetails.gold_price,
+              seller_username: saleDetails.seller_username
           });
       } else {
           res.status(404).json({ error: 'Sale details not found' });
