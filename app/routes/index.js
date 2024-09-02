@@ -1645,12 +1645,78 @@ router.get('/gold_sales_summary', isLogin, async (req, res) => {
     // Fetch all users except those with the role "Admin"
     const users = await Golduser.find({ role: { $ne: 'Admin' } });
 
-    // Calculate totals
+    // Get the current date for filtering sales
+    const startOfDay = dayjs().startOf('day').toDate();
+    const endOfDay = dayjs().endOf('day').toDate();
+    const startOfWeek = dayjs().startOf('week').toDate();
+    const endOfWeek = dayjs().endOf('week').toDate();
+    const startOfMonth = dayjs().startOf('month').toDate();
+    const endOfMonth = dayjs().endOf('month').toDate();
+
+    // Map user ID to their sales in different periods
+    const userSales = {};
+
+    // Fetch sales from gold_history within different periods
+    const salesData = await Goldhistory.find({
+      gold_outDateTime: { $lte: endOfDay }
+    });
+
+    // Summarize sales by user for different periods
+    salesData.forEach((sale) => {
+      const sellerName = sale.seller_name;
+      const saleAmount = parseFloat(sale.gold_price) || 0;
+
+      if (!userSales[sellerName]) {
+        userSales[sellerName] = {
+          day_sale: 0,
+          week_sale: 0,
+          month_sale: 0,
+          total_sale: 0
+        };
+      }
+
+      if (sale.gold_outDateTime >= startOfDay && sale.gold_outDateTime <= endOfDay) {
+        userSales[sellerName].day_sale += saleAmount;
+      }
+      if (sale.gold_outDateTime >= startOfWeek && sale.gold_outDateTime <= endOfWeek) {
+        userSales[sellerName].week_sale += saleAmount;
+      }
+      if (sale.gold_outDateTime >= startOfMonth && sale.gold_outDateTime <= endOfMonth) {
+        userSales[sellerName].month_sale += saleAmount;
+      }
+
+      userSales[sellerName].total_sale += saleAmount; // Total sale (all-time)
+    });
+
+    // Update Golduser with the summarized sales data
+    for (const user of users) {
+      const sales = userSales[user.name] || {
+        day_sale: 0,
+        week_sale: 0,
+        month_sale: 0,
+        total_sale: 0
+      };
+
+      await Golduser.updateOne(
+        { _id: user._id },
+        {
+          $set: {
+            day_sale: sales.day_sale,
+            week_sale: sales.week_sale,
+            month_sale: sales.month_sale,
+            total_sale: sales.total_sale
+          }
+        }
+      );
+    }
+
+    // Calculate totals for each period
     const totals = users.reduce((acc, user) => {
-      acc.day_sale += user.day_sale || 0;
-      acc.week_sale += user.week_sale || 0;
-      acc.month_sale += user.month_sale || 0;
-      acc.total_sale += user.total_sale || 0;
+      const userSale = userSales[user.name] || {};
+      acc.day_sale += userSale.day_sale || 0;
+      acc.week_sale += userSale.week_sale || 0;
+      acc.month_sale += userSale.month_sale || 0;
+      acc.total_sale += userSale.total_sale || 0;
       return acc;
     }, {
       day_sale: 0,
@@ -1659,13 +1725,14 @@ router.get('/gold_sales_summary', isLogin, async (req, res) => {
       total_sale: 0
     });
 
-    // Pass the users and totals data to the template
-    res.render('gold_salesSummary', { users, totals });
+    // Pass the users and sales data to the template
+    res.render('gold_salesSummary', { users, userSales, totals });
   } catch (error) {
     console.error(error);
     res.status(500).send('Internal Server Error');
   }
 });
+
 
 router.get('/gold_sales_employee', isLogin, async (req, res) => {
   try {
