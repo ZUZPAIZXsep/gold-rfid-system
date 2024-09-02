@@ -19,33 +19,6 @@
                     <input type="date" class="form-control" id="end_date_input" name="end_date" value="<%= endDate %>" placeholder="ถึงวันที่">
                 </div>
             </div> 
-            <div class="col-2 mt-2">
-                <label style="font-weight: 600;">ประเภทของทองคำ</label>
-                <select class="form-select" name="select_goldType">
-                    <option value="">เลือกประเภททองคำ</option>
-                    <option value="สร้อยคอ" <%= select_goldType === 'สร้อยคอ' ? 'selected' : '' %>>สร้อยคอ</option>
-                    <option value="แหวน" <%= select_goldType === 'แหวน' ? 'selected' : '' %>>แหวน</option>
-                    <option value="กำไลข้อมือ" <%= select_goldType === 'กำไลข้อมือ' ? 'selected' : '' %>>กำไลข้อมือ</option>
-                    <option value="สร้อยข้อมือ" <%= select_goldType === 'สร้อยข้อมือ' ? 'selected' : '' %>>สร้อยข้อมือ</option>
-                    <option value="ต่างหู" <%= select_goldType === 'ต่างหู' ? 'selected' : '' %>>ต่างหู</option>
-                </select>                
-            </div>
-            <div class="col-2 mt-2">
-                <label style="font-weight: 600;">ขนาดของทองคำ</label>
-                <select class="form-select" name="select_goldSize">
-                    <option value="">เลือกขนาดทองคำ</option>
-                    <option value="ครึ่งสลึง" <%= select_goldSize === 'ครึ่งสลึง' ? 'selected' : '' %>>ครึ่งสลึง</option>
-                    <option value="1 สลึง" <%= select_goldSize === '1 สลึง' ? 'selected' : '' %>>1 สลึง</option>
-                    <option value="2 สลึง" <%= select_goldSize === '2 สลึง' ? 'selected' : '' %>>2 สลึง</option>
-                    <option value="1 บาท" <%= select_goldSize === '1 บาท' ? 'selected' : '' %>>1 บาท</option>
-                    <option value="2 บาท" <%= select_goldSize === '2 บาท' ? 'selected' : '' %>>2 บาท</option>
-                    <option value="3 บาท" <%= select_goldSize === '3 บาท' ? 'selected' : '' %>>3 บาท</option>
-                </select>
-            </div>
-            <div class="col-2 mt-2">
-                <label style="font-weight: 600;">ค้นหาด้วยเลข Gold_Tag_id</label>
-                <input type="text" class="form-control" name="gold_id" placeholder="กรอกเลข Gold_Tag_id" value="<%= gold_id %>">
-            </div>
         </div>       
         <div>
             <button type="submit" class="btn btn-primary mt-3">
@@ -83,29 +56,6 @@
                         <% }); %>
                     </tbody>
                 </table>
-                
-                <!-- Pagination controls -->
-                <nav aria-label="Page navigation">
-                    <ul class="pagination justify-content-center mt-3">
-                        <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
-                            <a class="page-link" href="?page=1&<%= queryParams %>">หน้าแรก</a>
-                        </li>
-                        <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
-                            <a class="page-link" href="?page=<%= currentPage - 1 %>&<%= queryParams %>" aria-label="Next"><span aria-hidden="true">&laquo;</span></a>
-                        </li>
-                        <% for (let i = 1; i <= totalPages; i++) { %>
-                            <li class="page-item <%= currentPage === i ? 'active' : '' %>">
-                                <a class="page-link" href="?page=<%= i %>&<%= queryParams %>"><%= i %></a>
-                            </li>
-                        <% } %>
-                        <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
-                            <a class="page-link" href="?page=<%= currentPage + 1 %>&<%= queryParams %>" aria-label="Next"><span aria-hidden="true">&raquo;</span></a>
-                        </li>
-                        <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
-                            <a class="page-link" href="?page=<%= totalPages %>&<%= queryParams %>">หน้าสุดท้าย</a>
-                        </li>
-                    </ul>
-                </nav>
             <% } else { %>
                 <p>ไม่มีข้อมูลทองคำตรงกับเงื่อนไขที่คุณเลือก</p>
             <% } %>
@@ -115,7 +65,7 @@
 
 <%- include('footer') %>
 
-<style>
+<!-- <style>
     .page-item.active .page-link {
         background-color: #007bff;
         color: #ffffff;
@@ -128,4 +78,4 @@
         background-color: #f88379; /* สีเน้นของหน้าปัจจุบัน */
         color: #ffffff; /* สีข้อความของหน้าปัจจุบัน */
     }
-</style>
+</style> -->

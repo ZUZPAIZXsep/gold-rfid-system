@@ -1543,10 +1543,9 @@ function summarizeGoldHistory(data) {
   return Object.values(summary);
 }
 
-// Route to get gold history with summary and pagination
 router.get('/gold_history', isLogin, async (req, res, next) => {
   try {
-    const { start_date, end_date, select_goldType, select_goldSize, gold_id, page = 1, limit = 10 } = req.query;
+    const { start_date, end_date, select_goldType, select_goldSize, gold_id } = req.query;
     
     const query = {};
     if (start_date && end_date) {
@@ -1559,17 +1558,12 @@ router.get('/gold_history', isLogin, async (req, res, next) => {
     if (select_goldSize) query.gold_size = select_goldSize;
     if (gold_id) query.gold_id = gold_id;
 
-    const skip = (page - 1) * limit;
-    const [data, total] = await Promise.all([
-      Goldhistory.find(query).sort({ gold_Datetime: -1 }).skip(skip).limit(Number(limit)),
-      Goldhistory.countDocuments(query)
-    ]);
+    const data = await Goldhistory.find(query).sort({ gold_Datetime: -1 });
 
     // Get the latest date in the database
     const latestRecord = await Goldhistory.findOne().sort({ gold_Datetime: -1 }).exec();
     const latestDate = latestRecord ? latestRecord.gold_Datetime : null;
 
-    const totalPages = Math.ceil(total / limit);
     const summarizedGoldHistory = summarizeGoldHistory(data);
 
     res.render('gold_history', {
@@ -1580,8 +1574,6 @@ router.get('/gold_history', isLogin, async (req, res, next) => {
       select_goldType: select_goldType || '',
       select_goldSize: select_goldSize || '',
       gold_id: gold_id || '',
-      currentPage: Number(page),
-      totalPages: totalPages,
       latestDate: latestDate,
       queryParams: new URLSearchParams(req.query).toString()
     });    
@@ -1590,6 +1582,7 @@ router.get('/gold_history', isLogin, async (req, res, next) => {
     res.status(500).send('Internal Server Error');
   }
 });
+
 
 router.get('/gold_history/details', isLogin, async (req, res, next) => {
   try {
