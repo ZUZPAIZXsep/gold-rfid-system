@@ -10,7 +10,7 @@
                 <th>ขนาดทองคำ</th>
                 <th>น้ำหนัก (กรัม)</th>
                 <th>สถานะ</th>
-                <th>เวลา</th>
+                <th>เวลาที่บันทึกเข้าระบบ</th>
             </tr>
         </thead>
         <tbody>
@@ -43,7 +43,7 @@
                             <% } %>
                         <% } %>
                     </td>                    
-                    <td><%= dayjs(detail.gold_timestamp).format('HH:mm:ss') %></td>
+                    <td><%= dayjs(detail.gold_timestamp).format('DD-MM-YYYY HH:mm:ss') %></td>
                 </tr>
             <% }); %>
         </tbody>

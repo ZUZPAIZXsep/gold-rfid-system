@@ -1,38 +1,32 @@
 <%- include('header') %>
 
-<form method="GET">
+<form method="GET" action="/gold_history">
     <div class="container-fluid mt-3">
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <h3 style="font-weight: bold;">ประวัติทองคำในแต่ละวัน</h3>
             <a type="button" class="btn btn-success" style="margin-left: 4px;" href="/gold_sales">
-              <span class="material-icon material-symbols-outlined">shopping_cart</span> ไปยังหน้าการขาย
+                <span class="material-icon material-symbols-outlined">shopping_cart</span> ไปยังหน้าการขาย
             </a>
-        </div> 
-        <div class="row">
-            <div class="row mt-1">
-                <div class="col-2">
-                    <label for="start_date_input" style="font-weight: 600;">เลือกวันที่เริ่มต้น</label>
-                    <input type="date" class="form-control" id="start_date_input" name="start_date" value="<%= startDate %>" placeholder="เลือกวันที่เริ่มต้น">
-                </div>
-                <div class="col-2">
-                    <label for="end_date_input" style="font-weight: 600;">ถึงวันที่</label>
-                    <input type="date" class="form-control" id="end_date_input" name="end_date" value="<%= endDate %>" placeholder="ถึงวันที่">
-                </div>
-            </div> 
-        </div>       
-        <div>
-            <button type="submit" class="btn btn-primary mt-3">
-                <span class="material-icon material-symbols-outlined">
-                    search
-                </span>
-                ค้นหา
-            </button>
-            <a type="button" class="btn btn-danger mt-3" style="margin-left: 4px;" href="./gold_history">
-                <span class="material-icon material-symbols-outlined">
-                    close
-                </span>
-                ล้างค่า
-            </a>
+        </div>
+        <!-- ฟิลเตอร์เลือกช่วงวันที่ -->
+        <div class="row mt-1">
+            <div class="col-2">
+                <label for="start_date_input" style="font-weight: 600;">เลือกวันที่เริ่มต้น</label>
+                <input type="date" class="form-control" id="start_date_input" name="start_date" value="<%= startDate %>" placeholder="เลือกวันที่เริ่มต้น">
+            </div>
+            <div class="col-2">
+                <label for="end_date_input" style="font-weight: 600;">ถึงวันที่</label>
+                <input type="date" class="form-control" id="end_date_input" name="end_date" value="<%= endDate %>" placeholder="ถึงวันที่">
+            </div>
+            <div class="col-2 align-self-end">
+                <button type="submit" class="btn btn-primary">กรองข้อมูล</button>
+                <a type="button" class="btn btn-danger" style="margin-left: 4px;" href="./gold_history">
+                    <span class="material-icon material-symbols-outlined">
+                        close
+                    </span>
+                    ล้างค่า
+                </a>
+            </div>
         </div>
         <div class="mt-3">
             <% if (summarizedGoldHistory.length > 0) { %>
@@ -40,7 +34,7 @@
                     <thead class="table-success">
                         <tr>
                             <th width="200px">วันที่</th>
-                            <th width="150px">จำนวนรายการ</th>
+                            <th width="150px">จำนวนรายการทองคำ</th>
                             <th width="150px">รายละเอียด</th>
                         </tr>
                     </thead>
@@ -56,6 +50,38 @@
                         <% }); %>
                     </tbody>
                 </table>
+
+                <!-- Pagination Controls -->
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        <!-- ปุ่มไปยังหน้าแรก -->
+                        <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+                            <a class="page-link" href="/gold_history?page=1">หน้าแรกสุด</a>
+                        </li>
+                        
+                        <!-- ปุ่มย้อนกลับ -->
+                        <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+                            <a class="page-link" href="/gold_history?page=<%= currentPage - 1 %>" aria-label="Next"><span aria-hidden="true">&laquo;</span></a>
+                        </li>
+
+                        <!-- แสดงหมายเลขหน้า -->
+                        <% for (let i = 1; i <= totalPages; i++) { %>
+                            <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                                <a class="page-link" href="/gold_history?page=<%= i %>"><%= i %></a>
+                            </li>
+                        <% } %>
+
+                        <!-- ปุ่มถัดไป -->
+                        <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+                            <a class="page-link" href="/gold_history?page=<%= currentPage + 1 %>" aria-label="Next"><span aria-hidden="true">&raquo;</span></a>
+                        </li>
+                        
+                        <!-- ปุ่มไปยังหน้าท้ายสุด -->
+                        <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+                            <a class="page-link" href="/gold_history?page=<%= totalPages %>">ท้ายสุด</a>
+                        </li>
+                    </ul>
+                </nav>
             <% } else { %>
                 <p>ไม่มีข้อมูลทองคำตรงกับเงื่อนไขที่คุณเลือก</p>
             <% } %>
@@ -63,9 +89,20 @@
     </div>
 </form>
 
+<script>
+    // ฟังก์ชันในการส่งฟอร์มอัตโนมัติเมื่อมีการเปลี่ยนแปลงวันที่
+    document.getElementById('start_date_input').addEventListener('change', function() {
+        document.getElementById('dateFilterForm').submit();
+    });
+
+    document.getElementById('end_date_input').addEventListener('change', function() {
+        document.getElementById('dateFilterForm').submit();
+    });
+</script>
+
 <%- include('footer') %>
 
-<!-- <style>
+<style>
     .page-item.active .page-link {
         background-color: #007bff;
         color: #ffffff;
@@ -78,4 +115,4 @@
         background-color: #f88379; /* สีเน้นของหน้าปัจจุบัน */
         color: #ffffff; /* สีข้อความของหน้าปัจจุบัน */
     }
-</style> -->
+</style>

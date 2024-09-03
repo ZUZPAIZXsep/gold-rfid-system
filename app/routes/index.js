@@ -1246,6 +1246,7 @@ router.post('/update_goldstatus', isLogin, async (req, res) => {
   try {
       const { gold_ids, customer_name, customer_surname, customer_phone, gold_sales } = req.body;
       const currentTimestamp = dayjs().locale('th').format('YYYY-MM-DD HH:mm:ss');
+      const currentDate = dayjs().locale('th').format('YYYY-MM-DD'); // Extract current date for gold_datetime
       
       // Fetch the latest gold price
       const dataUrl = 'http://www.thaigold.info/RealTimeDataV2/gtdata_.txt';
@@ -1300,7 +1301,7 @@ router.post('/update_goldstatus', isLogin, async (req, res) => {
               goldPrice = 0; // Default if size not matched
           }
           
-          let existingGold = await Goldhistory.findOne({ gold_id: gold.gold_id }).sort({ gold_timestamp: -1 });
+          let existingGold = await Goldhistory.findOne({ gold_id: gold.gold_id }).sort({ gold_Datetime: -1 });
 
           if (existingGold) {
               // Update existing document
@@ -1310,6 +1311,7 @@ router.post('/update_goldstatus', isLogin, async (req, res) => {
               existingGold.gold_status = 'out of stock';
               existingGold.gold_price = goldPrice.toFixed(2);
               existingGold.gold_outDateTime = currentTimestamp;
+              existingGold.gold_datetime = currentDate; // Set current date
               existingGold.seller_username = req.session.usr;
               existingGold.seller_role = req.session.role;
               existingGold.seller_name = req.session.name;
@@ -1320,6 +1322,7 @@ router.post('/update_goldstatus', isLogin, async (req, res) => {
                   gold_id: gold.gold_id,
                   gold_status: 'out of stock',
                   gold_outDateTime: currentTimestamp,
+                  gold_datetime: currentDate, // Set current date
                   customer_name: customer_name,
                   customer_surname: customer_surname,
                   customer_phone: customer_phone,
@@ -1545,44 +1548,50 @@ function summarizeGoldHistory(data) {
 
 router.get('/gold_history', isLogin, async (req, res, next) => {
   try {
-    const { start_date, end_date, select_goldType, select_goldSize, gold_id } = req.query;
-    
-    const query = {};
-    if (start_date && end_date) {
-      query.gold_Datetime = {
-        $gte: new Date(start_date),
-        $lte: new Date(end_date)
-      };
-    }
-    if (select_goldType) query.gold_type = select_goldType;
-    if (select_goldSize) query.gold_size = select_goldSize;
-    if (gold_id) query.gold_id = gold_id;
+    const { start_date, end_date, page } = req.query;
+    const currentPage = parseInt(page) || 1;
+    const limit = 10; // จำนวนรายการต่อหน้า
+    const skip = (currentPage - 1) * limit;
 
-    const data = await Goldhistory.find(query).sort({ gold_Datetime: -1 });
+    const query = {};
+
+    // ถ้ามีค่า start_date และ end_date
+    if (start_date && end_date) {
+      const startDate = dayjs(start_date).startOf('day').toDate();
+      const endDate = dayjs(end_date).endOf('day').toDate();
+      query.gold_Datetime = { $gte: startDate, $lte: endDate };
+    }
+
+    // ดึงข้อมูลทั้งหมดเพื่อทำการสรุปก่อน
+    const allData = await Goldhistory.find(query).sort({ gold_Datetime: -1 });
+
+    // สรุปข้อมูล
+    const summarizedData = summarizeGoldHistory(allData);
+
+    // นำข้อมูลที่สรุปแล้วมาแบ่งหน้า
+    const paginatedData = summarizedData.slice(skip, skip + limit);
+
+    const totalCount = summarizedData.length;
+    const totalPages = Math.ceil(totalCount / limit);
 
     // Get the latest date in the database
     const latestRecord = await Goldhistory.findOne().sort({ gold_Datetime: -1 }).exec();
     const latestDate = latestRecord ? latestRecord.gold_Datetime : null;
 
-    const summarizedGoldHistory = summarizeGoldHistory(data);
-
     res.render('gold_history', {
-      summarizedGoldHistory,
-      dayjs: dayjs, // ส่ง dayjs ไปยัง EJS template
-      startDate: start_date || '',
-      endDate: end_date || '',
-      select_goldType: select_goldType || '',
-      select_goldSize: select_goldSize || '',
-      gold_id: gold_id || '',
+      summarizedGoldHistory: paginatedData,
+      dayjs: dayjs,
       latestDate: latestDate,
-      queryParams: new URLSearchParams(req.query).toString()
-    });    
+      currentPage: currentPage,
+      totalPages: totalPages,
+      startDate: start_date || '', // แสดงค่าเริ่มต้นของ start_date
+      endDate: end_date || '' // แสดงค่าเริ่มต้นของ end_date
+    });
   } catch (error) {
     console.error(error);
     res.status(500).send('Internal Server Error');
   }
 });
-
 
 router.get('/gold_history/details', isLogin, async (req, res, next) => {
   try {
