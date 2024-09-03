@@ -24,6 +24,7 @@
     "mysql": "^2.18.1",
     "node-cron": "^3.0.3",
     "node-hid": "^3.0.0",
-    "nodemon": "^3.1.0"
+    "nodemon": "^3.1.0",
+    "socket.io": "^4.7.5"
   }
 }

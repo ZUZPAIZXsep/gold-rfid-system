@@ -5,24 +5,24 @@
 <div class="text-center mb-4">
     <h2 style="font-size: 2rem; font-weight: bold;">พนักงาน: <%= currentUser.name %></h2>
 </div>
-<div class="total-summary d-flex justify-content-between mb-4">
-    <div class="flex-fill text-center p-2 border">
-        <h4 style="font-size: 1.5rem;">ยอดขายรายวัน</h4>
-        <p style="font-size: 1.25rem;"><%= totals.day_sale.toFixed(2) %></p>
-    </div>
-    <div class="flex-fill text-center p-2 border">
-        <h4 style="font-size: 1.5rem;">ยอดขายรายสัปดาห์</h4>
-        <p style="font-size: 1.25rem;"><%= totals.week_sale.toFixed(2) %></p>
-    </div>
-    <div class="flex-fill text-center p-2 border">
-        <h4 style="font-size: 1.5rem;">ยอดขายรายเดือน</h4>
-        <p style="font-size: 1.25rem;"><%= totals.month_sale.toFixed(2) %></p>
-    </div>
-    <div class="flex-fill text-center p-2 border">
-        <h4 style="font-size: 1.5rem;">ยอดขายรวม</h4>
-        <p style="font-size: 1.25rem;"><%= totals.total_sale.toFixed(2) %></p>
-    </div>
+<div id="sales-summary">
+  <%- include('partials/sales_employee_partial', { totals }) %>
 </div>
 </form>
 
 <%- include('footer') %>
+
+<script>
+  function refreshSalesSummary() {
+    fetch('/gold_sales_employee_partial')
+      .then(response => response.text())
+      .then(html => {
+        document.getElementById('sales-summary').innerHTML = html;
+      })
+      .catch(error => console.error('Error fetching sales summary:', error));
+  }
+
+  // Refresh every 10 seconds
+  setInterval(refreshSalesSummary, 1000);
+</script>
+

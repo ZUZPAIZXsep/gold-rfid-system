@@ -1,4 +1,5 @@
 <%- include('header') %>
+
 <form method="GET">
     <div>
         <!-- Display total sales summary -->
@@ -22,32 +23,24 @@
             </div>
         </div>
 
-        <table class="table table-bordered mt-4">
-            <thead class="table-success">
-                <tr>
-                    <th width="40px">ลำดับที่</th>
-                    <th width="160px">ชื่อในระบบ</th>
-                    <th width="320px">ชื่อพนักงาน</th>
-                    <th width="160px">ยอดขายรายวัน</th>
-                    <th width="160px">ยอดขายรายสัปดาห์</th>
-                    <th width="160px">ยอดขายรายเดือน</th>
-                    <th width="160px">ยอดขายรวม</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% users.forEach((user, index) => { %>
-                    <tr>
-                        <td><%= index + 1 %></td>
-                        <td><%= user.usr %></td>
-                        <td><%= user.name %></td>
-                        <td><%= user.day_sale.toFixed(2) %></td>
-                        <td><%= user.week_sale.toFixed(2) %></td>
-                        <td><%= user.month_sale.toFixed(2) %></td>                                    
-                        <td><%= user.total_sale.toFixed(2) %></td>
-                    </tr>
-                <% }); %>
-            </tbody>
-        </table>
+        <div id="sales-summary">
+            <%- include('partials/sales_summary_partial', { users: users }) %>
+        </div>
     </div>
 </form>
+
 <%- include('footer') %>
+
+<script>
+  function refreshSalesSummary() {
+    fetch('/gold_sales_summary_partial')
+      .then(response => response.text())
+      .then(html => {
+        document.getElementById('sales-summary').innerHTML = html;
+      })
+      .catch(error => console.error('Error fetching sales summary:', error));
+  }
+
+  // Refresh every 1 seconds
+  setInterval(refreshSalesSummary, 1000);
+</script>

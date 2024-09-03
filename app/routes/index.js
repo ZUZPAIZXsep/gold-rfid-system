@@ -13,6 +13,7 @@ const bcrypt = require('bcrypt');
 const cron = require('node-cron');
 const timezone = require('dayjs/plugin/timezone');
 const utc = require('dayjs/plugin/utc');
+const socketIo = require('socket.io');
 
 
 // เชื่อมต่อกับ MongoDB
@@ -1651,19 +1652,32 @@ router.post('/delete_goldhistory', async (req, res) => {
 
 router.get('/gold_sales_summary', isLogin, async (req, res) => {
   try {
+    // รีเซ็ตยอดขายของทุกผู้ใช้เป็น 0 ก่อน
+    await Golduser.updateMany(
+      { role: { $ne: 'Admin' } }, // ยกเว้นผู้ใช้ที่มี role เป็น Admin
+      {
+        $set: {
+          day_sale: 0,
+          week_sale: 0,
+          month_sale: 0,
+          total_sale: 0
+        }
+      }
+    );
+
     // Fetch all users except those with the role "Admin"
     const users = await Golduser.find({ role: { $ne: 'Admin' } });
 
     // Get the current date for filtering sales
     const startOfDay = dayjs().startOf('day').toDate();
     const endOfDay = dayjs().endOf('day').toDate();
-    const startOfWeek = dayjs().startOf('week').toDate();
-    const endOfWeek = dayjs().endOf('week').toDate();
+    
+    // Set the start of the week to Monday
+    const startOfWeek = dayjs().startOf('week').add(1, 'day').toDate(); // Monday
+    const endOfWeek = dayjs().endOf('week').add(1, 'day').toDate(); // End of Sunday
+    
     const startOfMonth = dayjs().startOf('month').toDate();
     const endOfMonth = dayjs().endOf('month').toDate();
-
-    // Map user ID to their sales in different periods
-    const userSales = {};
 
     // Fetch sales from gold_history within different periods
     const salesData = await Goldhistory.find({
@@ -1671,6 +1685,7 @@ router.get('/gold_sales_summary', isLogin, async (req, res) => {
     });
 
     // Summarize sales by user for different periods
+    const userSales = {};
     salesData.forEach((sale) => {
       const sellerName = sale.seller_name;
       const saleAmount = parseFloat(sale.gold_price) || 0;
@@ -1743,6 +1758,18 @@ router.get('/gold_sales_summary', isLogin, async (req, res) => {
 });
 
 
+router.get('/gold_sales_summary_partial', isLogin, async (req, res) => {
+  try {
+    const users = await Golduser.find({ role: { $ne: 'Admin' } });
+    res.render('partials/sales_summary_partial', { users });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+
+
 router.get('/gold_sales_employee', isLogin, async (req, res) => {
   try {
     const currentUser = await Golduser.findOne({ usr: req.session.usr });
@@ -1751,12 +1778,25 @@ router.get('/gold_sales_employee', isLogin, async (req, res) => {
       return res.status(404).send('User not found');
     }
 
-    // Calculate totals for the current user
+    // Reset sales data for the current user
+    await Golduser.updateOne(
+      { _id: currentUser._id },
+      {
+        $set: {
+          day_sale: 0,
+          week_sale: 0,
+          month_sale: 0,
+          total_sale: 0
+        }
+      }
+    );
+
+    // Summarize sales for different periods
     const totals = {
-      day_sale: currentUser.day_sale,
-      week_sale: currentUser.week_sale,
-      month_sale: currentUser.month_sale,
-      total_sale: currentUser.total_sale
+      day_sale: 0,
+      week_sale: 0,
+      month_sale: 0,
+      total_sale: 0
     };
 
     res.render('gold_salesEmployee', { currentUser, totals });
@@ -1765,6 +1805,64 @@ router.get('/gold_sales_employee', isLogin, async (req, res) => {
     res.status(500).send('Internal Server Error');
   }
 });
+
+router.get('/gold_sales_employee_partial', isLogin, async (req, res) => {
+  try {
+    const currentUser = await Golduser.findOne({ usr: req.session.usr });
+
+    if (!currentUser) {
+      return res.status(404).send('User not found');
+    }
+
+    // Get the current date for filtering sales
+    const startOfDay = dayjs().startOf('day').toDate();
+    const endOfDay = dayjs().endOf('day').toDate();
+    
+    // Set the start of the week to Monday
+    const startOfWeek = dayjs().startOf('week').add(1, 'day').toDate(); // Monday
+    const endOfWeek = dayjs().endOf('week').add(1, 'day').toDate(); // End of Sunday
+    
+    const startOfMonth = dayjs().startOf('month').toDate();
+    const endOfMonth = dayjs().endOf('month').toDate();
+
+    // Fetch sales from gold_history for the current user
+    const salesData = await Goldhistory.find({
+      seller_name: currentUser.name,
+      gold_outDateTime: { $lte: endOfDay }
+    });
+
+    // Summarize sales for different periods
+    const totals = {
+      day_sale: 0,
+      week_sale: 0,
+      month_sale: 0,
+      total_sale: 0
+    };
+
+    salesData.forEach((sale) => {
+      const saleAmount = parseFloat(sale.gold_price) || 0;
+
+      if (sale.gold_outDateTime >= startOfDay && sale.gold_outDateTime <= endOfDay) {
+        totals.day_sale += saleAmount;
+      }
+      if (sale.gold_outDateTime >= startOfWeek && sale.gold_outDateTime <= endOfWeek) {
+        totals.week_sale += saleAmount;
+      }
+      if (sale.gold_outDateTime >= startOfMonth && sale.gold_outDateTime <= endOfMonth) {
+        totals.month_sale += saleAmount;
+      }
+
+      totals.total_sale += saleAmount; // Total sale (all-time)
+    });
+
+    res.render('partials/sales_employee_partial', { totals });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+
 
 router.get('/create_user', isLogin, async (req, res) => {
   try {
