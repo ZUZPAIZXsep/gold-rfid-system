@@ -1618,7 +1618,7 @@ router.get('/gold_history/details', isLogin, async (req, res, next) => {
       details: details,
       dayjs: dayjs,
       latestDate: latestDate,
-      
+      selectedDate: dateParam,
     });
   } catch (error) {
     console.error(error);

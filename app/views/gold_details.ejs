@@ -1,7 +1,7 @@
 <%- include('header') %>
 
 <div class="container mt-3">
-    <h3>รายละเอียดทองคำสำหรับวันที่ <%= dayjs().format('DD-MM-YYYY') %></h3>
+    <h3>รายละเอียดทองคำสำหรับวันที่ <%= dayjs(selectedDate).format('DD-MM-YYYY') %></h3>
     <table class="table table-bordered mt-3">
         <thead class="table-success">
             <tr>
