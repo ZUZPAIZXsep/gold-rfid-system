@@ -1,0 +1,57 @@
+<%- include('header') %>
+
+<div class="container mt-5">
+  <h2>แก้ไขข้อมูลผู้ใช้</h2>
+  <form action="/edit_user/<%= user._id %>" method="POST">
+    <div class="mb-3">
+      <label for="name" class="form-label">ชื่อพนักงาน</label>
+      <input type="text" class="form-control" id="name" name="name" value="<%= user.name %>" required>
+    </div>
+    <div class="mb-3">
+      <label for="usr" class="form-label">ชื่อในระบบ</label>
+      <input type="text" class="form-control" id="usr" name="usr" value="<%= user.usr %>" required>
+    </div>
+    <div class="mb-3 position-relative">
+      <label for="pwd" class="form-label">รหัสผ่านใหม่ (หากต้องการเปลี่ยน)</label>
+      <input type="password" class="form-control" id="pwd" name="pwd" placeholder="********">
+      <!-- ไอคอนแสดงรหัสผ่าน -->
+      <span class="position-absolute" id="togglePassword" style="right: 10px; top: 35px; cursor: pointer;">
+        <i class="material-icons">visibility_off</i>
+      </span>
+    </div>
+    <div class="mb-3">
+      <label for="role" class="form-label">ตำแหน่ง</label>
+      <select class="form-select" id="role" name="role" required>
+        <option value="Owner" <%= user.role === 'Owner' ? 'selected' : '' %>>Owner</option>
+        <option value="Employee" <%= user.role === 'Employee' ? 'selected' : '' %>>Employee</option>
+      </select>
+    </div>
+    <div class="mb-3">
+      <label for="phone" class="form-label">โทรศัพท์</label>
+      <input type="text" class="form-control" id="phone" name="phone" value="<%= user.phone %>" required>
+    </div>
+    <div class="mb-3">
+      <label for="email" class="form-label">อีเมล</label>
+      <input type="email" class="form-control" id="email" name="email" value="<%= user.email %>" required>
+    </div>
+    <button type="submit" class="btn btn-primary">บันทึกการเปลี่ยนแปลง</button>
+    <a href="/home" class="btn btn-secondary">ยกเลิก</a>
+  </form>
+</div>
+
+<%- include('footer') %>
+
+<script>
+  // JavaScript สำหรับแสดง/ซ่อนรหัสผ่าน
+  const togglePassword = document.querySelector('#togglePassword');
+  const passwordField = document.querySelector('#pwd');
+
+  togglePassword.addEventListener('click', function () {
+    // เปลี่ยน type ของฟิลด์รหัสผ่าน
+    const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+    passwordField.setAttribute('type', type);
+
+    // เปลี่ยนไอคอนเมื่อมีการแสดง/ซ่อนรหัสผ่าน
+    this.querySelector('i').textContent = type === 'password' ? 'visibility_off' : 'visibility';
+  });
+</script>

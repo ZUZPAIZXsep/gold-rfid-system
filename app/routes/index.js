@@ -1862,8 +1862,6 @@ router.get('/gold_sales_employee_partial', isLogin, async (req, res) => {
   }
 });
 
-
-
 router.get('/create_user', isLogin, async (req, res) => {
   try {
     res.render('create_user');
@@ -1902,6 +1900,58 @@ router.post('/create_user', isLogin, async (req, res) => {
   } catch (err) {
     console.log(err);
     res.status(500).send('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+  }
+});
+
+// Route สำหรับแสดงฟอร์มแก้ไขผู้ใช้
+router.get('/edit_user/:id', isLogin, async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const user = await Golduser.findById(userId); // หา user ตาม id ที่ส่งมา
+
+    if (!user) {
+      return res.status(404).send('User not found');
+    }
+
+    res.render('edit_user', { user }); // ส่งข้อมูลผู้ใช้ไปยังหน้าฟอร์มแก้ไข
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+// Route สำหรับอัปเดตข้อมูลผู้ใช้
+router.post('/edit_user/:id', isLogin, async (req, res) => {
+  try {
+    const { usr, name, role, phone, email, pwd } = req.body;
+
+    // ตรวจสอบว่าผู้ใช้ที่แก้ไขมีอยู่จริง
+    const user = await Golduser.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).send('User not found');
+    }
+
+    // อัปเดตข้อมูลผู้ใช้
+    user.usr = usr;
+    user.name = name;
+    user.role = role;
+    user.phone = phone;
+    user.email = email;
+
+    // หากมีการกรอกรหัสผ่านใหม่ ให้แฮชและอัปเดต
+    if (pwd) {
+      user.pwd = await hashPassword(pwd);
+    }
+
+    // บันทึกการเปลี่ยนแปลงลงฐานข้อมูล
+    await user.save();
+
+    // ส่งกลับไปยังหน้า home
+    res.redirect('/home');
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
   }
 });
 
