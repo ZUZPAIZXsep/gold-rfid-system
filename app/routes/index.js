@@ -1534,65 +1534,83 @@ router.get('/gold_saleDetails', isLogin, async (req, res, next) => {
 // });
 
 // Function to summarize the gold history by date
+// สรุปข้อมูลโดยกรองเฉพาะรายการที่มีสถานะเป็น 'in stock'
 function summarizeGoldHistory(data) {
-  const summary = data.reduce((acc, record) => {
-    const date = dayjs(record.gold_Datetime).startOf('day').format('YYYY-MM-DD');
-    if (!acc[date]) {
-      acc[date] = { date: date, count: 0 };
-    }
-    acc[date].count += 1;
-    return acc;
-  }, {});
+  const summary = {};
 
+  data.forEach(entry => {
+    const dateKey = dayjs(entry.gold_Datetime).startOf('day').format('YYYY-MM-DD');
+    
+    // ตรวจสอบว่ามีการสร้าง key ของวันนั้นหรือยัง ถ้าไม่มีก็สร้างใหม่
+    if (!summary[dateKey]) {
+      summary[dateKey] = {
+        date: dateKey,
+        count: 0
+      };
+    }
+    
+    // นับเฉพาะรายการที่มีสถานะเป็น 'in stock'
+    if (entry.gold_status === 'in stock') {
+      summary[dateKey].count += 1;
+    }
+  });
+
+  // แปลงข้อมูลจาก Object เป็น Array
   return Object.values(summary);
 }
 
-router.get('/gold_history', isLogin, async (req, res, next) => {
-  try {
-    const { start_date, end_date, page } = req.query;
-    const currentPage = parseInt(page) || 1;
-    const limit = 10; // จำนวนรายการต่อหน้า
-    const skip = (currentPage - 1) * limit;
+  router.get('/gold_history', isLogin, async (req, res, next) => {
+    try {
+      const { start_date, end_date, page } = req.query;
+      const currentPage = parseInt(page) || 1;
+      const limit = 10;
+      const skip = (currentPage - 1) * limit;
 
-    const query = {};
+      const query = {};
 
-    // ถ้ามีค่า start_date และ end_date
-    if (start_date && end_date) {
-      const startDate = dayjs(start_date).startOf('day').toDate();
-      const endDate = dayjs(end_date).endOf('day').toDate();
-      query.gold_Datetime = { $gte: startDate, $lte: endDate };
+      const latestRecord = await Goldhistory.findOne().sort({ gold_Datetime: -1 }).exec();
+      const latestDate = latestRecord ? latestRecord.gold_Datetime : null;
+
+      if (start_date && !end_date) {
+        const startDate = dayjs(start_date).startOf('day').toDate();
+        query.gold_Datetime = { $gte: startDate, $lte: latestDate };
+      } else if (end_date && !start_date) {
+        const endDate = dayjs(end_date).endOf('day').toDate();
+        query.gold_Datetime = { $lte: endDate };
+      } else if (start_date && end_date) {
+        const startDate = dayjs(start_date).startOf('day').toDate();
+        const endDate = dayjs(end_date).endOf('day').toDate();
+        query.gold_Datetime = { $gte: startDate, $lte: endDate };
+      }
+
+      const allData = await Goldhistory.find(query).sort({ gold_Datetime: -1 });
+
+      const summarizedData = summarizeGoldHistory(allData);
+      const paginatedData = summarizedData.slice(skip, skip + limit);
+
+      const totalCount = summarizedData.length;
+      const totalPages = Math.ceil(totalCount / limit);
+
+      const queryParams = new URLSearchParams(req.query);
+      queryParams.delete('page');
+
+      res.render('gold_history', {
+        summarizedGoldHistory: paginatedData,
+        dayjs: dayjs,
+        latestDate: latestDate,
+        currentPage: currentPage,
+        totalPages: totalPages,
+        startDate: start_date || '',
+        endDate: end_date || '',
+        queryParams: queryParams.toString()
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).send('Internal Server Error');
     }
+  });
 
-    // ดึงข้อมูลทั้งหมดเพื่อทำการสรุปก่อน
-    const allData = await Goldhistory.find(query).sort({ gold_Datetime: -1 });
 
-    // สรุปข้อมูล
-    const summarizedData = summarizeGoldHistory(allData);
-
-    // นำข้อมูลที่สรุปแล้วมาแบ่งหน้า
-    const paginatedData = summarizedData.slice(skip, skip + limit);
-
-    const totalCount = summarizedData.length;
-    const totalPages = Math.ceil(totalCount / limit);
-
-    // Get the latest date in the database
-    const latestRecord = await Goldhistory.findOne().sort({ gold_Datetime: -1 }).exec();
-    const latestDate = latestRecord ? latestRecord.gold_Datetime : null;
-
-    res.render('gold_history', {
-      summarizedGoldHistory: paginatedData,
-      dayjs: dayjs,
-      latestDate: latestDate,
-      currentPage: currentPage,
-      totalPages: totalPages,
-      startDate: start_date || '', // แสดงค่าเริ่มต้นของ start_date
-      endDate: end_date || '' // แสดงค่าเริ่มต้นของ end_date
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('Internal Server Error');
-  }
-});
 
 router.get('/gold_history/details', isLogin, async (req, res, next) => {
   try {

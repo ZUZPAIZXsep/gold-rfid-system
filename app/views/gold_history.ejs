@@ -19,7 +19,6 @@
                 <input type="date" class="form-control" id="end_date_input" name="end_date" value="<%= endDate %>" placeholder="ถึงวันที่">
             </div>
             <div class="col-2 align-self-end">
-                <button type="submit" class="btn btn-primary">กรองข้อมูล</button>
                 <a type="button" class="btn btn-danger" style="margin-left: 4px;" href="./gold_history">
                     <span class="material-icon material-symbols-outlined">
                         close
@@ -56,29 +55,29 @@
                     <ul class="pagination justify-content-center">
                         <!-- ปุ่มไปยังหน้าแรก -->
                         <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
-                            <a class="page-link" href="/gold_history?page=1">หน้าแรกสุด</a>
+                            <a class="page-link" href="/gold_history?page=1&<%= queryParams %>">หน้าแรกสุด</a>
                         </li>
-                        
+
                         <!-- ปุ่มย้อนกลับ -->
                         <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
-                            <a class="page-link" href="/gold_history?page=<%= currentPage - 1 %>" aria-label="Next"><span aria-hidden="true">&laquo;</span></a>
+                            <a class="page-link" href="/gold_history?page=<%= currentPage - 1 %>&<%= queryParams %>" aria-label="Next"><span aria-hidden="true">&laquo;</span></a>
                         </li>
 
                         <!-- แสดงหมายเลขหน้า -->
                         <% for (let i = 1; i <= totalPages; i++) { %>
                             <li class="page-item <%= currentPage === i ? 'active' : '' %>">
-                                <a class="page-link" href="/gold_history?page=<%= i %>"><%= i %></a>
+                                <a class="page-link" href="/gold_history?page=<%= i %>&<%= queryParams %>"><%= i %></a>
                             </li>
                         <% } %>
 
                         <!-- ปุ่มถัดไป -->
                         <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
-                            <a class="page-link" href="/gold_history?page=<%= currentPage + 1 %>" aria-label="Next"><span aria-hidden="true">&raquo;</span></a>
+                            <a class="page-link" href="/gold_history?page=<%= currentPage + 1 %>&<%= queryParams %>" aria-label="Next"><span aria-hidden="true">&raquo;</span></a>
                         </li>
-                        
+
                         <!-- ปุ่มไปยังหน้าท้ายสุด -->
                         <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
-                            <a class="page-link" href="/gold_history?page=<%= totalPages %>">ท้ายสุด</a>
+                            <a class="page-link" href="/gold_history?page=<%= totalPages %>&<%= queryParams %>">ท้ายสุด</a>
                         </li>
                     </ul>
                 </nav>
@@ -90,15 +89,15 @@
 </form>
 
 <script>
-    // ฟังก์ชันในการส่งฟอร์มอัตโนมัติเมื่อมีการเปลี่ยนแปลงวันที่
-    document.getElementById('start_date_input').addEventListener('change', function() {
-        document.getElementById('dateFilterForm').submit();
+    document.getElementById('start_date_input').addEventListener('change', function () {
+        this.form.submit(); // ส่งฟอร์มอัตโนมัติเมื่อมีการเลือกวันที่เริ่มต้น
     });
 
-    document.getElementById('end_date_input').addEventListener('change', function() {
-        document.getElementById('dateFilterForm').submit();
+    document.getElementById('end_date_input').addEventListener('change', function () {
+        this.form.submit(); // ส่งฟอร์มอัตโนมัติเมื่อมีการเลือกวันที่สิ้นสุด
     });
 </script>
+
 
 <%- include('footer') %>
 
