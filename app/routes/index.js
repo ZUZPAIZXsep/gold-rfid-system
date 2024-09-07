@@ -1670,39 +1670,33 @@ router.post('/delete_goldhistory', async (req, res) => {
 
 router.get('/gold_sales_summary', isLogin, async (req, res) => {
   try {
-    // รีเซ็ตยอดขายของทุกผู้ใช้เป็น 0 ก่อน
-    await Golduser.updateMany(
-      { role: { $ne: 'Admin' } }, // ยกเว้นผู้ใช้ที่มี role เป็น Admin
-      {
-        $set: {
-          day_sale: 0,
-          week_sale: 0,
-          month_sale: 0,
-          total_sale: 0
-        }
-      }
-    );
-
-    // Fetch all users except those with the role "Admin"
+    const selectedDate = req.query.date || dayjs().format('YYYY-MM-DD');
+    const selectedDay = dayjs(selectedDate);
     const users = await Golduser.find({ role: { $ne: 'Admin' } });
 
-    // Get the current date for filtering sales
-    const startOfDay = dayjs().startOf('day').toDate();
-    const endOfDay = dayjs().endOf('day').toDate();
-    
-    // Set the start of the week to Monday
-    const startOfWeek = dayjs().startOf('week').add(1, 'day').toDate(); // Monday
-    const endOfWeek = dayjs().endOf('week').add(1, 'day').toDate(); // End of Sunday
-    
-    const startOfMonth = dayjs().startOf('month').toDate();
-    const endOfMonth = dayjs().endOf('month').toDate();
+    // กำหนดค่าเริ่มต้นของวันที่ที่ถูกเลือก
+    const startOfDay = selectedDay.startOf('day').toDate();
+    const endOfDay = selectedDay.endOf('day').toDate();
 
-    // Fetch sales from gold_history within different periods
+    // กำหนดให้เริ่มต้นนับสัปดาห์จากวันจันทร์
+    let startOfWeek = selectedDay.startOf('week').add(1, 'day').toDate(); // Monday
+    let endOfWeek = selectedDay.endOf('week').add(1, 'day').toDate(); // Sunday
+
+    // ถ้าหากเลือกวันอาทิตย์ ให้ใช้สัปดาห์ก่อนหน้า
+    if (selectedDay.day() === 0) {
+      startOfWeek = selectedDay.subtract(1, 'week').startOf('week').add(1, 'day').toDate(); // Previous Monday
+      endOfWeek = selectedDay.endOf('week').toDate(); // Sunday of the current week
+    }
+
+    const startOfMonth = selectedDay.startOf('month').toDate();
+    const endOfMonth = selectedDay.endOf('month').toDate();
+
+    // ดึงข้อมูลยอดขายในช่วงเวลาที่เลือก
     const salesData = await Goldhistory.find({
       gold_outDateTime: { $lte: endOfDay }
     });
 
-    // Summarize sales by user for different periods
+    // คำนวณยอดขายสำหรับแต่ละช่วงเวลา
     const userSales = {};
     salesData.forEach((sale) => {
       const sellerName = sale.seller_name;
@@ -1727,10 +1721,10 @@ router.get('/gold_sales_summary', isLogin, async (req, res) => {
         userSales[sellerName].month_sale += saleAmount;
       }
 
-      userSales[sellerName].total_sale += saleAmount; // Total sale (all-time)
+      userSales[sellerName].total_sale += saleAmount; // ยอดขายรวม (รวมทุกช่วงเวลา)
     });
 
-    // Update Golduser with the summarized sales data
+    // อัปเดตข้อมูลยอดขายในฐานข้อมูล
     for (const user of users) {
       const sales = userSales[user.name] || {
         day_sale: 0,
@@ -1752,7 +1746,7 @@ router.get('/gold_sales_summary', isLogin, async (req, res) => {
       );
     }
 
-    // Calculate totals for each period
+    // คำนวณยอดขายรวมสำหรับแต่ละช่วงเวลา
     const totals = users.reduce((acc, user) => {
       const userSale = userSales[user.name] || {};
       acc.day_sale += userSale.day_sale || 0;
@@ -1767,24 +1761,26 @@ router.get('/gold_sales_summary', isLogin, async (req, res) => {
       total_sale: 0
     });
 
-    // Pass the users and sales data to the template
-    res.render('gold_salesSummary', { users, userSales, totals });
+    // ส่งข้อมูลไปที่ template
+    res.render('gold_salesSummary', { users, date: selectedDate, totals, dayjs });
   } catch (error) {
     console.error(error);
     res.status(500).send('Internal Server Error');
   }
 });
-
 
 router.get('/gold_sales_summary_partial', isLogin, async (req, res) => {
   try {
+    const selectedDate = req.query.date || dayjs().format('YYYY-MM-DD');
     const users = await Golduser.find({ role: { $ne: 'Admin' } });
-    res.render('partials/sales_summary_partial', { users });
+    res.render('partials/sales_summary_partial', { users, date: selectedDate });
   } catch (error) {
     console.error(error);
     res.status(500).send('Internal Server Error');
   }
 });
+
+
 
 
 
