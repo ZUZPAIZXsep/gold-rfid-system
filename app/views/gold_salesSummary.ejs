@@ -30,6 +30,27 @@
     <div id="sales-summary">
         <%- include('partials/sales_summary_partial', { users: users }) %>
     </div>
+
+    <!-- ฟิลเตอร์เลือกช่วงวันที่ (ส่วนที่เพิ่มเข้ามา) -->
+    <div class="row mt-1">
+        <div class="col-2">
+            <label for="start_date_input" style="font-weight: 600;">เลือกวันที่เริ่มต้น</label>
+            <input type="date" class="form-control" id="start_date_input" name="start_date" value="<%= startDate %>" placeholder="เลือกวันที่เริ่มต้น">
+        </div>
+        <div class="col-2">
+            <label for="end_date_input" style="font-weight: 600;">ถึงวันที่</label>
+            <input type="date" class="form-control" id="end_date_input" name="end_date" value="<%= endDate %>" placeholder="ถึงวันที่">
+        </div>        
+        <div class="col-2 align-self-end">
+            <a type="button" class="btn btn-danger" style="margin-left: 4px;" href="./gold_sales_summary">
+                <span class="material-icon material-symbols-outlined">
+                    close
+                </span>
+                ล้างค่า
+            </a>
+        </div>
+    </div>
+
 </form>
 
 <%- include('footer') %>

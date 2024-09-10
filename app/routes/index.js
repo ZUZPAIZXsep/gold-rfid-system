@@ -1672,6 +1672,9 @@ router.get('/gold_sales_summary', isLogin, async (req, res) => {
   try {
     const selectedDate = req.query.date || dayjs().format('YYYY-MM-DD');
     const selectedDay = dayjs(selectedDate);
+    const startDate = req.query.start_date || dayjs().startOf('month').format('YYYY-MM-DD'); // ค่าเริ่มต้นของ startDate
+    const endDate = req.query.end_date || dayjs().endOf('month').format('YYYY-MM-DD'); // ค่าเริ่มต้นของ endDate
+
     const users = await Golduser.find({ role: { $ne: 'Admin' } });
 
     // กำหนดค่าเริ่มต้นของวันที่ที่ถูกเลือก
@@ -1762,7 +1765,7 @@ router.get('/gold_sales_summary', isLogin, async (req, res) => {
     });
 
     // ส่งข้อมูลไปที่ template
-    res.render('gold_salesSummary', { users, date: selectedDate, totals, dayjs });
+    res.render('gold_salesSummary', { users, date: selectedDate, totals, dayjs, startDate, endDate });
   } catch (error) {
     console.error(error);
     res.status(500).send('Internal Server Error');
