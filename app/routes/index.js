@@ -1670,36 +1670,37 @@ router.post('/delete_goldhistory', async (req, res) => {
 
 router.get('/gold_sales_summary', isLogin, async (req, res) => {
   try {
+    const firstGoldEntry = await Goldhistory.findOne().sort({ gold_Datetime: 1 }).exec(); // ค้นหารายการแรกสุด
+    const firstDate = firstGoldEntry ? firstGoldEntry.gold_Datetime : dayjs().toDate(); // หากไม่มีข้อมูล ใช้วันปัจจุบันแทนs
+
     const selectedDate = req.query.date || dayjs().format('YYYY-MM-DD');
     const selectedDay = dayjs(selectedDate);
-    const startDate = req.query.start_date || dayjs().startOf('month').format('YYYY-MM-DD'); // ค่าเริ่มต้นของ startDate
-    const endDate = req.query.end_date || dayjs().endOf('month').format('YYYY-MM-DD'); // ค่าเริ่มต้นของ endDate
+    const startDate = req.query.start_date || dayjs(firstDate).format('YYYY-MM-DD');
+    const endDate = req.query.end_date || dayjs().format('YYYY-MM-DD');
 
     const users = await Golduser.find({ role: { $ne: 'Admin' } });
 
-    // กำหนดค่าเริ่มต้นของวันที่ที่ถูกเลือก
-    const startOfDay = selectedDay.startOf('day').toDate();
-    const endOfDay = selectedDay.endOf('day').toDate();
-
-    // กำหนดให้เริ่มต้นนับสัปดาห์จากวันจันทร์
-    let startOfWeek = selectedDay.startOf('week').add(1, 'day').toDate(); // Monday
-    let endOfWeek = selectedDay.endOf('week').add(1, 'day').toDate(); // Sunday
-
-    // ถ้าหากเลือกวันอาทิตย์ ให้ใช้สัปดาห์ก่อนหน้า
-    if (selectedDay.day() === 0) {
-      startOfWeek = selectedDay.subtract(1, 'week').startOf('week').add(1, 'day').toDate(); // Previous Monday
-      endOfWeek = selectedDay.endOf('week').toDate(); // Sunday of the current week
+    const query = {};
+    if (startDate && endDate) {
+      const start = dayjs(startDate).startOf('day').toDate();
+      const end = dayjs(endDate).endOf('day').toDate();
+      query.gold_Datetime = { $gte: start, $lte: end };
     }
 
+    const startOfDay = selectedDay.startOf('day').toDate();
+    const endOfDay = selectedDay.endOf('day').toDate();
     const startOfMonth = selectedDay.startOf('month').toDate();
     const endOfMonth = selectedDay.endOf('month').toDate();
 
-    // ดึงข้อมูลยอดขายในช่วงเวลาที่เลือก
-    const salesData = await Goldhistory.find({
-      gold_outDateTime: { $lte: endOfDay }
-    });
+    const startOfWeek = selectedDay.startOf('week').add(1, 'day').toDate();
+    const endOfWeek = selectedDay.endOf('week').add(1, 'day').toDate();
 
-    // คำนวณยอดขายสำหรับแต่ละช่วงเวลา
+    const salesData = await Goldhistory.find({
+      gold_outDateTime: { $gte: new Date(startDate), $lte: new Date(endDate) }
+    }).sort({ gold_outDateTime: -1 });
+
+    const summarizedGoldHistory = summarizeGoldHistory2(salesData); // สรุปข้อมูล gold history
+
     const userSales = {};
     salesData.forEach((sale) => {
       const sellerName = sale.seller_name;
@@ -1724,10 +1725,9 @@ router.get('/gold_sales_summary', isLogin, async (req, res) => {
         userSales[sellerName].month_sale += saleAmount;
       }
 
-      userSales[sellerName].total_sale += saleAmount; // ยอดขายรวม (รวมทุกช่วงเวลา)
+      userSales[sellerName].total_sale += saleAmount;
     });
 
-    // อัปเดตข้อมูลยอดขายในฐานข้อมูล
     for (const user of users) {
       const sales = userSales[user.name] || {
         day_sale: 0,
@@ -1749,7 +1749,6 @@ router.get('/gold_sales_summary', isLogin, async (req, res) => {
       );
     }
 
-    // คำนวณยอดขายรวมสำหรับแต่ละช่วงเวลา
     const totals = users.reduce((acc, user) => {
       const userSale = userSales[user.name] || {};
       acc.day_sale += userSale.day_sale || 0;
@@ -1764,13 +1763,21 @@ router.get('/gold_sales_summary', isLogin, async (req, res) => {
       total_sale: 0
     });
 
-    // ส่งข้อมูลไปที่ template
-    res.render('gold_salesSummary', { users, date: selectedDate, totals, dayjs, startDate, endDate });
+    res.render('gold_salesSummary', {
+      users,
+      date: selectedDate,
+      totals,
+      dayjs,
+      startDate,
+      endDate,
+      summarizedGoldHistory // ส่งข้อมูล summarizedGoldHistory
+    });
   } catch (error) {
     console.error(error);
     res.status(500).send('Internal Server Error');
   }
 });
+
 
 router.get('/gold_sales_summary_partial', isLogin, async (req, res) => {
   try {
@@ -1783,6 +1790,25 @@ router.get('/gold_sales_summary_partial', isLogin, async (req, res) => {
   }
 });
 
+function summarizeGoldHistory2(data) {
+  const summary = [];
+
+  data.forEach((item) => {
+    const date = dayjs(item.gold_outDateTime).startOf('day').format('YYYY-MM-DD');
+    const existingEntry = summary.find(entry => entry.date === date);
+
+    if (existingEntry) {
+      existingEntry.count += 1;
+    } else {
+      summary.push({
+        date: date,
+        count: 1
+      });
+    }
+  });
+
+  return summary;
+}
 
 
 

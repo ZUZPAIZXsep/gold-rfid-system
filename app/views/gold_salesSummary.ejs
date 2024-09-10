@@ -50,26 +50,65 @@
             </a>
         </div>
     </div>
-
+    <!-- เพิ่มตาราง summarizedGoldHistory -->
+    <div class="mt-3">
+        <% if (summarizedGoldHistory.length > 0) { %>
+          <table class="table table-bordered mt-3">
+            <thead class="table-success">
+              <tr>
+                <th width="200px">วันที่</th>
+                <th width="150px">จำนวนรายการทองคำ</th>
+                <th width="150px">รายละเอียด</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% summarizedGoldHistory.forEach((entry) => { %>
+                <tr>
+                  <td><%= dayjs(entry.date).locale('th').format('DD-MM-YYYY') %></td>
+                  <td><%= entry.count %></td>
+                  <td>
+                    <a class="btn btn-info btn-sm" href="/gold_history/details?date=<%= dayjs(entry.date).format('YYYY-MM-DD') %>">ดูรายละเอียด</a>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        <% } else { %>
+          <p>ไม่มีข้อมูลทองคำตรงกับเงื่อนไขที่คุณเลือก</p>
+        <% } %>
+      </div>      
 </form>
 
 <%- include('footer') %>
 
 <script>
-  function refreshSalesSummary() {
-    const selectedDate = document.querySelector('#selectedDate').value;
-    fetch(`/gold_sales_summary_partial?date=${selectedDate}`)
-      .then(response => response.text())
-      .then(html => {
-        document.getElementById('sales-summary').innerHTML = html;
-      })
-      .catch(error => console.error('Error fetching sales summary:', error));
-  }
-
-  document.getElementById('selectedDate').addEventListener('change', function() {
-    document.getElementById('dateForm').submit();
-  });
-
-  // Refresh every 1 second
-  setInterval(refreshSalesSummary, 1000);
-</script>
+    function refreshSalesSummary() {
+      const selectedDate = document.querySelector('#selectedDate').value;
+      const startDate = document.querySelector('#start_date_input').value;
+      const endDate = document.querySelector('#end_date_input').value;
+  
+      // ส่งวันที่พร้อมช่วงวันที่ไปให้ server เพื่อดึงข้อมูลใหม่
+      fetch(`/gold_sales_summary_partial?date=${selectedDate}&start_date=${startDate}&end_date=${endDate}`)
+        .then(response => response.text())
+        .then(html => {
+          document.getElementById('sales-summary').innerHTML = html;
+        })
+        .catch(error => console.error('Error fetching sales summary:', error));
+    }
+  
+    // อัปเดตเมื่อมีการเปลี่ยนวันที่หรือช่วงวันที่
+    document.getElementById('selectedDate').addEventListener('change', function() {
+      document.getElementById('dateForm').submit();
+    });
+  
+    document.getElementById('start_date_input').addEventListener('change', function() {
+      document.getElementById('dateForm').submit();
+    });
+  
+    document.getElementById('end_date_input').addEventListener('change', function() {
+      document.getElementById('dateForm').submit();
+    });
+  
+    // Refresh every 1 second
+    setInterval(refreshSalesSummary, 1000);
+  </script>
