@@ -1610,40 +1610,47 @@ function summarizeGoldHistory(data) {
     }
   });
 
-
-
-router.get('/gold_history/details', isLogin, async (req, res, next) => {
-  try {
-    const dateParam = req.query.date;
-    // Get the latest date in the database
-    const latestRecord = await Goldhistory.findOne().sort({ gold_Datetime: -1 }).exec();
-    const latestDate = latestRecord ? latestRecord.gold_Datetime : null;
-    if (!dateParam) {
-      return res.status(400).send('Date parameter is required.');
-    }
-
-    const date = dayjs(dateParam).startOf('day').utc().toDate();
-    const endDate = dayjs(dateParam).endOf('day').utc().toDate();
-
-    const details = await Goldhistory.find({
-      gold_Datetime: {
-        $gte: date,
-        $lt: endDate
+  router.get('/gold_history/details', isLogin, async (req, res, next) => {
+    try {
+      const dateParam = req.query.date;
+      // Get the latest date in the database
+      const latestRecord = await Goldhistory.findOne().sort({ gold_Datetime: -1 }).exec();
+      const latestDate = latestRecord ? latestRecord.gold_Datetime : null;
+  
+      if (!dateParam) {
+        return res.status(400).send('Date parameter is required.');
       }
-    }).sort({ gold_timestamp: -1 });
-
-    res.render('gold_details', {
-      details: details,
-      dayjs: dayjs,
-      latestDate: latestDate,
-      selectedDate: dateParam,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
+  
+      const date = dayjs(dateParam).startOf('day').utc().toDate();
+      const endDate = dayjs(dateParam).endOf('day').utc().toDate();
+  
+      // Query for all details in the selected date range
+      const details = await Goldhistory.find({
+        gold_Datetime: {
+          $gte: date,
+          $lt: endDate
+        }
+      }).sort({ gold_timestamp: -1 });
+  
+      // นับจำนวนรายการทั้งหมด
+      const totalGoldCount = details.length;
+  
+      // นับเฉพาะรายการที่มีสถานะเป็น 'in stock'
+      const inStockCount = details.filter(entry => entry.gold_status === 'in stock').length;
+  
+      res.render('gold_details', {
+        details: details,
+        dayjs: dayjs,
+        latestDate: latestDate,
+        selectedDate: dateParam,
+        totalGoldCount: totalGoldCount,  // ส่งข้อมูลจำนวนทั้งหมดไปยัง EJS
+        inStockCount: inStockCount       // ส่งข้อมูลจำนวนที่เป็น 'in stock'
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).send('Internal Server Error');
+    }
+  });  
 
 
 router.get('/delete_history', isLogin, async (req, res) => {
