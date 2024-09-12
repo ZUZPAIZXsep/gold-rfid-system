@@ -1791,26 +1791,60 @@ router.get('/gold_sales_summary_partial', isLogin, async (req, res) => {
 });
 
 function summarizeGoldHistory2(data) {
-  const summary = [];
+  const summary = {};
 
-  data.forEach((item) => {
-    const date = dayjs(item.gold_outDateTime).startOf('day').format('YYYY-MM-DD');
-    const existingEntry = summary.find(entry => entry.date === date);
-
-    if (existingEntry) {
-      existingEntry.count += 1;
-    } else {
-      summary.push({
-        date: date,
-        count: 1
-      });
+  data.forEach(entry => {
+    const dateKey = dayjs(entry.gold_Datetime).startOf('day').format('YYYY-MM-DD');
+    
+    // ตรวจสอบว่ามีการสร้าง key ของวันนั้นหรือยัง ถ้าไม่มีก็สร้างใหม่
+    if (!summary[dateKey]) {
+      summary[dateKey] = {
+        date: dateKey,
+        count: 0
+      };
+    }
+    
+    // นับเฉพาะรายการที่มีสถานะเป็น 'out of stock'
+    if (entry.gold_status === 'out of stock') {
+      summary[dateKey].count += 1;
     }
   });
-
-  return summary;
+  // แปลงข้อมูลจาก Object เป็น Array
+  return Object.values(summary);
 }
 
+router.get('/gold_summary/details', isLogin, async (req, res, next) => {
+  try {
+    const dateParam = req.query.date;
+    // Get the latest date in the database
+    const latestRecord = await Goldhistory.findOne().sort({ gold_Datetime: -1 }).exec();
+    const latestDate = latestRecord ? latestRecord.gold_Datetime : null;
+    if (!dateParam) {
+      return res.status(400).send('Date parameter is required.');
+    }
 
+    const date = dayjs(dateParam).startOf('day').utc().toDate();
+    const endDate = dayjs(dateParam).endOf('day').utc().toDate();
+
+    const details = await Goldhistory.find({
+      gold_Datetime: {
+        $gte: date,
+        $lt: endDate
+      },
+      gold_status: "out of stock"
+    }).sort({ gold_outDatetime: -1 });
+
+    res.render('gold_details_sum', {
+      details: details,
+      dayjs: dayjs,
+      latestDate: latestDate,
+      selectedDate: dateParam,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
 
 
 router.get('/gold_sales_employee', isLogin, async (req, res) => {

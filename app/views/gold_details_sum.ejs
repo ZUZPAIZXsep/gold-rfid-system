@@ -1,0 +1,60 @@
+<%- include('header') %>
+
+<div class="container mt-3">
+    <h3>รายละเอียดทองคำสำหรับวันที่ <%= dayjs(selectedDate).format('DD-MM-YYYY') %></h3>
+    <table class="table table-bordered mt-3">
+        <thead class="table-success">
+            <tr>
+                <th>Gold Tag ID</th>
+                <th>ผู้ซื้อ</th>
+                <th>ผู้ขาย</th>
+                <th>ประเภททองคำ</th>
+                <th>ขนาดทองคำ</th>
+                <th>น้ำหนัก (กรัม)</th>
+                <th>ราคา</th>
+                <th>สถานะ</th>
+                <th>เวลาที่ขาย</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% details.forEach((detail) => { %>
+                <tr>
+                    <td><%= detail.gold_id %></td>
+                    <td><%= detail.customer_name %></td>
+                    <td><%= detail.seller_username %></td>
+                    <td><%= detail.gold_type %></td>
+                    <td><%= detail.gold_size %></td>
+                    <td><%= detail.gold_weight %></td>
+                    <td><%= detail.gold_price %></td>
+                    <td class="text-center" style="vertical-align: middle;">
+                        <% 
+                            const isLatestDate = detail.gold_outDateTime.toDateString() === latestDate.toDateString(); 
+                            const status = detail.gold_status;
+                        %>
+                        <% if (isLatestDate) { %>
+                            <% if (status === 'in stock') { %>
+                                <span class="badge bg-success">ยังไม่ถูกขาย</span>
+                            <% } else if (status === 'ready to sell') { %>
+                                <span class="badge bg-warning">นำออกมาขาย</span>
+                            <% } else { %>
+                                <span class="badge bg-danger">ขายออกแล้ว</span>
+                            <% } %>
+                        <% } else { %>
+                            <% if (status === 'in stock') { %>
+                                <span class="badge bg-secondary">ข้อมูลเก่า</span>
+                            <% } else if (status === 'ready to sell') { %>
+                                <span class="badge bg-secondary">ข้อมูลเก่า</span>
+                            <% } else { %>
+                                <span class="badge bg-danger">ขายออกแล้ว</span>
+                            <% } %>
+                        <% } %>
+                    </td>                    
+                    <td><%= dayjs(detail.gold_outDateTime).format('DD-MM-YYYY HH:mm:ss') %></td>
+                </tr>
+            <% }); %>
+        </tbody>
+    </table>
+    <a class="btn btn-secondary" href="/gold_sales_summary">กลับไปยังประวัติทองคำ</a>
+</div>
+
+<%- include('footer') %>

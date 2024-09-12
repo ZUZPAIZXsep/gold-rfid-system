@@ -57,7 +57,7 @@
             <thead class="table-success">
               <tr>
                 <th width="200px">วันที่</th>
-                <th width="150px">จำนวนรายการทองคำ</th>
+                <th width="150px">จำนวนรายการทองคำที่ขาย</th>
                 <th width="150px">รายละเอียด</th>
               </tr>
             </thead>
@@ -67,7 +67,7 @@
                   <td><%= dayjs(entry.date).locale('th').format('DD-MM-YYYY') %></td>
                   <td><%= entry.count %></td>
                   <td>
-                    <a class="btn btn-info btn-sm" href="/gold_history/details?date=<%= dayjs(entry.date).format('YYYY-MM-DD') %>">ดูรายละเอียด</a>
+                    <a class="btn btn-info btn-sm" href="/gold_summary/details?date=<%= dayjs(entry.date).format('YYYY-MM-DD') %>">ดูรายละเอียด</a>
                   </td>
                 </tr>
               <% }); %>
