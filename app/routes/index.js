@@ -1684,6 +1684,11 @@ router.get('/gold_sales_summary', isLogin, async (req, res) => {
     const selectedDay = dayjs(selectedDate);
     const startDate = req.query.start_date || dayjs(firstDate).format('YYYY-MM-DD');
     const endDate = req.query.end_date || dayjs().format('YYYY-MM-DD');
+    const page = req.query.page;
+
+    const currentPage = parseInt(page) || 1;
+    const limit = 10;
+    const skip = (currentPage - 1) * limit;
 
     const users = await Golduser.find({ role: { $ne: 'Admin' } });
 
@@ -1707,6 +1712,13 @@ router.get('/gold_sales_summary', isLogin, async (req, res) => {
     }).sort({ gold_outDateTime: -1 });
 
     const summarizedGoldHistory = summarizeGoldHistory2(salesData); // สรุปข้อมูล gold history
+    const paginatedData = summarizedGoldHistory.slice(skip, skip + limit);
+
+    const totalCount = summarizedGoldHistory.length;
+    const totalPages = Math.ceil(totalCount / limit);
+
+    const queryParams = new URLSearchParams(req.query);
+    queryParams.delete('page');
 
     const userSales = {};
     salesData.forEach((sale) => {
@@ -1777,7 +1789,10 @@ router.get('/gold_sales_summary', isLogin, async (req, res) => {
       dayjs,
       startDate,
       endDate,
-      summarizedGoldHistory // ส่งข้อมูล summarizedGoldHistory
+      summarizedGoldHistory: paginatedData, // ส่งข้อมูล summarizedGoldHistory
+      currentPage: currentPage,
+      totalPages: totalPages,
+      queryParams: queryParams.toString()
     });
   } catch (error) {
     console.error(error);
@@ -1846,6 +1861,8 @@ router.get('/gold_summary/details', isLogin, async (req, res, next) => {
       gold_status: "out of stock"
     }).sort({ gold_outDateTime: -1 });
 
+    const outStockCount = details.filter(entry => entry.gold_status === 'out of stock').length;
+
     console.log("Details Found:", details.length); // ลองพิมพ์จำนวนรายการที่พบเพื่อตรวจสอบ
 
     res.render('gold_details_sum', {
@@ -1853,6 +1870,7 @@ router.get('/gold_summary/details', isLogin, async (req, res, next) => {
       dayjs: dayjs,
       latestDate: latestDate,
       selectedDate: dateParam,
+      outStockCount: outStockCount
     });
   } catch (error) {
     console.error(error);
@@ -1890,7 +1908,10 @@ router.get('/gold_sales_employee', isLogin, async (req, res) => {
       total_sale: 0
     };
 
-    res.render('gold_salesEmployee', { currentUser, totals });
+    res.render('gold_salesEmployee', { 
+      currentUser, 
+      totals,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).send('Internal Server Error');
@@ -1946,7 +1967,51 @@ router.get('/gold_sales_employee_partial', isLogin, async (req, res) => {
       totals.total_sale += saleAmount; // Total sale (all-time)
     });
 
-    res.render('partials/sales_employee_partial', { totals });
+    res.render('partials/sales_employee_partial', { 
+      totals,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+router.get('/gold_employee/details', isLogin, async (req, res, next) => {
+  try {
+    const dateParam = req.query.date;
+    const latestRecord = await Goldhistory.findOne().sort({ gold_Datetime: -1 }).exec();
+    const latestDate = latestRecord ? latestRecord.gold_Datetime : null;
+    
+    if (!dateParam) {
+      return res.status(400).send('Date parameter is required.');
+    }
+
+    const date = dayjs(dateParam).startOf('day').toDate(); // ลบ .utc()
+    const endDate = dayjs(dateParam).endOf('day').toDate(); // ลบ .utc()
+
+    // ลองพิมพ์ค่าออกมาตรวจสอบดูว่า date และ endDate ถูกต้องหรือไม่
+    console.log("Start Date:", date);
+    console.log("End Date:", endDate);
+
+    const details = await Goldhistory.find({
+      gold_outDateTime: {
+        $gte: date,
+        $lt: endDate
+      },
+      gold_status: "out of stock"
+    }).sort({ gold_outDateTime: -1 });
+
+    const outStockCount = details.filter(entry => entry.gold_status === 'out of stock').length;
+
+    console.log("Details Found:", details.length); // ลองพิมพ์จำนวนรายการที่พบเพื่อตรวจสอบ
+
+    res.render('gold_details_emp', {
+      details: details,
+      dayjs: dayjs,
+      latestDate: latestDate,
+      selectedDate: dateParam,
+      outStockCount: outStockCount
+    });
   } catch (error) {
     console.error(error);
     res.status(500).send('Internal Server Error');
