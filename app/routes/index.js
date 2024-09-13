@@ -1703,7 +1703,7 @@ router.get('/gold_sales_summary', isLogin, async (req, res) => {
     const endOfWeek = selectedDay.endOf('week').add(1, 'day').toDate();
 
     const salesData = await Goldhistory.find({
-      gold_outDateTime: { $gte: new Date(startDate), $lte: new Date(endDate) }
+      gold_outDateTime: { $gte: dayjs(startDate).startOf('day').toDate(), $lte: dayjs(endDate).endOf('day').toDate() }
     }).sort({ gold_outDateTime: -1 });
 
     const summarizedGoldHistory = summarizeGoldHistory2(salesData); // สรุปข้อมูล gold history
@@ -1801,8 +1801,8 @@ function summarizeGoldHistory2(data) {
   const summary = {};
 
   data.forEach(entry => {
-    const dateKey = dayjs(entry.gold_Datetime).startOf('day').format('YYYY-MM-DD');
-    
+    const dateKey = dayjs(entry.gold_outDateTime).startOf('day').format('YYYY-MM-DD'); // แก้ไขให้ใช้ฟิลด์ gold_outDateTime แทน gold_outDatetime
+
     // ตรวจสอบว่ามีการสร้าง key ของวันนั้นหรือยัง ถ้าไม่มีก็สร้างใหม่
     if (!summary[dateKey]) {
       summary[dateKey] = {
@@ -1816,6 +1816,7 @@ function summarizeGoldHistory2(data) {
       summary[dateKey].count += 1;
     }
   });
+
   // แปลงข้อมูลจาก Object เป็น Array
   return Object.values(summary);
 }
@@ -1823,23 +1824,29 @@ function summarizeGoldHistory2(data) {
 router.get('/gold_summary/details', isLogin, async (req, res, next) => {
   try {
     const dateParam = req.query.date;
-    // Get the latest date in the database
     const latestRecord = await Goldhistory.findOne().sort({ gold_Datetime: -1 }).exec();
     const latestDate = latestRecord ? latestRecord.gold_Datetime : null;
+    
     if (!dateParam) {
       return res.status(400).send('Date parameter is required.');
     }
 
-    const date = dayjs(dateParam).startOf('day').utc().toDate();
-    const endDate = dayjs(dateParam).endOf('day').utc().toDate();
+    const date = dayjs(dateParam).startOf('day').toDate(); // ลบ .utc()
+    const endDate = dayjs(dateParam).endOf('day').toDate(); // ลบ .utc()
+
+    // ลองพิมพ์ค่าออกมาตรวจสอบดูว่า date และ endDate ถูกต้องหรือไม่
+    console.log("Start Date:", date);
+    console.log("End Date:", endDate);
 
     const details = await Goldhistory.find({
-      gold_Datetime: {
+      gold_outDateTime: {
         $gte: date,
         $lt: endDate
       },
       gold_status: "out of stock"
-    }).sort({ gold_outDatetime: -1 });
+    }).sort({ gold_outDateTime: -1 });
+
+    console.log("Details Found:", details.length); // ลองพิมพ์จำนวนรายการที่พบเพื่อตรวจสอบ
 
     res.render('gold_details_sum', {
       details: details,
