@@ -13,7 +13,6 @@
                 <th>ขนาดทองคำ</th>
                 <th>น้ำหนัก (กรัม)</th>
                 <th>ราคา</th>
-                <th>สถานะ</th>
                 <th>เวลาที่ขาย</th>
             </tr>
         </thead>
@@ -21,15 +20,12 @@
             <% details.forEach((detail) => { %>
                 <tr>
                     <td><%= detail.gold_id %></td>
-                    <td><%= detail.customer_name %></td>
-                    <td><%= detail.seller_username %></td>
+                    <td><%= detail.customer_name + " " + detail.customer_surname %></td>
+                    <td><%= detail.seller_name %></td>
                     <td><%= detail.gold_type %></td>
                     <td><%= detail.gold_size %></td>
                     <td><%= detail.gold_weight %></td>
-                    <td><%= detail.gold_price %></td>
-                    <td class="text-center" style="vertical-align: middle;">
-                        <span class="badge bg-danger">ขายออกแล้ว</span>
-                    </td>                    
+                    <td><%= detail.gold_price %></td>                   
                     <td><%= dayjs(detail.gold_outDateTime).format('DD-MM-YYYY HH:mm:ss') %></td>
                 </tr>
             <% }); %>

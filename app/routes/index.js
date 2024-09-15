@@ -13,7 +13,10 @@ const bcrypt = require('bcrypt');
 const cron = require('node-cron');
 const timezone = require('dayjs/plugin/timezone');
 const utc = require('dayjs/plugin/utc');
-const socketIo = require('socket.io');
+const isoWeek = require('dayjs/plugin/isoWeek');
+const isBetween = require('dayjs/plugin/isBetween');
+dayjs.extend(isoWeek);
+dayjs.extend(isBetween);
 
 
 // เชื่อมต่อกับ MongoDB
@@ -1677,8 +1680,8 @@ router.post('/delete_goldhistory', async (req, res) => {
 
 router.get('/gold_sales_summary', isLogin, async (req, res) => {
   try {
-    const firstGoldEntry = await Goldhistory.findOne().sort({ gold_Datetime: 1 }).exec(); // ค้นหารายการแรกสุด
-    const firstDate = firstGoldEntry ? firstGoldEntry.gold_Datetime : dayjs().toDate(); // หากไม่มีข้อมูล ใช้วันปัจจุบันแทนs
+    const firstGoldEntry = await Goldhistory.findOne().sort({ gold_Datetime: 1 }).exec();
+    const firstDate = firstGoldEntry ? firstGoldEntry.gold_Datetime : dayjs().toDate();
 
     const selectedDate = req.query.date || dayjs().format('YYYY-MM-DD');
     const selectedDay = dayjs(selectedDate);
@@ -1703,15 +1706,14 @@ router.get('/gold_sales_summary', isLogin, async (req, res) => {
     const endOfDay = selectedDay.endOf('day').toDate();
     const startOfMonth = selectedDay.startOf('month').toDate();
     const endOfMonth = selectedDay.endOf('month').toDate();
-
-    const startOfWeek = selectedDay.startOf('week').add(1, 'day').toDate();
-    const endOfWeek = selectedDay.endOf('week').add(1, 'day').toDate();
+    const startOfWeek = selectedDay.startOf('isoWeek').toDate(); // Monday
+    const endOfWeek = selectedDay.endOf('isoWeek').toDate(); // Sunday
 
     const salesData = await Goldhistory.find({
       gold_outDateTime: { $gte: dayjs(startDate).startOf('day').toDate(), $lte: dayjs(endDate).endOf('day').toDate() }
     }).sort({ gold_outDateTime: -1 });
 
-    const summarizedGoldHistory = summarizeGoldHistory2(salesData); // สรุปข้อมูล gold history
+    const summarizedGoldHistory = summarizeGoldHistory2(salesData);
     const paginatedData = summarizedGoldHistory.slice(skip, skip + limit);
 
     const totalCount = summarizedGoldHistory.length;
@@ -1722,7 +1724,7 @@ router.get('/gold_sales_summary', isLogin, async (req, res) => {
 
     const userSales = {};
     salesData.forEach((sale) => {
-      const sellerName = sale.seller_name;
+      const sellerName = sale.seller_username;
       const saleAmount = parseFloat(sale.gold_price) || 0;
 
       if (!userSales[sellerName]) {
@@ -1734,21 +1736,22 @@ router.get('/gold_sales_summary', isLogin, async (req, res) => {
         };
       }
 
+      if (sale.gold_outDateTime >= startOfMonth && sale.gold_outDateTime <= endOfMonth) {
+        userSales[sellerName].month_sale += saleAmount;
+      }
       if (sale.gold_outDateTime >= startOfDay && sale.gold_outDateTime <= endOfDay) {
         userSales[sellerName].day_sale += saleAmount;
       }
       if (sale.gold_outDateTime >= startOfWeek && sale.gold_outDateTime <= endOfWeek) {
         userSales[sellerName].week_sale += saleAmount;
       }
-      if (sale.gold_outDateTime >= startOfMonth && sale.gold_outDateTime <= endOfMonth) {
-        userSales[sellerName].month_sale += saleAmount;
-      }
+      
 
       userSales[sellerName].total_sale += saleAmount;
     });
 
     for (const user of users) {
-      const sales = userSales[user.name] || {
+      const sales = userSales[user.usr] || {
         day_sale: 0,
         week_sale: 0,
         month_sale: 0,
@@ -1756,7 +1759,7 @@ router.get('/gold_sales_summary', isLogin, async (req, res) => {
       };
 
       await Golduser.updateOne(
-        { _id: user._id },
+        { usr: user.usr }, // Use the correct user identifier
         {
           $set: {
             day_sale: sales.day_sale,
@@ -1769,7 +1772,7 @@ router.get('/gold_sales_summary', isLogin, async (req, res) => {
     }
 
     const totals = users.reduce((acc, user) => {
-      const userSale = userSales[user.name] || {};
+      const userSale = userSales[user.usr] || {};
       acc.day_sale += userSale.day_sale || 0;
       acc.week_sale += userSale.week_sale || 0;
       acc.month_sale += userSale.month_sale || 0;
@@ -1789,7 +1792,7 @@ router.get('/gold_sales_summary', isLogin, async (req, res) => {
       dayjs,
       startDate,
       endDate,
-      summarizedGoldHistory: paginatedData, // ส่งข้อมูล summarizedGoldHistory
+      summarizedGoldHistory: paginatedData,
       currentPage: currentPage,
       totalPages: totalPages,
       queryParams: queryParams.toString()
@@ -1799,7 +1802,6 @@ router.get('/gold_sales_summary', isLogin, async (req, res) => {
     res.status(500).send('Internal Server Error');
   }
 });
-
 
 router.get('/gold_sales_summary_partial', isLogin, async (req, res) => {
   try {
