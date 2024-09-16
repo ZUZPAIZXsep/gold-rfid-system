@@ -1,9 +1,9 @@
 <%- include('header') %>
 
 <form method="GET" id="dateForm">
-    <div class="mb-4">
-        <label for="selectedDate" class="form-label">เลือกวันที่</label>
-        <input type="date" id="selectedDate" name="date" class="form-control" value="<%= dayjs(date).format('YYYY-MM-DD') %>">
+    <div class="mb-4" style="opacity: 0; height: 0; overflow: hidden;">
+      <label for="selectedDate" class="form-label">เลือกวันที่</label>
+      <input type="date" id="selectedDate" name="date" class="form-control" value="<%= dayjs(date).format('YYYY-MM-DD') %>">
     </div>
     
     <!-- Display total sales summary -->
@@ -139,7 +139,7 @@
     document.getElementById('end_date_input').addEventListener('change', function() {
       document.getElementById('dateForm').submit();
     });
-  
+
     // Refresh every 1 second
     setInterval(refreshSalesSummary, 1000);
   </script>

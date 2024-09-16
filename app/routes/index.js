@@ -1843,17 +1843,13 @@ router.get('/gold_summary/details', isLogin, async (req, res, next) => {
     const dateParam = req.query.date;
     const latestRecord = await Goldhistory.findOne().sort({ gold_Datetime: -1 }).exec();
     const latestDate = latestRecord ? latestRecord.gold_Datetime : null;
-    
+
     if (!dateParam) {
       return res.status(400).send('Date parameter is required.');
     }
 
-    const date = dayjs(dateParam).startOf('day').toDate(); // ลบ .utc()
-    const endDate = dayjs(dateParam).endOf('day').toDate(); // ลบ .utc()
-
-    // ลองพิมพ์ค่าออกมาตรวจสอบดูว่า date และ endDate ถูกต้องหรือไม่
-    console.log("Start Date:", date);
-    console.log("End Date:", endDate);
+    const date = dayjs(dateParam).startOf('day').toDate();
+    const endDate = dayjs(dateParam).endOf('day').toDate();
 
     const details = await Goldhistory.find({
       gold_outDateTime: {
@@ -1865,14 +1861,28 @@ router.get('/gold_summary/details', isLogin, async (req, res, next) => {
 
     const outStockCount = details.filter(entry => entry.gold_status === 'out of stock').length;
 
-    console.log("Details Found:", details.length); // ลองพิมพ์จำนวนรายการที่พบเพื่อตรวจสอบ
+    // รวมยอดขายของแต่ละพนักงาน
+    const salesBySeller = details.reduce((acc, entry) => {
+      if (!acc[entry.seller_name]) {
+        acc[entry.seller_name] = 0;
+      }
+      acc[entry.seller_name] += parseFloat(entry.gold_price);
+      return acc;
+    }, {});
+
+    // ยอดขายรวมทั้งหมดในวันนั้น
+    const totalSales = details.reduce((acc, entry) => {
+      return acc + parseFloat(entry.gold_price);
+    }, 0);
 
     res.render('gold_details_sum', {
       details: details,
       dayjs: dayjs,
       latestDate: latestDate,
       selectedDate: dateParam,
-      outStockCount: outStockCount
+      outStockCount: outStockCount,
+      salesBySeller: salesBySeller, // ส่งข้อมูลยอดขายของแต่ละพนักงาน
+      totalSales: totalSales // ส่งข้อมูลยอดขายรวม
     });
   } catch (error) {
     console.error(error);

@@ -31,6 +31,18 @@
             <% }); %>
         </tbody>
     </table>
+
+    <!-- สรุปยอดขายของพนักงานแต่ละคน -->
+    <h5>ยอดขายของพนักงาน:</h5>
+    <ul>
+        <% for (let seller in salesBySeller) { %>
+            <li><%= seller %>: <%= salesBySeller[seller].toFixed(2) %> บาท</li>
+        <% } %>
+    </ul>
+
+    <!-- ยอดขายรวมทั้งหมด -->
+    <h3 class="mt-4">ยอดขายรวมทั้งหมด: <%= totalSales.toFixed(2) %> บาท</h3>
+
     <a class="btn btn-secondary" href="/gold_sales_summary">กลับไปยังประวัติการขาย</a>
 </div>
 
