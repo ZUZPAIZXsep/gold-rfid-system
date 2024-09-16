@@ -38,6 +38,7 @@ const goldTagSchema = new mongoose.Schema({
   gold_type: String,
   gold_size: String,
   gold_weight: String,
+  gold_dealer: String,
   has_data: Boolean,
   gold_tray: String
 },{ 
@@ -53,6 +54,7 @@ const goldCountHistorySchema = new mongoose.Schema({
   gold_type: String,
   gold_size: String,
   gold_weight: String,
+  gold_dealer: String,
   gold_tray: String,
   gold_timestamp: { type: Date, default: Date.now },
   gold_status: String,
@@ -78,6 +80,7 @@ const goldTagsCountSchema = new mongoose.Schema({
   gold_type: String,
   gold_size: String,
   gold_weight: String,
+  gold_dealer: String,
   gold_tray: String,
   gold_timestamp: { type: Date, default: Date.now },
   gold_status: String,
@@ -692,7 +695,6 @@ router.post('/save_goldtags', isLogin, async (req, res) => {
     //   }
     // );
 
-
     res.json({ message: 'Records updated successfully' });
   } catch (error) {
     console.error(error);
@@ -1012,7 +1014,7 @@ router.post('/save_goldtags', isLogin, async (req, res) => {
         // ดึงค่า Gold_Tag_id จาก body ของการส่งข้อมูลแบบ POST
         const goldId = req.body.gold_id;
         // ดำเนินการบันทึกข้อมูลทองคำโดยใช้ goldId ที่ได้มา
-        const { gold_id, gold_type, gold_size, gold_weight } = req.body;
+        const { gold_id, gold_type, gold_size, gold_weight, gold_dealer } = req.body;
 
           // // สร้าง timestamp ปัจจุบัน
           // const timestamp = Date.now();
@@ -1025,7 +1027,8 @@ router.post('/save_goldtags', isLogin, async (req, res) => {
               gold_id,
               gold_type,
               gold_size,
-              gold_weight
+              gold_weight,
+              gold_dealer
               // ,gold_timestamp // เพิ่ม timestamp ไปยังข้อมูล
           });
           
@@ -1125,7 +1128,16 @@ router.post('/save_goldtags', isLogin, async (req, res) => {
           }
 
           // ส่งข้อมูลทองคำไปยังหน้าแก้ไขข้อมูล
-          res.render('edit_dataform', { goldId: goldData.gold_id, goldType: goldData.gold_type, goldSize: goldData.gold_size, goldWeight: goldData.gold_weight, select_goldType: goldData.gold_type, select_goldSize: goldData.gold_size });
+          res.render('edit_dataform', { 
+            goldId: goldData.gold_id,
+            goldType: goldData.gold_type, 
+            goldSize: goldData.gold_size, 
+            goldWeight: goldData.gold_weight, 
+            select_goldType: goldData.gold_type, 
+            select_goldSize: goldData.gold_size,
+            goldDealer: goldData.gold_dealer, 
+          
+          });
           
       } catch (error) {
           console.error(error);
@@ -1136,10 +1148,10 @@ router.post('/save_goldtags', isLogin, async (req, res) => {
   // POST route เพื่ออัปเดตข้อมูลทองคำ
   router.post('/update_data', isLogin, async (req, res) => {
       try {
-          const { gold_id, gold_type, gold_size, gold_weight } = req.body; // รับข้อมูลที่แก้ไขจากฟอร์ม
+          const { gold_id, gold_type, gold_size, gold_weight, gold_dealer } = req.body; // รับข้อมูลที่แก้ไขจากฟอร์ม
 
           // ค้นหาและอัปเดตข้อมูลทองคำในฐานข้อมูล
-          await GoldTag.findOneAndUpdate({ gold_id: gold_id }, { gold_type: gold_type, gold_size: gold_size, gold_weight: gold_weight });
+          await GoldTag.findOneAndUpdate({ gold_id: gold_id }, { gold_type: gold_type, gold_size: gold_size, gold_weight: gold_weight, gold_dealer: gold_dealer});
 
           res.redirect('/edit_goldTagData?success=true'); // ส่งกลับไปยังหน้าหลักหลังจากทำการอัปเดตข้อมูลเสร็จสิ้น
       } catch (error) {
@@ -1443,99 +1455,6 @@ router.get('/gold_saleDetails', isLogin, async (req, res, next) => {
   }
 });
 
-
-// router.get('/gold_history', isLogin, async (req, res, next) => {
-//   try {
-//     let condition = {};
-
-//     // ถ้ามีการเลือกประเภททองคำ
-//     if (req.query.select_goldType && req.query.select_goldType !== 'เลือกประเภททองคำ') {
-//         condition.gold_type = req.query.select_goldType;
-//     }
-
-//     // ถ้ามีการเลือกขนาดทองคำ
-//     if (req.query.select_goldSize && req.query.select_goldSize !== 'เลือกขนาดทองคำ') {
-//         condition.gold_size = req.query.select_goldSize;
-//     }
-
-//     if (req.query.gold_id && req.query.gold_id.trim().length > 0) {
-//         condition.gold_id = req.query.gold_id.trim();
-//     }
-
-//     // Filter by start and end date
-//      // ถ้ามีการเลือกวันที่เริ่มต้นและสิ้นสุด
-//     if (req.query.start_date && req.query.end_date) {
-//         const startDate = dayjs(req.query.start_date).startOf('day').utc().toDate();
-//         const endDate = dayjs(req.query.end_date).endOf('day').utc().toDate();
-
-//         condition.gold_Datetime = {
-//             $gte: startDate,
-//             $lt: endDate
-//         };
-//       // ถ้ามีการเลือกแค่วันที่เริ่มต้น
-//     } else if (req.query.start_date) {
-//         const startDate = dayjs(req.query.start_date).startOf('day').utc().toDate();
-//         condition.gold_Datetime = { $gte: startDate };
-//       // ถ้ามีการเลือกแค่วันที่สิ้นสุด
-//     } else if (req.query.end_date) {
-//         const endDate = dayjs(req.query.end_date).endOf('day').utc().toDate();
-//         condition.gold_Datetime = { $lt: endDate };
-//     }
-
-//       // Get the latest date in the database
-//       const latestRecord = await Goldhistory.findOne().sort({ gold_Datetime: -1 }).exec();
-//       const latestDate = latestRecord ? latestRecord.gold_Datetime : null;
-
-//       // Pagination logic
-//       const page = parseInt(req.query.page) || 1;
-//       const skip = (page - 1) * ITEMS_PER_PAGE;
-
-//       // เพิ่มการค้นหาทองที่มีสถานะเป็น in stock ในแต่ละวัน
-//       const allRecords = await Goldhistory.find(condition)
-//           .sort({ gold_Datetime: -1,gold_timestamp: -1, gold_tray: 1 })  // เรียงตาม gold_Datetime , gold_timestamp และ gold_tray
-//           .skip(skip)
-//           .limit(ITEMS_PER_PAGE);
-
-//       const totalItems = await Goldhistory.countDocuments(condition);
-
-//       // Create query parameters string without the page parameter
-//       const queryParams = new URLSearchParams(req.query);
-//       queryParams.delete('page');
-
-//       // นับจำนวนทองคำที่มีสถานะเป็น in stock ในแต่ละวัน
-//       const allInStockRecords = await Goldhistory.find({ gold_status: 'in stock' });
-
-//       const dailyInStockMap = {};
-//       allInStockRecords.forEach(item => {
-//           const dateKey = `${item.gold_Datetime.getFullYear()}-${item.gold_Datetime.getMonth() + 1}-${item.gold_Datetime.getDate()}`;
-//           if (!dailyInStockMap[dateKey]) {
-//               dailyInStockMap[dateKey] = 0;
-//           }
-//           dailyInStockMap[dateKey] += 1;
-//       });
-
-//       res.render('gold_history', { 
-//           goldshistory: allRecords, 
-//           dayjs: dayjs, 
-//           select_goldType: req.query.select_goldType, 
-//           select_goldSize: req.query.select_goldSize,
-//           gold_id: req.query.gold_id,
-//           startDate: req.query.start_date,
-//           endDate: req.query.end_date,
-//           currentUrl: req.originalUrl,
-//           totalPages: Math.ceil(totalItems / ITEMS_PER_PAGE),
-//           currentPage: page,
-//           latestDate: latestDate,
-//           queryParams: queryParams.toString(),
-//           dailyInStockMap: dailyInStockMap // ส่งข้อมูลจำนวนทองคำไปยัง EJS
-//       });
-
-//   } catch (error) {
-//       console.error(error);
-//       res.status(500).send('Internal Server Error');
-//   }
-// });
-
 // Function to summarize the gold history by date
 // สรุปข้อมูลโดยกรองเฉพาะรายการที่มีสถานะเป็น 'in stock'
 function summarizeGoldHistory(data) {
@@ -1655,28 +1574,6 @@ function summarizeGoldHistory(data) {
     }
   });  
 
-
-router.get('/delete_history', isLogin, async (req, res) => {
-  try {
-    res.render('delete_history');
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
-// Route to handle deletion of all records in Goldhistory
-router.post('/delete_goldhistory', async (req, res) => {
-  try {
-    await Goldtagscount.deleteMany({});
-    await Goldhistory.deleteMany({}); // Deletes all records in the collection
-    console.log('All records in Goldhistory have been deleted');
-    res.json({ message: 'All records in Goldhistory have been deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting records:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
 
 router.get('/gold_sales_summary', isLogin, async (req, res) => {
   try {
@@ -2122,5 +2019,49 @@ router.post('/edit_user/:id', isLogin, async (req, res) => {
     res.status(500).send('Internal Server Error');
   }
 });
+
+router.get('/delete_history', isLogin, async (req, res) => {
+  try {
+    res.render('delete_history');
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+// // Route to handle deletion of all records in Goldhistory
+// router.post('/delete_goldhistory', async (req, res) => {
+//   try {
+//     // await Goldtagscount.deleteMany({});
+//     await Goldhistory.deleteMany({}); // Deletes all records in the collection
+//     console.log('All records in Goldhistory have been deleted');
+//     res.json({ message: 'All records in Goldhistory have been deleted successfully' });
+//   } catch (error) {
+//     console.error('Error deleting records:', error);
+//     res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// });
+
+router.post('/delete_goldhistory', async (req, res) => {
+  try {
+    const startDate = dayjs('2024-08-22').startOf('day').toDate(); // เริ่มต้นวันที่ 23/08/2024
+    const endDate = dayjs('2024-08-30').endOf('day').toDate();     // สิ้นสุดวันที่ 30/08/2024
+
+    // ลบข้อมูลในช่วงวันที่ที่กำหนดใน Goldhistory
+    await Goldhistory.deleteMany({
+      gold_Datetime: {
+        $gte: startDate,
+        $lte: endDate
+      }
+    });
+
+    console.log(`Records from ${startDate} to ${endDate} have been deleted from Goldhistory`);
+    res.json({ message: `Records from 22/08/2024 to 30/08/2024 have been deleted successfully` });
+  } catch (error) {
+    console.error('Error deleting records:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 
 module.exports = router;

@@ -78,6 +78,7 @@
                     <th>ขนาด</th>
                     <th>น้ำหนัก</th>
                     <th>ราคาทองคำ (บาท)</th>
+                    <th>ตัวแทนจำหน่ายที่รับมาขาย</th>
                     <th>Gold_Tag_id</th>
                     <th width="160px"></th>
                   </tr>
@@ -106,6 +107,7 @@
                             N/A
                         <% } %>
                       </td>
+                      <td><%= edit_goldTagData.gold_dealer %></td>
                       <td><%= edit_goldTagData.gold_id %></td>
                       <td class="text-center">
                         <a class="btn btn-primary" style="margin-right:3px;" href="/edit_dataform?gold_id=<%= edit_goldTagData.gold_id %>">
