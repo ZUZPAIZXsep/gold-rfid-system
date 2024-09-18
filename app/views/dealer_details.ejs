@@ -1,0 +1,92 @@
+<%- include('header') %>
+
+<div class="container-fluid">
+  <h2 class="my-4">ข้อมูลผู้จัดจำหน่ายทองคำ</h2>
+
+  <!-- Success message container -->
+  <div class="row">
+    <div class="col-3">
+      <div id="successMessage" class="alert d-none" role="alert">
+        
+      </div>
+    </div>
+  </div>
+
+  <!-- ตรวจสอบว่ามีข้อมูลผู้จัดจำหน่ายหรือไม่ -->
+  <% if (dealers && dealers.length > 0) { %>
+    <div>
+      <table class="table table-bordered mt-3">
+        <thead class="table-success">
+          <tr>
+            <th>#</th>
+            <th>ชื่อร้าน</th>
+            <th>ที่อยู่</th>
+            <th>เบอร์โทร</th>
+            <th>เบอร์แฟกซ์</th>
+            <th width="160px"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% dealers.forEach((dealer, index) => { %>
+            <tr>
+              <td><%= index + 1 %></td>
+              <td><%= dealer.dealer_name %></td>
+              <td><%= dealer.dealer_address %></td>
+              <td><%= dealer.dealer_phone %></td>
+              <td><%= dealer.dealer_fax || 'ไม่มีข้อมูล' %></td>
+              <td class="text-center">
+                <!-- ปุ่มแก้ไข -->
+                <a href="/edit_dealer/<%= dealer._id %>" class="btn btn-warning btn-sm" style="margin-right:3px;">
+                    แก้ไข
+                </a>
+                <!-- ปุ่มลบ -->
+                <form action="/delete_dealer/<%= dealer._id %>" method="POST" style="display:inline;">
+                  <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('คุณต้องการลบข้อมูลนี้หรือไม่?')">
+                    ลบ
+                </button>
+                </form>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  <% } else { %>
+    <div class="alert alert-warning">ไม่มีข้อมูลผู้จัดจำหน่ายทองคำ</div>
+  <% } %>
+</div>
+
+<%- include('footer') %>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const successMessage = document.getElementById('successMessage');
+
+        if (urlParams.has('success')) {
+            const successType = urlParams.get('success');
+
+            // เปลี่ยน class ของ alert ตามประเภทของการแจ้งเตือน
+            if (successType === 'update') {
+                successMessage.textContent = 'แก้ไขข้อมูลเรียบร้อย';
+                successMessage.classList.add('alert-success');
+                successMessage.classList.remove('alert-danger');
+            } else if (successType === 'delete') {
+                successMessage.textContent = 'ลบข้อมูลเรียบร้อย';
+                successMessage.classList.add('alert-danger');
+                successMessage.classList.remove('alert-success');
+            }
+
+            successMessage.classList.remove('d-none');
+
+            // Hide the message after 3 seconds
+            setTimeout(() => {
+                successMessage.classList.add('d-none');
+                // Remove the 'success' parameter from the URL without refreshing the page
+                const newUrl = window.location.href.split('?')[0];
+                window.history.replaceState({}, document.title, newUrl);
+            }, 3000);
+        }
+    });
+</script>
+

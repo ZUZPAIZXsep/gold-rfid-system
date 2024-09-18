@@ -1,0 +1,67 @@
+<%- include('header') %>
+
+<div class="container-fluid">
+    <h2 class="my-4">เพิ่มข้อมูลผู้จัดจำหน่ายทองคำ</h2>
+    <!-- Success message container -->
+    <div class="row">
+        <div class="col-3">
+            <div id="successMessage" class="alert alert-success d-none" role="alert">
+                บันทึกข้อมูลเรียบร้อย
+            </div>
+        </div>
+    </div>
+    <form action="/add_dealer" method="POST" class="needs-validation" novalidate>
+      <div class="row mb-3">
+        <div class="col-md-3">
+          <label for="dealer_name" class="form-label">ชื่อร้าน :</label>
+          <input type="text" class="form-control" id="dealer_name" name="dealer_name" required>
+          <div class="invalid-feedback">กรุณากรอกชื่อร้าน</div>
+        </div>
+      </div>
+  
+      <div class="row mb-3">
+        <div class="col-md-3">
+          <label for="dealer_address" class="form-label">ที่อยู่ :</label>
+          <textarea class="form-control" id="dealer_address" name="dealer_address" rows="4" required></textarea>
+          <div class="invalid-feedback">กรุณากรอกที่อยู่</div>
+        </div>
+      </div>      
+  
+      <div class="row mb-3">
+        <div class="col-md-2">
+          <label for="dealer_phone" class="form-label">เบอร์โทร :</label>
+          <input type="text" class="form-control" id="dealer_phone" name="dealer_phone" required>
+          <div class="invalid-feedback">กรุณากรอกเบอร์โทร</div>
+        </div>
+      </div>
+  
+      <div class="row mb-3">
+        <div class="col-md-2">
+          <label for="dealer_fax" class="form-label">เบอร์แฟกซ์ :</label>
+          <input type="text" class="form-control" id="dealer_fax" name="dealer_fax">
+        </div>
+      </div>
+  
+      <button type="submit" class="btn btn-primary mt-3">เพิ่มข้อมูล</button>
+    </form>
+</div>
+
+<%- include('footer') %>
+
+<script>
+    // Display success message if query parameter is set
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('success')) {
+            const successMessage = document.getElementById('successMessage');
+            successMessage.classList.remove('d-none');
+            // Hide the message after 3 seconds
+            setTimeout(() => {
+                successMessage.classList.add('d-none');
+                // Remove the 'success' parameter from the URL without refreshing the page
+                const newUrl = window.location.href.split('?')[0];
+                window.history.replaceState({}, document.title, newUrl);
+            }, 3000);
+        }
+    });
+</script>

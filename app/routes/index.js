@@ -115,6 +115,20 @@ const goldUserSchema = new mongoose.Schema({
 
 const Golduser = mongoose.model('Golduser', goldUserSchema);
 
+// โครงสร้างข้อมูล gold_dealer
+const goldDealerSchema = new mongoose.Schema({
+  
+  dealer_name: String,
+  dealer_address: String,
+  dealer_phone: String,
+  dealer_fax: String
+
+},{
+  collection: 'gold_dealer'
+});
+
+const GoldDealer = mongoose.model('GoldDealer', goldDealerSchema);
+
 // ฟังก์ชันสำหรับจัดถาด
 function assignTray(gold_type) {
   switch(gold_type) {
@@ -2014,6 +2028,81 @@ router.post('/edit_user/:id', isLogin, async (req, res) => {
 
     // ส่งกลับไปยังหน้า home
     res.redirect('/home');
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+// GET route สำหรับแสดงฟอร์มเพิ่มผู้จัดจำหน่าย
+router.get('/add_dealer', isLogin, (req, res) => {
+  res.render('add_dealer');
+});
+
+// POST route สำหรับบันทึกข้อมูลผู้จัดจำหน่าย
+router.post('/add_dealer', isLogin, async (req, res) => {
+  try {
+    const { dealer_name, dealer_address, dealer_phone, dealer_fax } = req.body;
+
+    const newDealer = new GoldDealer({
+      dealer_name,
+      dealer_address,
+      dealer_phone,
+      dealer_fax
+    });
+
+    await newDealer.save(); // บันทึกข้อมูลลงในฐานข้อมูล
+
+    res.redirect('/add_dealer?success=true'); // แสดงข้อความสำเร็จหลังจากบันทึกเสร็จ
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+router.get('/dealer_details', async (req, res) => {
+  try {
+    const dealers = await GoldDealer.find(); // ดึงข้อมูลจาก MongoDB
+    res.render('dealer_details', { dealers });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+router.get('/edit_dealer/:id', async (req, res) => {
+  try {
+    const dealer = await GoldDealer.findById(req.params.id);
+    if (!dealer) {
+      return res.status(404).send('ไม่พบข้อมูล');
+    }
+    res.render('edit_dealer', { dealer });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+router.post('/update_dealer/:id', async (req, res) => {
+  try {
+    const { dealer_name, dealer_address, dealer_phone, dealer_fax } = req.body;
+    await GoldDealer.findByIdAndUpdate(req.params.id, {
+      dealer_name,
+      dealer_address,
+      dealer_phone,
+      dealer_fax
+    });
+    res.redirect('/dealer_details?success=update');
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+router.post('/delete_dealer/:id', async (req, res) => {
+  try {
+    await GoldDealer.findByIdAndDelete(req.params.id);
+    res.redirect('/dealer_details?success=delete');
   } catch (error) {
     console.error(error);
     res.status(500).send('Internal Server Error');
