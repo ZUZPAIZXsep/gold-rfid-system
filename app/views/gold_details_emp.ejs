@@ -2,7 +2,7 @@
 
 <div class="container mt-3">
     <h3>รายละเอียดการขายทองคำสำหรับวันที่ <%= dayjs(selectedDate).format('DD-MM-YYYY') %></h3>
-    <h5 class="mt-3">จำนวนรายการทองคำที่ขายทั้งหมด : <%= inStockCount %> รายการ</h5>
+    <h5 class="mt-3">จำนวนรายการทองคำที่ขายทั้งหมด : <%= outStockCount %> รายการ</h5>
     <table class="table table-bordered mt-3">
         <thead class="table-success">
             <tr>
@@ -13,7 +13,6 @@
                 <th>ขนาดทองคำ</th>
                 <th>น้ำหนัก (กรัม)</th>
                 <th>ราคา</th>
-                <th>สถานะ</th>
                 <th>เวลาที่ขาย</th>
             </tr>
         </thead>
@@ -21,20 +20,29 @@
             <% details.forEach((detail) => { %>
                 <tr>
                     <td><%= detail.gold_id %></td>
-                    <td><%= detail.customer_name %></td>
-                    <td><%= detail.seller_username %></td>
+                    <td><%= detail.customer_name + " " + detail.customer_surname %></td>
+                    <td><%= detail.seller_name %></td>
                     <td><%= detail.gold_type %></td>
                     <td><%= detail.gold_size %></td>
                     <td><%= detail.gold_weight %></td>
-                    <td><%= detail.gold_price %></td>
-                    <td class="text-center" style="vertical-align: middle;">
-                        <span class="badge bg-danger">ขายออกแล้ว</span>
-                    </td>                    
+                    <td><%= detail.gold_price %></td>                   
                     <td><%= dayjs(detail.gold_outDateTime).format('DD-MM-YYYY HH:mm:ss') %></td>
                 </tr>
             <% }); %>
         </tbody>
     </table>
+
+    <!-- สรุปยอดขายของพนักงานแต่ละคน -->
+    <h5>ยอดขายของพนักงาน:</h5>
+    <ul>
+        <% for (let seller in salesBySeller) { %>
+            <li><%= seller %>: <%= salesBySeller[seller].toFixed(2) %> บาท</li>
+        <% } %>
+    </ul>
+
+    <!-- ยอดขายรวมทั้งหมด -->
+    <h3 class="mt-4">ยอดขายรวมทั้งหมด: <%= totalSales.toFixed(2) %> บาท</h3>
+
     <a class="btn btn-secondary" href="/gold_sales_employee">กลับไปยังประวัติการขาย</a>
 </div>
 
