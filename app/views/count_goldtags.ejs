@@ -42,7 +42,7 @@
       let totalTags = countgoldtags.length;
     %>
     <div class="mt-4">
-        <h3>จำนวนทองคำที่นับได้ : <%= totalTags %> รายการ</h3>
+        <h3 id="totalTags">จำนวนทองคำที่นับได้ : <%= totalTags %> รายการ</h3>
         <ul>
             <% const trays = { 'ถาดที่ 1': 'สร้อยคอ', 'ถาดที่ 2': 'แหวน', 'ถาดที่ 3': 'กำไลข้อมือ', 'ถาดที่ 4': 'สร้อยข้อมือ', 'ถาดที่ 5': 'ต่างหู' }; %>
             <% Object.keys(trays).forEach(tray => {
@@ -64,7 +64,7 @@
                 <th width="100px">น้ำหนัก</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="goldtagsTableBody">
             <% countgoldtags.forEach((count_tag, index) => { %>
                 <tr>
                     <td><%= index + 1 %></td>
@@ -131,4 +131,40 @@
                 console.error('Error:', error);
             });
     }
+
+    // ฟังก์ชันสำหรับการอัปเดตข้อมูล countgoldtags
+    function refreshGoldTags() {
+        fetch('/count_goldtags_partial') // เรียกข้อมูลจากเส้นทางใหม่
+            .then(response => response.json())
+            .then(data => {
+                const tableBody = document.getElementById('goldtagsTableBody');
+                const totalTags = document.getElementById('totalTags');
+
+                tableBody.innerHTML = ''; // ล้างข้อมูลเก่า
+
+                // อัปเดตจำนวนทองคำที่นับได้
+                totalTags.innerHTML = `จำนวนทองคำที่นับได้ : ${data.length} รายการ`;
+
+                // เพิ่มแถวใหม่จากข้อมูลที่ได้
+                data.forEach((count_tag, index) => {
+                    const row = `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${count_tag.gold_id}</td>
+                            <td>${count_tag.gold_tray}</td>
+                            <td>${count_tag.gold_type}</td>
+                            <td>${count_tag.gold_size}</td>
+                            <td>${count_tag.gold_weight} กรัม</td>
+                        </tr>
+                    `;
+                    tableBody.innerHTML += row;
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+
+    // เรียก refreshGoldTags ทุกๆ 1 วินาที
+    setInterval(refreshGoldTags, 1000);
 </script>

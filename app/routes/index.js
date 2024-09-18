@@ -546,6 +546,44 @@ router.get('/count_goldtags', isLogin, async (req, res) => {
   }
 });
 
+router.get('/count_goldtags_partial', isLogin, async (req, res) => {
+  try {
+    let countgoldtags = [];
+    let rfidTags = rfidModule.getRfidTags(); // เรียกใช้งาน rfidTags จาก rfidModule
+    
+    // ดึงข้อมูลจาก database ที่มี gold_id ตรงกับ rfidTags
+    countgoldtags = await GoldTag.find({ gold_id: { $in: rfidTags } });
+
+    // เพิ่มการจัดถาดให้กับทองคำแต่ละชนิด
+    countgoldtags = countgoldtags.map(tag => {
+      return {
+        ...tag._doc,
+        gold_tray: assignTray(tag.gold_type)
+      };
+    });
+
+    // เรียงข้อมูลตามลำดับถาด
+    countgoldtags.sort((a, b) => {
+      const trayOrder = {
+        'ถาดที่ 1': 1,
+        'ถาดที่ 2': 2,
+        'ถาดที่ 3': 3,
+        'ถาดที่ 4': 4,
+        'ถาดที่ 5': 5,
+        'ถาดอื่นๆ': 6
+      };
+
+      return trayOrder[a.gold_tray] - trayOrder[b.gold_tray];
+    });
+
+    // ส่งข้อมูลเฉพาะที่จำเป็นกลับไป
+    res.json(countgoldtags);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
 // router.post('/save_goldtags', async (req, res) => {
 //   try {
 //       let rfidTags = rfidModule.getRfidTags(); // Get RFID tags
@@ -1831,7 +1869,15 @@ router.get('/gold_sales_employee', isLogin, async (req, res) => {
     const startOfWeek = selectedDay.startOf('isoWeek').toDate(); // Monday
     const endOfWeek = selectedDay.endOf('isoWeek').toDate(); // Sunday
 
+    const currentUser = await Golduser.findOne({ usr: req.session.usr });
+
+    if (!currentUser) {
+      return res.status(404).send('User not found');
+    }
+
+    // Fetch sales data for the current user within the date range
     const salesData = await Goldhistory.find({
+      seller_name: currentUser.name,  // กรองตามพนักงานที่ล็อกอินอยู่
       gold_outDateTime: { $gte: dayjs(startDate).startOf('day').toDate(), $lte: dayjs(endDate).endOf('day').toDate() }
     }).sort({ gold_outDateTime: -1 });
 
@@ -1843,12 +1889,6 @@ router.get('/gold_sales_employee', isLogin, async (req, res) => {
 
     const queryParams = new URLSearchParams(req.query);
     queryParams.delete('page');
-
-    const currentUser = await Golduser.findOne({ usr: req.session.usr });
-
-    if (!currentUser) {
-      return res.status(404).send('User not found');
-    }
 
     // Reset sales data for the current user
     await Golduser.updateOne(
@@ -1863,7 +1903,7 @@ router.get('/gold_sales_employee', isLogin, async (req, res) => {
       }
     );
 
-    // Summarize sales for different periods
+    // Summarize sales for different periods (not shown)
     const totals = {
       day_sale: 0,
       week_sale: 0,
@@ -1889,6 +1929,7 @@ router.get('/gold_sales_employee', isLogin, async (req, res) => {
   }
 });
 
+
 router.get('/gold_sales_employee_partial', isLogin, async (req, res) => {
   try {
     const currentUser = await Golduser.findOne({ usr: req.session.usr });
@@ -1910,7 +1951,7 @@ router.get('/gold_sales_employee_partial', isLogin, async (req, res) => {
 
     // Fetch sales from gold_history for the current user
     const salesData = await Goldhistory.find({
-      seller_name: currentUser.name,
+      seller_name: currentUser.name, // ใช้ currentUser.name แทนการค้นหาทั้งหมด
       gold_outDateTime: { $lte: endOfDay }
     });
 
@@ -1949,6 +1990,12 @@ router.get('/gold_sales_employee_partial', isLogin, async (req, res) => {
 
 router.get('/gold_employee/details', isLogin, async (req, res, next) => {
   try {
+    const currentUser = await Golduser.findOne({ usr: req.session.usr });
+
+    if (!currentUser) {
+      return res.status(404).send('User not found');
+    }
+
     const dateParam = req.query.date;
     const latestRecord = await Goldhistory.findOne().sort({ gold_Datetime: -1 }).exec();
     const latestDate = latestRecord ? latestRecord.gold_Datetime : null;
@@ -1960,7 +2007,9 @@ router.get('/gold_employee/details', isLogin, async (req, res, next) => {
     const date = dayjs(dateParam).startOf('day').toDate();
     const endDate = dayjs(dateParam).endOf('day').toDate();
 
+    // Fetch sales for the current user and selected date
     const details = await Goldhistory.find({
+      seller_name: currentUser.name, // กรองตามชื่อพนักงานที่ล็อกอินอยู่
       gold_outDateTime: {
         $gte: date,
         $lt: endDate
@@ -1970,7 +2019,7 @@ router.get('/gold_employee/details', isLogin, async (req, res, next) => {
 
     const outStockCount = details.filter(entry => entry.gold_status === 'out of stock').length;
 
-    // รวมยอดขายของแต่ละพนักงาน
+    // รวมยอดขายของพนักงานที่ล็อกอิน
     const salesBySeller = details.reduce((acc, entry) => {
       if (!acc[entry.seller_name]) {
         acc[entry.seller_name] = 0;
@@ -1990,7 +2039,7 @@ router.get('/gold_employee/details', isLogin, async (req, res, next) => {
       latestDate: latestDate,
       selectedDate: dateParam,
       outStockCount: outStockCount,
-      salesBySeller: salesBySeller, // ส่งข้อมูลยอดขายของแต่ละพนักงาน
+      salesBySeller: salesBySeller, // ส่งข้อมูลยอดขายของพนักงานที่ล็อกอิน
       totalSales: totalSales // ส่งข้อมูลยอดขายรวม
     });
   } catch (error) {
