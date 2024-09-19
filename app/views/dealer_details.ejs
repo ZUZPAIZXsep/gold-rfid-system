@@ -1,7 +1,12 @@
 <%- include('header') %>
 
-<div class="container-fluid">
-  <h2 class="my-4">ข้อมูลผู้จัดจำหน่ายทองคำ</h2>
+  <div class="container-fluid">
+   <div class="my-3" style="display: flex; justify-content: space-between; align-items: center;">
+    <h3 style="font-weight: bold;">ข้อมูลผู้จัดจำหน่ายทองคำ</h3>
+      <a type="button" class="btn btn-success" style="margin-left: 4px;" href="/add_dealer">
+        <span class="material-icon material-symbols-outlined">add</span> เพิ่มข้อมูลผู้จัดจำหน่าย
+      </a>
+  </div>
 
   <!-- Success message container -->
   <div class="row">
@@ -67,25 +72,29 @@
             const successType = urlParams.get('success');
 
             // เปลี่ยน class ของ alert ตามประเภทของการแจ้งเตือน
-            if (successType === 'update') {
-                successMessage.textContent = 'แก้ไขข้อมูลเรียบร้อย';
+            if (successType === 'true') {
+                successMessage.textContent = 'เพิ่มข้อมูลเรียบร้อย';
                 successMessage.classList.add('alert-success');
                 successMessage.classList.remove('alert-danger');
             } else if (successType === 'delete') {
                 successMessage.textContent = 'ลบข้อมูลเรียบร้อย';
                 successMessage.classList.add('alert-danger');
                 successMessage.classList.remove('alert-success');
+            } else if (successType === 'update') {
+                successMessage.textContent = 'แก้ไขข้อมูลเรียบร้อย';
+                successMessage.classList.add('alert-success');
+                successMessage.classList.remove('alert-danger'); 
             }
 
             successMessage.classList.remove('d-none');
 
-            // Hide the message after 3 seconds
+            // Hide the message after 2 seconds
             setTimeout(() => {
                 successMessage.classList.add('d-none');
                 // Remove the 'success' parameter from the URL without refreshing the page
                 const newUrl = window.location.href.split('?')[0];
                 window.history.replaceState({}, document.title, newUrl);
-            }, 3000);
+            }, 2000);
         }
     });
 </script>

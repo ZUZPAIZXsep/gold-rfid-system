@@ -38,7 +38,7 @@ const goldTagSchema = new mongoose.Schema({
   gold_type: String,
   gold_size: String,
   gold_weight: String,
-  gold_dealer: String,
+  dealer_name: String,
   has_data: Boolean,
   gold_tray: String
 },{ 
@@ -54,7 +54,7 @@ const goldCountHistorySchema = new mongoose.Schema({
   gold_type: String,
   gold_size: String,
   gold_weight: String,
-  gold_dealer: String,
+  dealer_name: String,
   gold_tray: String,
   gold_timestamp: { type: Date, default: Date.now },
   gold_status: String,
@@ -80,7 +80,7 @@ const goldTagsCountSchema = new mongoose.Schema({
   gold_type: String,
   gold_size: String,
   gold_weight: String,
-  gold_dealer: String,
+  dealer_name: String,
   gold_tray: String,
   gold_timestamp: { type: Date, default: Date.now },
   gold_status: String,
@@ -1051,10 +1051,14 @@ router.post('/save_goldtags', isLogin, async (req, res) => {
 
   router.get('/add_dataform', isLogin, async (req, res) => {
     try {
-        // ดึงค่า Gold_Tag_id จาก query string
+        // ดึงค่า Gold_Tag_id จาก query string (ถ้ามี)
         const goldId = req.query.gold_id;
 
-        res.render('add_dataform', { goldId: goldId });
+        // ดึงข้อมูลผู้จัดจำหน่ายทั้งหมดจาก GoldDealer collection
+        const dealers = await GoldDealer.find({}, { dealer_name: 1 }); // ค้นหาข้อมูลผู้จัดจำหน่าย (เฉพาะ dealer_name)
+
+        // ส่งค่า dealers ไปยัง add_dataform.ejs
+        res.render('add_dataform', { goldId: goldId, dealers: dealers });
     } catch (error) {
         console.error(error);
         res.status(500).send('Internal Server Error');
@@ -1066,13 +1070,9 @@ router.post('/save_goldtags', isLogin, async (req, res) => {
         // ดึงค่า Gold_Tag_id จาก body ของการส่งข้อมูลแบบ POST
         const goldId = req.body.gold_id;
         // ดำเนินการบันทึกข้อมูลทองคำโดยใช้ goldId ที่ได้มา
-        const { gold_id, gold_type, gold_size, gold_weight, gold_dealer } = req.body;
+        const { gold_id, gold_type, gold_size, gold_weight, dealer_name } = req.body;
 
-          // // สร้าง timestamp ปัจจุบัน
-          // const timestamp = Date.now();
 
-          // // แปลง timestamp เป็นวันที่และเวลาในรูปแบบที่ต้องการ (วัน เดือน ปี เวลา ไทย)
-          // const gold_timestamp = dayjs(timestamp).locale('th').format('DD MMMM YYYY HH:mm:ss');
 
           // สร้างข้อมูลที่จะบันทึกลงในฐานข้อมูล
           const newGoldData = new GoldTag({
@@ -1080,7 +1080,7 @@ router.post('/save_goldtags', isLogin, async (req, res) => {
               gold_type,
               gold_size,
               gold_weight,
-              gold_dealer
+              dealer_name
               // ,gold_timestamp // เพิ่ม timestamp ไปยังข้อมูล
           });
           
@@ -1171,39 +1171,43 @@ router.post('/save_goldtags', isLogin, async (req, res) => {
 
   // GET route เพื่อดึงข้อมูลทองคำที่ต้องการแก้ไข
   router.get('/edit_dataform', isLogin, async (req, res) => {
-      try {
-          const goldId = req.query.gold_id; // รับ Gold_Tag_id ที่ต้องการแก้ไขจาก query parameter
-          const goldData = await GoldTag.findOne({ gold_id: goldId }); // ค้นหาข้อมูลทองคำที่ต้องการแก้ไขในฐานข้อมูล
+    try {
+        const goldId = req.query.gold_id; // รับ Gold_Tag_id ที่ต้องการแก้ไขจาก query parameter
+        const goldData = await GoldTag.findOne({ gold_id: goldId }); // ค้นหาข้อมูลทองคำที่ต้องการแก้ไขในฐานข้อมูล
 
-          if (!goldData) {
-              return res.status(404).send('Gold data not found'); // หากไม่พบข้อมูลทองคำที่ต้องการแก้ไข
-          }
+        if (!goldData) {
+            return res.status(404).send('Gold data not found'); // หากไม่พบข้อมูลทองคำที่ต้องการแก้ไข
+        }
 
-          // ส่งข้อมูลทองคำไปยังหน้าแก้ไขข้อมูล
-          res.render('edit_dataform', { 
+        // ดึงข้อมูลผู้จัดจำหน่ายทั้งหมดจาก GoldDealer collection
+        const dealers = await GoldDealer.find({}, { dealer_name: 1 }); // ค้นหาข้อมูลผู้จัดจำหน่าย (เฉพาะ dealer_name)
+
+        // ส่งข้อมูลทองคำและรายชื่อผู้จัดจำหน่ายไปยังหน้าแก้ไขข้อมูล
+        res.render('edit_dataform', {
             goldId: goldData.gold_id,
-            goldType: goldData.gold_type, 
-            goldSize: goldData.gold_size, 
-            goldWeight: goldData.gold_weight, 
-            select_goldType: goldData.gold_type, 
+            goldType: goldData.gold_type,
+            goldSize: goldData.gold_size,
+            goldWeight: goldData.gold_weight,
+            select_goldType: goldData.gold_type,
             select_goldSize: goldData.gold_size,
-            goldDealer: goldData.gold_dealer, 
-          
-          });
-          
-      } catch (error) {
-          console.error(error);
-          res.status(500).send('Internal Server Error');
-      }
-  });
+            goldDealer: goldData.dealer_name,
+            dealers: dealers // ส่งข้อมูลรายชื่อผู้จัดจำหน่ายไปด้วย
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
 
   // POST route เพื่ออัปเดตข้อมูลทองคำ
   router.post('/update_data', isLogin, async (req, res) => {
       try {
-          const { gold_id, gold_type, gold_size, gold_weight, gold_dealer } = req.body; // รับข้อมูลที่แก้ไขจากฟอร์ม
+          const { gold_id, gold_type, gold_size, gold_weight, dealer_name } = req.body; // รับข้อมูลที่แก้ไขจากฟอร์ม
 
           // ค้นหาและอัปเดตข้อมูลทองคำในฐานข้อมูล
-          await GoldTag.findOneAndUpdate({ gold_id: gold_id }, { gold_type: gold_type, gold_size: gold_size, gold_weight: gold_weight, gold_dealer: gold_dealer});
+          await GoldTag.findOneAndUpdate({ gold_id: gold_id }, { gold_type: gold_type, gold_size: gold_size, gold_weight: gold_weight, dealer_name: dealer_name});
 
           res.redirect('/edit_goldTagData?success=true'); // ส่งกลับไปยังหน้าหลักหลังจากทำการอัปเดตข้อมูลเสร็จสิ้น
       } catch (error) {
@@ -2160,7 +2164,7 @@ router.post('/add_dealer', isLogin, async (req, res) => {
 
     await newDealer.save(); // บันทึกข้อมูลลงในฐานข้อมูล
 
-    res.redirect('/add_dealer?success=true'); // แสดงข้อความสำเร็จหลังจากบันทึกเสร็จ
+    res.redirect('/dealer_details?success=true'); // แสดงข้อความสำเร็จหลังจากบันทึกเสร็จ
   } catch (error) {
     console.error(error);
     res.status(500).send('Internal Server Error');

@@ -48,14 +48,16 @@
         <div class="mt-3">
             <label>ตัวแทนจำหน่ายที่รับมาขาย</label>
             <div class="col-3">
-                <select name="gold_dealer" id="gold_dealer" class="form-select">
-                    <option selected>เลือกร้านตัวแทนจำหน่ายที่รับมาขาย</option>
-                    <option value="dealer_1">ร้าน A</option>
-                    <option value="dealer_2">ร้าน B</option>
-                    <option value="dealer_3">ร้าน C</option>
+                <select name="dealer_name" id="dealer_name" class="form-select">
+                    <option selected disabled>เลือกร้านตัวแทนจำหน่ายที่รับมาขาย</option>
+                    <% dealers.forEach(function(dealer) { %>
+                        <option value="<%= dealer.dealer_name %>">
+                            <%= dealer.dealer_name %>
+                        </option>
+                    <% }); %>
                 </select>
             </div>
-        </div>         
+        </div>                 
         <div class="mt-4">
             <button type="submit" class="btn btn-success" style="margin-right: 3px;">
                 <span class="material-icon material-symbols-outlined">
