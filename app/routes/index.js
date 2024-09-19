@@ -444,6 +444,43 @@ router.get('/count_tosellpage', isLogin, async (req, res) => {
   }
 });
 
+router.get('/count_tosellpage_partial', isLogin, async (req, res) => {
+  try {
+    let countgoldtags = [];
+    let rfidTags = rfidModule.getRfidTags(); // เรียกใช้งาน rfidTags จาก rfidModule
+
+
+    countgoldtags = await GoldTag.find({ gold_id: { $in: rfidTags } });
+
+    countgoldtags = countgoldtags.map(tag => {
+      return {
+        ...tag._doc,
+        gold_tray: assignTray(tag.gold_type)
+      };
+    });
+
+    countgoldtags.sort((a, b) => {
+      const trayOrder = {
+        'ถาดที่ 1': 1,
+        'ถาดที่ 2': 2,
+        'ถาดที่ 3': 3,
+        'ถาดที่ 4': 4,
+        'ถาดที่ 5': 5,
+        'ถาดอื่นๆ': 6
+
+      };
+
+      return trayOrder[a.gold_tray] - trayOrder[b.gold_tray];
+    });
+
+    res.json(countgoldtags); // ส่งข้อมูลในรูปแบบ JSON
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
 router.post('/ready_to_sell', isLogin, async (req, res) => {
   try {
     let rfidTags = rfidModule.getRfidTags(); // เรียกใช้งาน rfidTags จาก rfidModule
@@ -1046,6 +1083,26 @@ router.post('/save_goldtags', isLogin, async (req, res) => {
     } catch (error) {
       console.error(error);
       res.status(500).send('Internal Server Error');
+    }
+  });
+
+  router.get('/add_golddata_partial', isLogin, async (req, res) => {
+    try {
+        let addgoldsdata = [];
+        let rfidTags = rfidModule.getRfidTags();
+        for (let i = 0; i < rfidTags.length; i++) {
+            const existingGold = await GoldTag.findOne({ gold_id: rfidTags[i] });
+            let hasData = false;
+            if (existingGold) {
+                hasData = true;
+            }
+            addgoldsdata.push({ gold_id: rfidTags[i], has_data: hasData });
+        }
+        res.json(addgoldsdata); // ส่งข้อมูลในรูปแบบ JSON
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Internal Server Error');
     }
   });
 

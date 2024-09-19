@@ -42,17 +42,12 @@
       let totalTags = countgoldtags.length;
     %>
     <div class="mt-4">
-        <h3 id="totalTags">จำนวนทองคำที่นับได้ : <%= totalTags %> รายการ</h3>
-        <ul>
-            <% const trays = { 'ถาดที่ 1': 'สร้อยคอ', 'ถาดที่ 2': 'แหวน', 'ถาดที่ 3': 'กำไลข้อมือ', 'ถาดที่ 4': 'สร้อยข้อมือ', 'ถาดที่ 5': 'ต่างหู' }; %>
-            <% Object.keys(trays).forEach(tray => {
-                const count = countgoldtags.filter(tag => tag.gold_tray === tray).length;
-                if (count > 0) { %>
-                    <li><%= tray %> มี <%= trays[tray] %> <%= count %> ชิ้น</li>
-                <% }
-            }); %>
-        </ul> 
+        <h3 id="totalTags">จำนวนทองคำที่นับได้ : 0 รายการ</h3>
+        <ul id="traySummary">
+            <!-- จะถูกเติมด้วยข้อมูลจาก JavaScript -->
+        </ul>
     </div>
+
     <table class="table table-bordered">
         <thead class="table-success">
             <tr>
@@ -65,16 +60,7 @@
             </tr>
         </thead>
         <tbody id="goldtagsTableBody">
-            <% countgoldtags.forEach((count_tag, index) => { %>
-                <tr>
-                    <td><%= index + 1 %></td>
-                    <td><%= count_tag.gold_id %></td>
-                    <td><%= count_tag.gold_tray %></td>
-                    <td><%= count_tag.gold_type %></td>
-                    <td><%= count_tag.gold_size %></td>
-                    <td><%= count_tag.gold_weight %> กรัม</td>
-                </tr>
-            <% }); %>
+            <!-- จะถูกเติมด้วยข้อมูลจาก JavaScript -->
         </tbody>
     </table>
 </div>
@@ -133,19 +119,32 @@
     }
 
     // ฟังก์ชันสำหรับการอัปเดตข้อมูล countgoldtags
-    function refreshGoldTags() {
-        fetch('/count_goldtags_partial') // เรียกข้อมูลจากเส้นทางใหม่
+    function refreshCountGoldTags() {
+        fetch('/count_tosellpage_partial') // เรียกข้อมูลจากเส้นทางใหม่
             .then(response => response.json())
             .then(data => {
                 const tableBody = document.getElementById('goldtagsTableBody');
                 const totalTags = document.getElementById('totalTags');
+                const traySummary = document.getElementById('traySummary');
 
-                tableBody.innerHTML = ''; // ล้างข้อมูลเก่า
+                // ล้างข้อมูลเก่า
+                tableBody.innerHTML = ''; 
+                traySummary.innerHTML = '';
 
                 // อัปเดตจำนวนทองคำที่นับได้
                 totalTags.innerHTML = `จำนวนทองคำที่นับได้ : ${data.length} รายการ`;
 
-                // เพิ่มแถวใหม่จากข้อมูลที่ได้
+                // สร้างรายการถาดใหม่
+                const trays = { 'ถาดที่ 1': 'สร้อยคอ', 'ถาดที่ 2': 'แหวน', 'ถาดที่ 3': 'กำไลข้อมือ', 'ถาดที่ 4': 'สร้อยข้อมือ', 'ถาดที่ 5': 'ต่างหู' };
+
+                Object.keys(trays).forEach(tray => {
+                    const count = data.filter(tag => tag.gold_tray === tray).length;
+                    if (count > 0) {
+                        traySummary.innerHTML += `<li>${tray} มี ${trays[tray]} ${count} ชิ้น</li>`;
+                    }
+                });
+
+                // เพิ่มแถวใหม่ในตาราง
                 data.forEach((count_tag, index) => {
                     const row = `
                         <tr>
@@ -165,6 +164,6 @@
             });
     }
 
-    // เรียก refreshGoldTags ทุกๆ 1 วินาที
-    setInterval(refreshGoldTags, 300);
+    // เรียก refreshCountGoldTags ทุกๆ 0.3 วินาที
+    setInterval(refreshCountGoldTags, 300);
 </script>
