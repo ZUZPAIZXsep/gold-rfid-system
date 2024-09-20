@@ -497,7 +497,8 @@ router.post('/ready_to_sell', isLogin, async (req, res) => {
       gold_tray: assignTray(count_tag.gold_type),
       gold_timestamp: dayjs().locale('th').format('YYYY-MM-DD HH:mm:ss'), // Timestamp ปัจจุบัน (รูปแบบวันที่และเวลาไทย)
       gold_status: 'ready to sell', // เปลี่ยนสถานะเป็น ready to sell
-      gold_Datetime: goldDatetime
+      gold_Datetime: goldDatetime,
+      dealer_name: count_tag.dealer_name 
     }));
 
     // อัปเดตข้อมูล สถานะใน collection `Goldtagscount` สำหรับตัวที่อ่านได้
@@ -690,7 +691,8 @@ router.post('/save_goldtags', isLogin, async (req, res) => {
             gold_tray: assignTray(tag.gold_type),
             gold_status: 'in stock',
             gold_timestamp: newTimestamp, // Update the timestamp
-            gold_Datetime: goldDatetime // Ensure `gold_Datetime` is set to the start of the current day in UTC
+            gold_Datetime: goldDatetime,// Ensure `gold_Datetime` is set to the start of the current day in UTC
+            dealer_name: tag.dealer_name 
           },
           $unset: {
             gold_outDateTime: 1,  // Remove `gold_outDateTime`
@@ -733,7 +735,8 @@ router.post('/save_goldtags', isLogin, async (req, res) => {
               gold_weight: tag.gold_weight,
               gold_tray: assignTray(tag.gold_type),
               gold_status: 'in stock',
-              gold_timestamp: newTimestamp // Update the timestamp
+              gold_timestamp: newTimestamp, // Update the timestamp
+              dealer_name: tag.dealer_name 
             },
             $unset: {
               gold_outDateTime: 1,  // Remove `gold_outDateTime`
@@ -753,6 +756,7 @@ router.post('/save_goldtags', isLogin, async (req, res) => {
           gold_weight: tag.gold_weight,
           gold_tray: assignTray(tag.gold_type),
           gold_status: 'in stock',
+          dealer_name: tag.dealer_name ,
           gold_timestamp: newTimestamp, // Set the timestamp
           gold_Datetime: goldDatetime // Set to the start of the current day in UTC
         });
@@ -790,36 +794,6 @@ router.post('/save_goldtags', isLogin, async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
-
-// router.post('/copy_previous_day', async (req, res) => {
-//   try {
-//     let currentDate = dayjs().locale('th').startOf('day').toDate();
-//     let previousDate = dayjs(currentDate).subtract(1, 'day').toDate(); // Calculate the previous day
-//     let newDatetime = dayjs().locale('th').format('YYYY-MM-DD'); // Current date for `gold_datetime`
-
-//     // Fetch records from the previous day
-//     let previousDayRecords = await Goldhistory.find({
-//       gold_datetime: previousDate
-//     });
-
-//     // Copy records to the current day with updated `gold_datetime`
-//     let newRecords = previousDayRecords.map(record => ({
-//       ...record._doc, // Copy all fields
-//       _id: mongoose.Types.ObjectId(), // Generate a new ObjectId
-//       gold_datetime: newDatetime // Update to current day
-//     }));
-
-//     // Insert new records for the current day
-//     await Goldhistory.insertMany(newRecords);
-
-//     res.json({ message: 'Previous day records copied to the current day successfully' });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ error: 'Internal Server Error' });
-//   }
-// });
-
 
   router.get('/clear_goldtags_count', isLogin, async (req, res) => {
     try {

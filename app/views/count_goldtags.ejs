@@ -57,6 +57,7 @@
                 <th width="100px">ประเภท</th>
                 <th width="100px">ขนาด</th>
                 <th width="100px">น้ำหนัก</th>
+                <th width="100px">ร้านผู้จัดจำหน่าย</th>
             </tr>
         </thead>
         <tbody id="goldtagsTableBody">
@@ -154,6 +155,7 @@
                             <td>${count_tag.gold_type}</td>
                             <td>${count_tag.gold_size}</td>
                             <td>${count_tag.gold_weight} กรัม</td>
+                            <td>${count_tag.dealer_name}</td>
                         </tr>
                     `;
                     tableBody.innerHTML += row;
