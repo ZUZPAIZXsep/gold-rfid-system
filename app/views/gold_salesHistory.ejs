@@ -8,91 +8,51 @@
               <span class="material-icon material-symbols-outlined">shopping_cart</span> ไปยังหน้าการขาย
             </a>
         </div>   
-        <div class="row">
-            <div class="row mt-1">
-                <div class="col-2">
-                    <label for="start_date_input" style="font-weight: 600;">เลือกวันที่เริ่มต้น</label>
-                    <input type="date" class="form-control" id="start_date_input" name="start_date" value="<%= startDate %>" placeholder="เลือกวันที่เริ่มต้น">
-                </div>
-                <div class="col-2">
-                    <label for="end_date_input" style="font-weight: 600;">ถึงวันที่</label>
-                    <input type="date" class="form-control" id="end_date_input" name="end_date" value="<%= endDate %>" placeholder="ถึงวันที่">
-                </div>
-            </div> 
-            <div class="col-2 mt-2">
-                <label style="font-weight: 600;">ประเภทของทองคำ</label>
-                <select class="form-select" name="select_goldType">
-                    <option value="">เลือกประเภททองคำ</option>
-                    <option value="สร้อยคอ" <%= select_goldType === 'สร้อยคอ' ? 'selected' : '' %>>สร้อยคอ</option>
-                    <option value="แหวน" <%= select_goldType === 'แหวน' ? 'selected' : '' %>>แหวน</option>
-                    <option value="กำไลข้อมือ" <%= select_goldType === 'กำไลข้อมือ' ? 'selected' : '' %>>กำไลข้อมือ</option>
-                    <option value="สร้อยข้อมือ" <%= select_goldType === 'สร้อยข้อมือ' ? 'selected' : '' %>>สร้อยข้อมือ</option>
-                    <option value="ต่างหู" <%= select_goldType === 'ต่างหู' ? 'selected' : '' %>>ต่างหู</option>
-                </select>                
+        <!-- ฟิลเตอร์เลือกช่วงวันที่ -->
+        <div class="row mt-1">
+            <div class="col-2">
+                <label for="start_date_input" style="font-weight: 600;">เลือกวันที่เริ่มต้น</label>
+                <input type="date" class="form-control" id="start_date_input" name="start_date" value="<%= startDate %>" placeholder="เลือกวันที่เริ่มต้น">
             </div>
-            <div class="col-2 mt-2">
-                <label style="font-weight: 600;">ขนาดของทองคำ</label>
-                <select class="form-select" name="select_goldSize">
-                    <option value="">เลือกขนาดทองคำ</option>
-                    <option value="ครึ่งสลึง" <%= select_goldSize === 'ครึ่งสลึง' ? 'selected' : '' %>>ครึ่งสลึง</option>
-                    <option value="1 สลึง" <%= select_goldSize === '1 สลึง' ? 'selected' : '' %>>1 สลึง</option>
-                    <option value="2 สลึง" <%= select_goldSize === '2 สลึง' ? 'selected' : '' %>>2 สลึง</option>
-                    <option value="1 บาท" <%= select_goldSize === '1 บาท' ? 'selected' : '' %>>1 บาท</option>
-                    <option value="2 บาท" <%= select_goldSize === '2 บาท' ? 'selected' : '' %>>2 บาท</option>
-                    <option value="3 บาท" <%= select_goldSize === '3 บาท' ? 'selected' : '' %>>3 บาท</option>
-                </select>
+            <div class="col-2">
+                <label for="end_date_input" style="font-weight: 600;">ถึงวันที่</label>
+                <input type="date" class="form-control" id="end_date_input" name="end_date" value="<%= endDate %>" placeholder="ถึงวันที่">
             </div>
-            <div class="col-2 mt-2">
-                <label style="font-weight: 600;">ค้นหาด้วยเลข Gold_Tag_id</label>
-                <input type="text" class="form-control" name="gold_id" placeholder="กรอกเลข Gold_Tag_id" value="<%= gold_id %>">
+            <div class="col-2 align-self-end">
+                <a type="button" class="btn btn-danger" style="margin-left: 4px;" href="./gold_salesHistory">
+                    <span class="material-icon material-symbols-outlined">
+                        close
+                    </span>
+                    ล้างค่า
+                </a>
             </div>
-        </div>       
-        <div>
-            <button type="submit" class="btn btn-primary mt-3">
-                <span class="material-icon material-symbols-outlined">
-                    search
-                </span>
-                ค้นหา
-            </button>
-            <a type="button" class="btn btn-danger mt-3" style="margin-left: 4px;" href="./gold_salesHistory">
-                <span class="material-icon material-symbols-outlined">
-                    refresh
-                </span>
-                ล้างข้อมูล
-            </a>
         </div>
         <div class="mt-3">
             <% if (goldshistory.length > 0) { %>
                 <table class="table table-bordered mt-3">
                     <thead class="table-success">
                         <tr>
-                            <th width="250px">วันที่ขายออก</th>
-                            <th>ถาด</th>
-                            <th>ชนิด</th>
-                            <th>ขนาด</th>
-                            <th>น้ำหนัก</th>
-                            <th>Gold_Tag_id</th>
-                            <th class="text-center" width="170px">รายละเอียดการซื้อขาย</th>
+                            <th>เลขที่รายการ</th>
+                            <th>วันที่ขายออก</th>
+                            <th>จำนวนสินค้า</th>
+                            <th width="160px">รายละเอียดการซื้อขาย</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <% goldshistory.forEach((gold_salesHistory, index) => { %>
+                        <% goldshistory.forEach(group => { %>
                             <tr>
-                                <td><%= dayjs(gold_salesHistory.gold_outDateTime).locale('th').format('DD-MM-YYYY HH:mm:ss') %></td>
-                                <td><%= gold_salesHistory.gold_tray %></td>
-                                <td><%= gold_salesHistory.gold_type %></td>
-                                <td><%= gold_salesHistory.gold_size %></td>
-                                <td><%= gold_salesHistory.gold_weight %> กรัม</td>
-                                <td><%= gold_salesHistory.gold_id %></td>
+                                <td><%= group._id %></td> <!-- ใช้ group._id หรือ group.order_number -->
+                                <td><%= dayjs(group.gold_outDateTime).format('DD/MM/YYYY HH:mm:ss') %></td>
+                                <td><%= group.gold_items.length %> รายการ</td>
                                 <td class="text-center">
-                                    <button class="btn btn-success view-details-btn" data-gold-id="<%= gold_salesHistory._id %>">
-                                      <span class="material-icon material-symbols-outlined">format_list_bulleted</span> รายละเอียด
-                                    </button>
-                                </td>                                                              
+                                    <a href="/gold_salesHistory/<%= group._id %>" class="btn btn-success">
+                                        <span class="material-icon material-symbols-outlined">format_list_bulleted</span> รายละเอียด
+                                    </a>
+                                </td>                                                                                             
                             </tr>
-                        <% }); %>
+                        <% }) %>                        
                     </tbody>
-                </table>
+                </table>                
             <% } else { %>
                 <p>ไม่มีข้อมูลทองคำตรงกับเงื่อนไขที่คุณเลือก</p>
             <% } %>
@@ -205,6 +165,16 @@
                 }
             });
         });
+    });
+</script>
+
+<script>
+    document.getElementById('start_date_input').addEventListener('change', function () {
+        this.form.submit(); // ส่งฟอร์มอัตโนมัติเมื่อมีการเลือกวันที่เริ่มต้น
+    });
+
+    document.getElementById('end_date_input').addEventListener('change', function () {
+        this.form.submit(); // ส่งฟอร์มอัตโนมัติเมื่อมีการเลือกวันที่สิ้นสุด
     });
 </script>
 

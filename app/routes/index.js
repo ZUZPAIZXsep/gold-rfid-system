@@ -67,6 +67,7 @@ const goldCountHistorySchema = new mongoose.Schema({
   seller_username: String,
   seller_role: String,
   seller_name: String,
+  order_number: String
 },{ 
   collection: 'goldcount_history'
 });
@@ -1452,6 +1453,10 @@ router.post('/update_goldstatus', isLogin, async (req, res) => {
         threeBaht: (pricePerGram * 3) + (400*3)
       };
 
+      // หาเลขคำสั่งซื้อล่าสุดและสร้างเลขคำสั่งซื้อใหม่
+      const latestOrder = await Goldhistory.findOne().sort({ order_number: -1 }).exec();
+      const newOrderNumber = latestOrder ? (parseInt(latestOrder.order_number) + 1).toString().padStart(4, '0') : '0001';
+
       // Update gold_status and gold_outDateTime in Goldtagscount collection
       await Goldtagscount.updateMany(
           { gold_id: { $in: gold_ids } },
@@ -1496,6 +1501,7 @@ router.post('/update_goldstatus', isLogin, async (req, res) => {
               existingGold.seller_username = req.session.usr;
               existingGold.seller_role = req.session.role;
               existingGold.seller_name = req.session.name;
+              existingGold.order_number = newOrderNumber; // ใส่เลขคำสั่งซื้อ
               await existingGold.save();
           } else {
               // Create new document in Goldhistory
@@ -1512,11 +1518,12 @@ router.post('/update_goldstatus', isLogin, async (req, res) => {
                   seller_username: req.session.usr,
                   seller_role: req.session.role,
                   seller_name: req.session.name,
+                  order_number: newOrderNumber // ใส่เลขคำสั่งซื้อ
               });
           }
       }
 
-      res.json({ message: 'Data saved successfully' });
+      res.json({ message: 'Data saved successfully', order_number: newOrderNumber });
 
   } catch (error) {
       console.error('Error:', error);
@@ -1525,22 +1532,79 @@ router.post('/update_goldstatus', isLogin, async (req, res) => {
 });
 
 
-  const ITEMS_PER_PAGE = 15;
 
-  router.get('/gold_salesHistory', isLogin, async (req, res, next) => {
+//   const ITEMS_PER_PAGE = 15;
+
+//   router.get('/gold_salesHistory', isLogin, async (req, res, next) => {
+//     try {
+//         let condition = { gold_status: 'out of stock' }; // Initial condition for out of stock items
+
+//         // Filter conditions based on query parameters
+//         if (req.query.select_goldType && req.query.select_goldType !== 'เลือกประเภททองคำ') {
+//             condition.gold_type = req.query.select_goldType;
+//         }
+//         if (req.query.select_goldSize && req.query.select_goldSize !== 'เลือกขนาดทองคำ') {
+//             condition.gold_size = req.query.select_goldSize;
+//         }
+//         if (req.query.gold_id && req.query.gold_id.trim().length > 0) {
+//             condition.gold_id = req.query.gold_id.trim();
+//         }
+//         if (req.query.start_date && req.query.end_date) {
+//             const startDate = new Date(req.query.start_date);
+//             const endDate = new Date(req.query.end_date);
+//             condition.gold_outDateTime = {
+//                 $gte: startDate,
+//                 $lt: dayjs(endDate).endOf('day').toDate() // End of day for endDate
+//             };
+//         } else if (req.query.start_date) {
+//             const startDate = new Date(req.query.start_date);
+//             condition.gold_outDateTime = { $gte: startDate };
+//         } else if (req.query.end_date) {
+//             const endDate = new Date(req.query.end_date);
+//             condition.gold_outDateTime = { $lt: dayjs(endDate).endOf('day').toDate() };
+//         }
+
+//         // Pagination logic
+//         const page = parseInt(req.query.page) || 1;
+//         const skip = (page - 1) * ITEMS_PER_PAGE;
+
+//         const allRecords = await Goldhistory.find(condition)
+//             .sort({ gold_outDateTime: -1 })
+//             .skip(skip)
+//             .limit(ITEMS_PER_PAGE);
+
+//         const totalItems = await Goldhistory.countDocuments(condition);
+
+//         // Create query parameters string without the page parameter
+//         const queryParams = new URLSearchParams(req.query);
+//         queryParams.delete('page');
+
+//         res.render('gold_salesHistory', {
+//           goldshistory: allRecords,
+//           dayjs: dayjs,
+//           select_goldType: req.query.select_goldType,
+//           select_goldSize: req.query.select_goldSize,
+//           startDate: req.query.start_date,
+//           endDate: req.query.end_date,
+//           gold_id: req.query.gold_id,
+//           currentUrl: req.originalUrl,
+//           totalPages: Math.ceil(totalItems / ITEMS_PER_PAGE),
+//           currentPage: page,
+//           queryParams: queryParams.toString(),
+//       });
+
+//     } catch (error) {
+//         console.error(error);
+//         res.status(500).send('Internal Server Error');
+//     }
+// });
+
+const ITEMS_PER_PAGE = 15;
+
+router.get('/gold_salesHistory', isLogin, async (req, res, next) => {
     try {
         let condition = { gold_status: 'out of stock' }; // Initial condition for out of stock items
 
-        // Filter conditions based on query parameters
-        if (req.query.select_goldType && req.query.select_goldType !== 'เลือกประเภททองคำ') {
-            condition.gold_type = req.query.select_goldType;
-        }
-        if (req.query.select_goldSize && req.query.select_goldSize !== 'เลือกขนาดทองคำ') {
-            condition.gold_size = req.query.select_goldSize;
-        }
-        if (req.query.gold_id && req.query.gold_id.trim().length > 0) {
-            condition.gold_id = req.query.gold_id.trim();
-        }
         if (req.query.start_date && req.query.end_date) {
             const startDate = new Date(req.query.start_date);
             const endDate = new Date(req.query.end_date);
@@ -1560,10 +1624,24 @@ router.post('/update_goldstatus', isLogin, async (req, res) => {
         const page = parseInt(req.query.page) || 1;
         const skip = (page - 1) * ITEMS_PER_PAGE;
 
-        const allRecords = await Goldhistory.find(condition)
-            .sort({ gold_outDateTime: -1 })
-            .skip(skip)
-            .limit(ITEMS_PER_PAGE);
+        // Use aggregation to group items by order_number and collect all items in the same order_number
+        const allRecords = await Goldhistory.aggregate([
+          { $match: condition },
+          { $sort: { gold_outDateTime: -1 } }, // First sort by date
+          {
+              $group: {
+                  _id: "$order_number",
+                  gold_items: { $push: "$$ROOT" },
+                  total_weight: { $sum: "$gold_weight" },
+                  gold_outDateTime: { $first: "$gold_outDateTime" },
+                  gold_tray: { $first: "$gold_tray" },
+              }
+          },
+          { $sort: { _id: -1 } }, // Sort by order_number ascending
+          { $skip: skip },
+          { $limit: ITEMS_PER_PAGE }
+        ]);
+
 
         const totalItems = await Goldhistory.countDocuments(condition);
 
@@ -1572,24 +1650,52 @@ router.post('/update_goldstatus', isLogin, async (req, res) => {
         queryParams.delete('page');
 
         res.render('gold_salesHistory', {
-          goldshistory: allRecords,
-          dayjs: dayjs,
-          select_goldType: req.query.select_goldType,
-          select_goldSize: req.query.select_goldSize,
-          startDate: req.query.start_date,
-          endDate: req.query.end_date,
-          gold_id: req.query.gold_id,
-          currentUrl: req.originalUrl,
-          totalPages: Math.ceil(totalItems / ITEMS_PER_PAGE),
-          currentPage: page,
-          queryParams: queryParams.toString(),
-      });
+            goldshistory: allRecords,
+            dayjs: dayjs,
+            select_goldType: req.query.select_goldType,
+            select_goldSize: req.query.select_goldSize,
+            startDate: req.query.start_date,
+            endDate: req.query.end_date,
+            gold_id: req.query.gold_id,
+            currentUrl: req.originalUrl,
+            totalPages: Math.ceil(totalItems / ITEMS_PER_PAGE),
+            currentPage: page,
+            queryParams: queryParams.toString(),
+        });
 
     } catch (error) {
         console.error(error);
         res.status(500).send('Internal Server Error');
     }
 });
+
+router.get('/gold_salesHistory/:orderNumber', isLogin, async (req, res, next) => {
+  try {
+      const orderNumber = req.params.orderNumber;
+
+      // ค้นหาข้อมูลใน Goldhistory โดยใช้ order_number
+      const details = await Goldhistory.find({ order_number: orderNumber });
+
+      // นับจำนวนรายการที่ขายออกทั้งหมด
+      const outStockCount = details.length;
+
+      // คำนวณผลรวมของราคาทั้งหมดในกลุ่ม (แปลงเป็นตัวเลขก่อนรวม)
+      const totalPrice = details.reduce((sum, detail) => sum + parseFloat(detail.gold_price), 0);
+
+      res.render('gold_salesHistoryDetails', {
+          details: details,
+          outStockCount: outStockCount,
+          totalPrice: totalPrice, // ส่งผลรวมของราคาทั้งหมดไปยัง EJS
+          dayjs: dayjs
+      });
+  } catch (error) {
+      console.error(error);
+      res.status(500).send('Internal Server Error');
+  }
+});
+
+
+
 
 router.get('/gold_saleDetails', isLogin, async (req, res, next) => {
   try {
