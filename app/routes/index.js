@@ -1345,6 +1345,84 @@ router.post('/save_goldtags', isLogin, async (req, res) => {
 });
 
 
+router.get('/gold_sales_partial', isLogin, async (req, res) => {
+  try {
+      let goldsales = [];
+      let rfidTags = rfidModule.getRfidTags(); // Retrieve RFID tags
+
+      // Fetch gold sales data from database
+      goldsales = await GoldTag.find({ gold_id: { $in: rfidTags } });
+
+      // Add tray information
+      goldsales = goldsales.map(tag => ({
+          ...tag._doc,
+          gold_tray: assignTray(tag.gold_type) // Function to assign tray based on gold type
+      }));
+
+      // Sort gold sales by tray
+      goldsales.sort((a, b) => {
+          const trayOrder = {
+              'ถาดที่ 1': 1,
+              'ถาดที่ 2': 2,
+              'ถาดที่ 3': 3,
+              'ถาดที่ 4': 4,
+              'ถาดที่ 5': 5,
+              'ถาดอื่นๆ': 6
+          };
+          return trayOrder[a.gold_tray] - trayOrder[b.gold_tray];
+      });
+
+      // Fetch the latest gold price
+      const dataUrl = 'http://www.thaigold.info/RealTimeDataV2/gtdata_.txt';
+      const response = await axios.get(dataUrl);
+      const data = response.data;
+      const pricePerGram = parseFloat(data[5]?.bid);
+
+      if (isNaN(pricePerGram)) {
+          console.error('pricePerGram is not a valid number:', pricePerGram);
+          res.status(500).send('Invalid price data from API');
+          return;
+      }
+
+      // Calculate gold prices
+      const prices = {
+          halfSalung: (pricePerGram * 3.81 / 15.244 / 2) + 400,
+          oneSalung: (pricePerGram * 3.81 / 15.244) + 400,
+          twoSalung: (pricePerGram * 3.81 * 2 / 15.244) + 400,
+          oneBaht: (pricePerGram) + 400,
+          twoBaht: (pricePerGram * 2) + (400 * 2),
+          threeBaht: (pricePerGram * 3) + (400 * 3)
+      };
+
+      // Calculate total price
+      let totalGoldPrice = 0;
+      goldsales.forEach(item => {
+          if (item.gold_size === 'ครึ่งสลึง') {
+              totalGoldPrice += prices.halfSalung;
+          } else if (item.gold_size === '1 สลึง') {
+              totalGoldPrice += prices.oneSalung;
+          } else if (item.gold_size === '2 สลึง') {
+              totalGoldPrice += prices.twoSalung;
+          } else if (item.gold_size === '1 บาท') {
+              totalGoldPrice += prices.oneBaht;
+          } else if (item.gold_size === '2 บาท') {
+              totalGoldPrice += prices.twoBaht;
+          } else if (item.gold_size === '3 บาท') {
+              totalGoldPrice += prices.threeBaht;
+          }
+      });
+
+      res.json({
+          goldsales,
+          prices,
+          totalGoldPrice
+      });
+  } catch (error) {
+      console.error(error);
+      res.status(500).send('Internal Server Error');
+  }
+});
+
 router.post('/update_goldstatus', isLogin, async (req, res) => {
   try {
       const { gold_ids, customer_name, customer_surname, customer_phone, gold_sales } = req.body;

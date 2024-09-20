@@ -38,16 +38,8 @@
       let totalTags = goldsales.length;
     %>
     <div class="mt-4">
-        <h3>จำนวนทองคำที่นับได้ : <%= totalTags %> รายการ</h3>
-        <ul>
-            <% const trays = { 'ถาดที่ 1': 'สร้อยคอ', 'ถาดที่ 2': 'แหวน', 'ถาดที่ 3': 'กำไลข้อมือ', 'ถาดที่ 4': 'สร้อยข้อมือ', 'ถาดที่ 5': 'ต่างหู' }; %>
-            <% Object.keys(trays).forEach(tray => {
-                const count = goldsales.filter(tag => tag.gold_tray === tray).length;
-                if (count > 0) { %>
-                    <li><%= tray %> มี <%= trays[tray] %> <%= count %> ชิ้น</li>
-                <% }
-            }); %>
-        </ul> 
+        <h3 id="totalTags">จำนวนทองคำที่นับได้ : 0 รายการ</h3>
+        <ul id="traySummary"></ul> 
     </div>
     <table class="table table-bordered">
         <thead class="table-success">
@@ -61,38 +53,10 @@
                 <th width="100px">ราคาทองคำ (บาท)</th>
             </tr>
         </thead>
-        <tbody>
-            <% goldsales.forEach((gold_salesData, index) => { %>
-                <tr>
-                    <td><%= index + 1 %></td>
-                    <td><%= gold_salesData.gold_id %></td>
-                    <td><%= gold_salesData.gold_tray %></td>
-                    <td><%= gold_salesData.gold_type %></td>
-                    <td><%= gold_salesData.gold_size %></td>
-                    <td><%= gold_salesData.gold_weight %> กรัม</td>
-                    <td>
-                        <% if (gold_salesData.gold_size === 'ครึ่งสลึง' && gold_salesData.gold_weight == 1.9) { %>
-                            <%= prices.halfSalung.toFixed(2) %>
-                        <% } else if (gold_salesData.gold_size === '1 สลึง' && gold_salesData.gold_weight == 3.8) { %>
-                            <%= prices.oneSalung.toFixed(2) %>
-                        <% } else if (gold_salesData.gold_size === '2 สลึง' && gold_salesData.gold_weight == 7.6) { %>
-                            <%= prices.twoSalung.toFixed(2) %>
-                        <% } else if (gold_salesData.gold_size === '1 บาท' && gold_salesData.gold_weight == 15.16) { %>
-                            <%= prices.oneBaht.toFixed(2) %>
-                        <% } else if (gold_salesData.gold_size === '2 บาท' && gold_salesData.gold_weight == 30.4) { %>
-                            <%= prices.twoBaht.toFixed(2) %>
-                        <% } else if (gold_salesData.gold_size === '3 บาท' && gold_salesData.gold_weight == 45.6) { %>
-                            <%= prices.threeBaht.toFixed(2) %>
-                        <% } else { %>
-                            N/A
-                        <% } %>
-                    </td>
-                </tr>
-            <% }); %>
-        </tbody>
+        <tbody id="goldtagsTableBody"></tbody>
     </table>
     <div class="mt-3">
-        <h4>ราคารวม : <%= totalGoldPrice.toFixed(2) %> บาท</h4>
+        <h4 id="totalPrice">ราคารวม : 0.00 บาท</h4>
     </div>
 </div>
 
@@ -245,6 +209,77 @@ document.getElementById('confirmButton').addEventListener('click', () => {
                 console.error('Error:', error);
             });
     }
+
+    function refreshGoldSales() {
+        fetch('/gold_sales_partial')
+            .then(response => response.json())
+            .then(data => {
+                const goldsales = data.goldsales;
+                const prices = data.prices;
+                const totalGoldPrice = data.totalGoldPrice;
+
+                const tableBody = document.getElementById('goldtagsTableBody');
+                const totalTags = document.getElementById('totalTags');
+                const traySummary = document.getElementById('traySummary');
+                const totalPriceElement = document.getElementById('totalPrice');
+
+                // ล้างข้อมูลเก่า
+                tableBody.innerHTML = ''; 
+                traySummary.innerHTML = '';
+
+                // อัปเดตจำนวนทองคำที่นับได้
+                totalTags.innerHTML = `จำนวนทองคำที่นับได้ : ${goldsales.length} รายการ`;
+
+                // อัปเดตรายการถาด
+                const trays = { 'ถาดที่ 1': 'สร้อยคอ', 'ถาดที่ 2': 'แหวน', 'ถาดที่ 3': 'กำไลข้อมือ', 'ถาดที่ 4': 'สร้อยข้อมือ', 'ถาดที่ 5': 'ต่างหู' };
+                Object.keys(trays).forEach(tray => {
+                    const count = goldsales.filter(tag => tag.gold_tray === tray).length;
+                    if (count > 0) {
+                        traySummary.innerHTML += `<li>${tray} มี ${trays[tray]} ${count} ชิ้น</li>`;
+                    }
+                });
+
+                // เพิ่มข้อมูลในตาราง
+                goldsales.forEach((gold_salesData, index) => {
+                    let goldPrice = 0;
+                    if (gold_salesData.gold_size === 'ครึ่งสลึง') {
+                        goldPrice = prices.halfSalung;
+                    } else if (gold_salesData.gold_size === '1 สลึง') {
+                        goldPrice = prices.oneSalung;
+                    } else if (gold_salesData.gold_size === '2 สลึง') {
+                        goldPrice = prices.twoSalung;
+                    } else if (gold_salesData.gold_size === '1 บาท') {
+                        goldPrice = prices.oneBaht;
+                    } else if (gold_salesData.gold_size === '2 บาท') {
+                        goldPrice = prices.twoBaht;
+                    } else if (gold_salesData.gold_size === '3 บาท') {
+                        goldPrice = prices.threeBaht;
+                    }
+
+                    const row = `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${gold_salesData.gold_id}</td>
+                            <td>${gold_salesData.gold_tray}</td>
+                            <td>${gold_salesData.gold_type}</td>
+                            <td>${gold_salesData.gold_size}</td>
+                            <td>${gold_salesData.gold_weight} กรัม</td>
+                            <td>${goldPrice.toFixed(2)}</td>
+                        </tr>
+                    `;
+                    tableBody.innerHTML += row;
+                });
+
+                // อัปเดตราคารวม
+                totalPriceElement.textContent = `ราคารวม : ${totalGoldPrice.toFixed(2)} บาท`;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+
+    // เรียก refreshGoldSales ทุกๆ 0.3 วินาที
+    setInterval(refreshGoldSales, 300);
 </script>
 
 
