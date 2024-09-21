@@ -1599,7 +1599,7 @@ router.post('/update_goldstatus', isLogin, async (req, res) => {
 //     }
 // });
 
-const ITEMS_PER_PAGE = 15;
+const ITEMS_PER_PAGE = 10;
 
 router.get('/gold_salesHistory', isLogin, async (req, res, next) => {
     try {
@@ -1642,8 +1642,14 @@ router.get('/gold_salesHistory', isLogin, async (req, res, next) => {
           { $limit: ITEMS_PER_PAGE }
         ]);
 
+        // Count total number of distinct order_number groups
+        const totalItems = await Goldhistory.aggregate([
+            { $match: condition },
+            { $group: { _id: "$order_number" } },
+            { $count: "total" }
+        ]);
 
-        const totalItems = await Goldhistory.countDocuments(condition);
+        const totalGroups = totalItems[0] ? totalItems[0].total : 0;
 
         // Create query parameters string without the page parameter
         const queryParams = new URLSearchParams(req.query);
@@ -1658,7 +1664,7 @@ router.get('/gold_salesHistory', isLogin, async (req, res, next) => {
             endDate: req.query.end_date,
             gold_id: req.query.gold_id,
             currentUrl: req.originalUrl,
-            totalPages: Math.ceil(totalItems / ITEMS_PER_PAGE),
+            totalPages: Math.ceil(totalGroups / ITEMS_PER_PAGE),
             currentPage: page,
             queryParams: queryParams.toString(),
         });
@@ -1668,6 +1674,7 @@ router.get('/gold_salesHistory', isLogin, async (req, res, next) => {
         res.status(500).send('Internal Server Error');
     }
 });
+
 
 router.get('/gold_salesHistory/:orderNumber', isLogin, async (req, res, next) => {
   try {
@@ -1693,9 +1700,6 @@ router.get('/gold_salesHistory/:orderNumber', isLogin, async (req, res, next) =>
       res.status(500).send('Internal Server Error');
   }
 });
-
-
-
 
 router.get('/gold_saleDetails', isLogin, async (req, res, next) => {
   try {
@@ -1844,7 +1848,6 @@ function summarizeGoldHistory(data) {
       res.status(500).send('Internal Server Error');
     }
   });  
-
 
 router.get('/gold_sales_summary', isLogin, async (req, res) => {
   try {
@@ -2057,7 +2060,6 @@ router.get('/gold_summary/details', isLogin, async (req, res, next) => {
     res.status(500).send('Internal Server Error');
   }
 });
-
 
 router.get('/gold_sales_employee', isLogin, async (req, res) => {
   try {
