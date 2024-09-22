@@ -66,9 +66,53 @@
         </h5>
         <h4>ราคารวม: <%= totalPrice.toLocaleString() %> บาท</h4>
     </div>
-    
+    <!-- ปุ่มสร้าง PDF -->
+    <button id="printButton" class="btn btn-secondary">พิมพ์</button>
+
+    <button id="pdfButton" class="btn btn-success">สร้าง PDF</button>
 
     <a href="/gold_salesHistory" class="btn btn-primary mt-3">กลับไปหน้ารายการทั้งหมด</a>
 </div>
 
 <%- include('footer') %>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+    document.getElementById('printButton').addEventListener('click', () => {
+        const printContents = document.querySelector('.container-fluid').innerHTML;
+        const originalContents = document.body.innerHTML;
+
+        document.body.innerHTML = printContents;
+        window.print();
+        document.body.innerHTML = originalContents;
+    });
+
+    document.getElementById('pdfButton').addEventListener('click', () => {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        // นำข้อมูลจากตารางมาสร้าง PDF
+        const title = "รายละเอียดการขายทองคำ";
+        const subtitle = `จำนวนรายการทองคำที่ขายทั้งหมด: ${outStockCount} รายการ\n`;
+        const tableData = details.map(detail => [
+            detail.gold_id,
+            detail.gold_type,
+            detail.gold_size,
+            detail.gold_weight,
+            detail.dealer_name,
+            detail.gold_price
+        ]);
+
+        let pdfContent = `${title}\n\n${subtitle}\n`;
+
+        tableData.forEach(row => {
+            pdfContent += row.join(' | ') + '\n';
+        });
+
+        // สร้าง PDF
+        doc.text(pdfContent, 10, 10);
+        doc.save('gold_sales_history.pdf');
+    });
+</script>
+
