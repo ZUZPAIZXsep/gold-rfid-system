@@ -91,8 +91,7 @@
                     <input type="hidden" id="goldIds" name="goldIds">
                 </form>
                 <div class="mt-3">
-                    <!--<h5>ราคารวม : <%= totalGoldPrice.toFixed(2) %> บาท</h5>-->
-                    <h5 id="modalTotalPrice">ราคารวม: 0 บาท</h5>
+                    <h5>ราคารวม : <%= totalGoldPrice.toFixed(2) %> บาท</h5>
                 </div>
             </div>
             <div class="modal-footer">
@@ -107,115 +106,13 @@
     window.goldsales = JSON.parse('<%- JSON.stringify(goldsales) %>');
     const prices = JSON.parse('<%- JSON.stringify(prices) %>');
 
-    document.getElementById('saveBtn').addEventListener('click', () => {
-    const goldsales = window.goldsales;
-    const goldItemsTextarea = document.getElementById('goldItems');
-    const goldIdsInput = document.getElementById('goldIds');
-    let goldItemsText = '';
-    let goldIds = [];
-    let totalGoldPrice = 0;
-
-    goldsales.forEach(item => {
-        let goldPrice = 0;
-        if (item.gold_size === 'ครึ่งสลึง') {
-            goldPrice = prices.halfSalung;
-        } else if (item.gold_size === '1 สลึง') {
-            goldPrice = prices.oneSalung;
-        } else if (item.gold_size === '2 สลึง') {
-            goldPrice = prices.twoSalung;
-        } else if (item.gold_size === '1 บาท') {
-            goldPrice = prices.oneBaht;
-        } else if (item.gold_size === '2 บาท') {
-            goldPrice = prices.twoBaht;
-        } else if (item.gold_size === '3 บาท') {
-            goldPrice = prices.threeBaht;
-        }
-        
-        goldItemsText += `ประเภท: ${item.gold_type}, ขนาด: ${item.gold_size}, น้ำหนัก: ${item.gold_weight} กรัม, ราคา: ${goldPrice.toFixed(2)} บาท\n`;
-        goldIds.push(item.gold_id);
-        totalGoldPrice += goldPrice;
-    });
-
-    goldItemsTextarea.value = goldItemsText;
-    goldIdsInput.value = JSON.stringify(goldIds);
-    
-    // Show total price
-    const totalPriceElement = document.getElementById('totalPrice');
-    totalPriceElement.textContent = `ราคารวม : ${totalGoldPrice.toFixed(2)} บาท`;
-});
-
-document.getElementById('confirmButton').addEventListener('click', () => {
-    const customerForm = document.getElementById('customerForm');
-    const goldIds = document.getElementById('goldIds').value;
-    const customerName = document.getElementById('customerName').value;
-    const customerSurname = document.getElementById('customerSurname').value;
-    const customerPhone = document.getElementById('customerPhone').value;
-
-    const data = {
-        gold_ids: JSON.parse(goldIds),
-        customer_name: customerName,
-        customer_surname: customerSurname,
-        customer_phone: customerPhone,
-        gold_sales: window.goldsales
-    };
-
-    fetch('/update_goldstatus', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log(data);
-        if (data.message) {
-            const successMessage = document.getElementById('successMessage');
-            successMessage.classList.remove('d-none');
-            setTimeout(() => {
-                successMessage.classList.add('d-none');
-                window.location.reload(true);
-            }, 500);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
-});
-
-function reloadAddTags(){
-        window.location.reload(true);
-    }
-
-    function clearRfidTags() {
-        fetch('/clear_rfid_tags')
-            .then(response => response.json())
-            .then(data => {
-                console.log(data);
-                window.location.reload(true);
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
-    }
-
-    function clearGoldtagsCount() {
-        fetch('/clear_goldtags_count')
-            .then(response => response.json())
-            .then(data => {
-                console.log(data);
-                window.location.reload(true);
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
-    }
-
+    // เรียกฟังก์ชันเพื่อโหลดข้อมูลใหม่เฉพาะเมื่อจำเป็น
     function refreshGoldSales() {
-        fetch('/gold_sales_partial')
+        return fetch('/gold_sales_partial')
             .then(response => response.json())
             .then(data => {
-                const goldsales = data.goldsales;
+                // อัปเดตข้อมูลใน window.goldsales เพื่อใช้ในการบันทึก
+                window.goldsales = data.goldsales;
                 const prices = data.prices;
                 const totalGoldPrice = data.totalGoldPrice;
 
@@ -229,19 +126,19 @@ function reloadAddTags(){
                 traySummary.innerHTML = '';
 
                 // อัปเดตจำนวนทองคำที่นับได้
-                totalTags.innerHTML = `จำนวนทองคำที่นับได้ : ${goldsales.length} รายการ`;
+                totalTags.innerHTML = `จำนวนทองคำที่นับได้ : ${window.goldsales.length} รายการ`;
 
                 // อัปเดตรายการถาด
                 const trays = { 'ถาดที่ 1': 'สร้อยคอ', 'ถาดที่ 2': 'แหวน', 'ถาดที่ 3': 'กำไลข้อมือ', 'ถาดที่ 4': 'สร้อยข้อมือ', 'ถาดที่ 5': 'ต่างหู' };
                 Object.keys(trays).forEach(tray => {
-                    const count = goldsales.filter(tag => tag.gold_tray === tray).length;
+                    const count = window.goldsales.filter(tag => tag.gold_tray === tray).length;
                     if (count > 0) {
                         traySummary.innerHTML += `<li>${tray} มี ${trays[tray]} ${count} ชิ้น</li>`;
                     }
                 });
 
                 // เพิ่มข้อมูลในตาราง
-                goldsales.forEach((gold_salesData, index) => {
+                window.goldsales.forEach((gold_salesData, index) => {
                     let goldPrice = 0;
                     if (gold_salesData.gold_size === 'ครึ่งสลึง') {
                         goldPrice = prices.halfSalung;
@@ -271,110 +168,174 @@ function reloadAddTags(){
                     tableBody.innerHTML += row;
                 });
 
-                // อัปเดตราคารวม
+                // อัปเดตราคารวมในหน้าหลัก
                 totalPriceElement.textContent = `ราคารวม : ${totalGoldPrice.toFixed(2)} บาท`;
+
+                // อัปเดตข้อมูลใน Modal
+                updateModalContent(window.goldsales, prices);
             })
             .catch(error => {
                 console.error('Error:', error);
             });
     }
 
-        // ฟังก์ชันสำหรับการอัปเดตข้อมูลใน Modal
-    function updateModalData() {
-        fetch('/gold_sales_partial')
+    // ฟังก์ชันเพื่ออัปเดตเนื้อหาใน Modal
+    function updateModalContent(goldsales, prices) {
+        const goldItemsTextarea = document.getElementById('goldItems');
+        const goldIdsInput = document.getElementById('goldIds');
+        let goldItemsText = '';
+        let goldIds = [];
+        let totalGoldPrice = 0;
+
+        goldsales.forEach(item => {
+            let goldPrice = 0;
+            if (item.gold_size === 'ครึ่งสลึง') {
+                goldPrice = prices.halfSalung;
+            } else if (item.gold_size === '1 สลึง') {
+                goldPrice = prices.oneSalung;
+            } else if (item.gold_size === '2 สลึง') {
+                goldPrice = prices.twoSalung;
+            } else if (item.gold_size === '1 บาท') {
+                goldPrice = prices.oneBaht;
+            } else if (item.gold_size === '2 บาท') {
+                goldPrice = prices.twoBaht;
+            } else if (item.gold_size === '3 บาท') {
+                goldPrice = prices.threeBaht;
+            }
+
+            goldItemsText += `ประเภท: ${item.gold_type}, ขนาด: ${item.gold_size}, น้ำหนัก: ${item.gold_weight} กรัม, ราคา: ${goldPrice.toFixed(2)} บาท\n`;
+            goldIds.push(item.gold_id);
+            totalGoldPrice += goldPrice;
+        });
+
+        goldItemsTextarea.value = goldItemsText;
+        goldIdsInput.value = JSON.stringify(goldIds);
+
+        // แสดงราคารวมใน Modal
+        const modalTotalPrice = document.getElementById('confirmSellModal').querySelector('.modal-body h5');
+        modalTotalPrice.textContent = `ราคารวม : ${totalGoldPrice.toFixed(2)} บาท`;
+    }
+
+    document.getElementById('saveBtn').addEventListener('click', () => {
+        // เรียก refreshGoldSales ทุกครั้งเมื่อคลิกปุ่ม "กรอกข้อมูลการขาย"
+        refreshGoldSales().then(() => {
+            const goldItemsTextarea = document.getElementById('goldItems');
+            const goldIdsInput = document.getElementById('goldIds');
+
+            let goldItemsText = '';
+            let goldIds = [];
+            let totalGoldPrice = 0;
+
+            window.goldsales.forEach(item => {
+                let goldPrice = 0;
+                if (item.gold_size === 'ครึ่งสลึง') {
+                    goldPrice = prices.halfSalung;
+                } else if (item.gold_size === '1 สลึง') {
+                    goldPrice = prices.oneSalung;
+                } else if (item.gold_size === '2 สลึง') {
+                    goldPrice = prices.twoSalung;
+                } else if (item.gold_size === '1 บาท') {
+                    goldPrice = prices.oneBaht;
+                } else if (item.gold_size === '2 บาท') {
+                    goldPrice = prices.twoBaht;
+                } else if (item.gold_size === '3 บาท') {
+                    goldPrice = prices.threeBaht;
+                }
+
+                goldItemsText += `ประเภท: ${item.gold_type}, ขนาด: ${item.gold_size}, น้ำหนัก: ${item.gold_weight} กรัม, ราคา: ${goldPrice.toFixed(2)} บาท\n`;
+                goldIds.push(item.gold_id);
+                totalGoldPrice += goldPrice;
+            });
+
+            goldItemsTextarea.value = goldItemsText;
+            goldIdsInput.value = JSON.stringify(goldIds);
+
+            // Show total price in the modal body
+            const totalPriceElement = document.getElementById('totalPrice');
+            totalPriceElement.textContent = `ราคารวม: ${totalGoldPrice.toFixed(2)} บาท`;
+        });
+    });
+
+    document.getElementById('confirmButton').addEventListener('click', () => {
+        // ตรวจสอบข้อมูลและทำการบันทึก
+        const goldIds = document.getElementById('goldIds').value;
+        const customerName = document.getElementById('customerName').value.trim(); // ใช้ trim() เพื่อตัดช่องว่างข้างหน้า-หลัง
+        const customerSurname = document.getElementById('customerSurname').value.trim();
+        const customerPhone = document.getElementById('customerPhone').value.trim();
+
+        // ตรวจสอบว่าข้อมูลครบถ้วนหรือไม่
+        if (!goldIds || !customerName || !customerSurname || !customerPhone) {
+            alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+            return;
+        }
+
+        const data = {
+            gold_ids: JSON.parse(goldIds), // ตรวจสอบว่าข้อมูลนี้เป็น array
+            customer_name: customerName,
+            customer_surname: customerSurname,
+            customer_phone: customerPhone,
+            gold_sales: window.goldsales || [] 
+        };
+
+        // ตรวจสอบข้อมูลก่อนส่ง
+        console.log('Data to be sent:', data);
+
+        fetch('/update_goldstatus', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                const successMessage = document.getElementById('successMessage');
+                successMessage.classList.remove('d-none');
+                setTimeout(() => {
+                    successMessage.classList.add('d-none');
+                    window.location.reload(true);
+                }, 500);
+            } else {
+                console.error('Server response:', data);
+                alert('ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('เกิดข้อผิดพลาดในการส่งข้อมูล กรุณาตรวจสอบความถูกต้อง');
+        });
+    });
+
+function reloadAddTags(){
+        window.location.reload(true);
+    }
+
+    function clearRfidTags() {
+        fetch('/clear_rfid_tags')
             .then(response => response.json())
             .then(data => {
-                const goldsales = data.goldsales;
-                const prices = data.prices;
-                let goldItemsText = '';
-                let goldIds = [];
-                let totalGoldPrice = 0;
-
-                goldsales.forEach(item => {
-                    let goldPrice = 0;
-                    if (item.gold_size === 'ครึ่งสลึง') {
-                        goldPrice = prices.halfSalung;
-                    } else if (item.gold_size === '1 สลึง') {
-                        goldPrice = prices.oneSalung;
-                    } else if (item.gold_size === '2 สลึง') {
-                        goldPrice = prices.twoSalung;
-                    } else if (item.gold_size === '1 บาท') {
-                        goldPrice = prices.oneBaht;
-                    } else if (item.gold_size === '2 บาท') {
-                        goldPrice = prices.twoBaht;
-                    } else if (item.gold_size === '3 บาท') {
-                        goldPrice = prices.threeBaht;
-                    }
-
-                    goldItemsText += `ประเภท: ${item.gold_type}, ขนาด: ${item.gold_size}, น้ำหนัก: ${item.gold_weight} กรัม, ราคา: ${goldPrice.toFixed(2)} บาท\n`;
-                    goldIds.push(item.gold_id);
-                    totalGoldPrice += goldPrice;
-                });
-
-                document.getElementById('goldItems').value = goldItemsText;
-                document.getElementById('goldIds').value = JSON.stringify(goldIds);
-
-                // แสดงราคารวมใน Modal
-                document.getElementById('modalTotalPrice').textContent = `ราคารวม : ${totalGoldPrice.toFixed(2)} บาท`;
+                console.log(data);
+                window.location.reload(true);
             })
             .catch(error => {
                 console.error('Error:', error);
             });
     }
 
-    // เพิ่ม event listener สำหรับการเปิด Modal
-    const confirmSellModal = document.getElementById('confirmSellModal');
-    confirmSellModal.addEventListener('show.bs.modal', updateModalData);
-    // ฟังก์ชันสำหรับการอัปเดตข้อมูลใน Modal
-    function updateModalData() {
-        fetch('/gold_sales_partial')
+    function clearGoldtagsCount() {
+        fetch('/clear_goldtags_count')
             .then(response => response.json())
             .then(data => {
-                const goldsales = data.goldsales;
-                const prices = data.prices;
-                let goldItemsText = '';
-                let goldIds = [];
-                let totalGoldPrice = 0;
-
-                goldsales.forEach(item => {
-                    let goldPrice = 0;
-                    if (item.gold_size === 'ครึ่งสลึง') {
-                        goldPrice = prices.halfSalung;
-                    } else if (item.gold_size === '1 สลึง') {
-                        goldPrice = prices.oneSalung;
-                    } else if (item.gold_size === '2 สลึง') {
-                        goldPrice = prices.twoSalung;
-                    } else if (item.gold_size === '1 บาท') {
-                        goldPrice = prices.oneBaht;
-                    } else if (item.gold_size === '2 บาท') {
-                        goldPrice = prices.twoBaht;
-                    } else if (item.gold_size === '3 บาท') {
-                        goldPrice = prices.threeBaht;
-                    }
-
-                    goldItemsText += `ประเภท: ${item.gold_type}, ขนาด: ${item.gold_size}, น้ำหนัก: ${item.gold_weight} กรัม, ราคา: ${goldPrice.toFixed(2)} บาท\n`;
-                    goldIds.push(item.gold_id);
-                    totalGoldPrice += goldPrice;
-                });
-
-                document.getElementById('goldItems').value = goldItemsText;
-                document.getElementById('goldIds').value = JSON.stringify(goldIds);
-
-                // แสดงราคารวมใน Modal
-                document.getElementById('modalTotalPrice').textContent = `ราคารวม : ${totalGoldPrice.toFixed(2)} บาท`;
+                console.log(data);
+                window.location.reload(true);
             })
             .catch(error => {
                 console.error('Error:', error);
             });
     }
 
-    // เพิ่ม event listener สำหรับการเปิด Modal
-    confirmSellModal = document.getElementById('confirmSellModal');
-    confirmSellModal.addEventListener('show.bs.modal', updateModalData);
-
-
-    // เรียก refreshGoldSales ทุกๆ 0.3 วินาที
-    setInterval(refreshGoldSales, 300);
+// เรียก refreshGoldSales ทุกๆ 0.3 วินาที
+setInterval(refreshGoldSales, 300);
 </script>
-
 

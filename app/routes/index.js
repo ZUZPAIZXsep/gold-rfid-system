@@ -1345,7 +1345,6 @@ router.post('/save_goldtags', isLogin, async (req, res) => {
     }
 });
 
-
 router.get('/gold_sales_partial', isLogin, async (req, res) => {
   try {
       let goldsales = [];
