@@ -92,28 +92,28 @@
 </script>
 
 <style>
-
     @media print {
         /* ซ่อน header ที่รวมเข้ามา */
-
         header, .navbar, footer {
             display: none;
         }
 
-        /* ซ่อนปุ่มพิมพ์ใบเสร็จและปุ่มอื่น ๆ */
+        /* ซ่อน div ที่มี class gold-icon */
+        .gold-icon {
+            display: none;
+        }
 
+        /* ซ่อนปุ่มพิมพ์ใบเสร็จและปุ่มอื่น ๆ */
         .btn, .mt-4.d-flex {
             display: none;
         }
 
         /* แสดงเฉพาะเนื้อหาสำหรับการพิมพ์ */
-
         .container-fluid, .container-fluid * {
             visibility: visible;
         }
 
         /* ตำแหน่งการแสดงเนื้อหาสำหรับการพิมพ์ */
-
         .container-fluid {
             position: absolute;
             left: 0;
@@ -121,10 +121,8 @@
         }
 
         /* คุณสามารถปรับขนาดฟอนต์เพื่อให้เหมาะกับใบเสร็จ */
-
         table {
             font-size: 12px;
         }
     }
-
 </style>
