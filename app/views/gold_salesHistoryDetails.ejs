@@ -96,14 +96,14 @@
     /* ซ่อน watermark ในสภาวะปกติ */
     .watermark {
         visibility: hidden;
-        position: absolute; /* เปลี่ยนเป็น absolute */
+        position: absolute;
         top: 50%;
         left: 50%;
-        transform: translate(-50%, -50%);
+        transform: translate(-50%, -50%) rotate(-45deg); /* หมุนเป็นแนวทแยง */
         font-size: 50px;
         color: rgba(0, 0, 0, 0.1); /* สีจาง */
         white-space: nowrap;
-        z-index: 10000; /* เพิ่ม z-index ให้สูงขึ้น */
+        z-index: 10000;
         pointer-events: none;
         opacity: 0; /* ซ่อนแบบใช้ opacity */
     }
