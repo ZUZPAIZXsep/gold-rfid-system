@@ -2387,7 +2387,7 @@ router.post('/add_dealer', isLogin, async (req, res) => {
   }
 });
 
-router.get('/dealer_details', async (req, res) => {
+router.get('/dealer_details', isLogin, async (req, res) => {
   try {
     const dealers = await GoldDealer.find(); // ดึงข้อมูลจาก MongoDB
     res.render('dealer_details', { dealers });
@@ -2397,7 +2397,7 @@ router.get('/dealer_details', async (req, res) => {
   }
 });
 
-router.get('/edit_dealer/:id', async (req, res) => {
+router.get('/edit_dealer/:id', isLogin, async (req, res) => {
   try {
     const dealer = await GoldDealer.findById(req.params.id);
     if (!dealer) {
@@ -2410,7 +2410,7 @@ router.get('/edit_dealer/:id', async (req, res) => {
   }
 });
 
-router.post('/update_dealer/:id', async (req, res) => {
+router.post('/update_dealer/:id', isLogin, async (req, res) => {
   try {
     const { dealer_name, dealer_address, dealer_phone, dealer_fax } = req.body;
     await GoldDealer.findByIdAndUpdate(req.params.id, {
@@ -2426,7 +2426,7 @@ router.post('/update_dealer/:id', async (req, res) => {
   }
 });
 
-router.post('/delete_dealer/:id', async (req, res) => {
+router.post('/delete_dealer/:id', isLogin, async (req, res) => {
   try {
     await GoldDealer.findByIdAndDelete(req.params.id);
     res.redirect('/dealer_details?success=delete');
@@ -2475,6 +2475,54 @@ router.post('/delete_goldhistory', async (req, res) => {
     res.json({ message: `Records from 22/08/2024 to 30/08/2024 have been deleted successfully` });
   } catch (error) {
     console.error('Error deleting records:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+router.get('/gold_order', isLogin, async(req, res) => {
+  try {
+    let condition = { gold_status: 'in stock' };
+    
+    // ดึงข้อมูลจาก database ที่มี gold_id ตรงกับ rfidTags
+    const golds = await Goldtagscount.find(condition);
+    const dealers = await GoldDealer.find(); // Fetch dealers from the database
+
+    // เรียงข้อมูลตามลำดับถาด
+    golds.sort((a, b) => {
+      const trayOrder = {
+        'ถาดที่ 1': 1,
+        'ถาดที่ 2': 2,
+        'ถาดที่ 3': 3,
+        'ถาดที่ 4': 4,
+        'ถาดที่ 5': 5,
+        'ถาดอื่นๆ': 6
+      };
+
+      return trayOrder[a.gold_tray] - trayOrder[b.gold_tray];
+    });
+
+    res.render('gold_order', {
+      golds: golds,
+      dealers: dealers,
+      dayjs: dayjs,
+    });
+    } catch (error) {
+      console.error('Error deleting records:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+router.post('/order_gold', isLogin, async (req, res) => {
+  try {
+    const { goldType, goldSize, quantity, dealer } = req.body;
+
+    // Logic to place an order for gold
+    console.log(`Ordering ${quantity} of ${goldType} (size: ${goldSize}) from dealer: ${dealer}`);
+    
+    // After processing the order, redirect or send a success message
+    res.redirect('/order_confirmation');
+  } catch (error) {
+    console.error('Error placing order:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });

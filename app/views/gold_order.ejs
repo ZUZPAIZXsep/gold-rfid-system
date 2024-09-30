@@ -1,0 +1,181 @@
+<%- include('header') %>
+
+<div>
+    <%
+      let totalTags = golds.length;
+    %>
+    <table style="width: 95%; border-collapse: collapse; margin: 10px auto; table-layout: fixed;">
+        <!-- Row 1: Total gold count (No border) -->
+        <tr>
+          <th colspan="5" style="color: white; background-color: #4CAF50; padding: 25px; border-radius: 5px; font-size: 28px; text-align: center;">
+            จำนวนทองคำในระบบ<br>
+            <span style="font-size: 48px;"><%= totalTags %></span><br>
+            รายการ<br>
+          </th>
+        </tr>
+
+        <!-- Row 2: Types of gold (With border) -->
+        <tr>
+          <% 
+            const goldTypes = { 
+              'สร้อยคอ': 'necklace', 
+              'แหวน': 'ring', 
+              'กำไลข้อมือ': 'bangle', 
+              'สร้อยข้อมือ': 'bracelet', 
+              'ต่างหู': 'earrings' 
+            }; 
+      
+            const icons = {
+              'สร้อยคอ': '/images/gold-necklace.png',
+              'แหวน': '/images/gold-ring.png',
+              'กำไลข้อมือ': '/images/gold-bangle.png',
+              'สร้อยข้อมือ': '/images/gold-bracelet.png',
+              'ต่างหู': '/images/gold-earrings.png'
+            };
+            
+            Object.keys(goldTypes).forEach(type => {
+              const count = golds.filter(tag => tag.gold_type === type).length;
+              if (count >= 0) { 
+          %>
+              <td style="padding: 10px; background-color: #f0f8ff; border-radius: 5px; text-align: center; border: 1px solid black; width: 20%;">
+                <button class="type-button" onclick="showTypeDetails('<%= type %>')" style="width: 100%; padding: 10px; background-color: #f0f8ff; border: none;">
+                  <span style="font-weight: bold; color: green;font-size: 20px;"><%= type %></span><br>
+                  <img src="<%= icons[type] %>" alt="Icon" style="width: 30px; height: 30px; vertical-align: middle; margin-top: 8px;">
+                </button>
+              </td>
+          <% 
+              }
+            }); 
+          %>
+        </tr>
+
+        <!-- Row 3: Gold counts (With border) -->
+        <tr>
+          <% 
+            Object.keys(goldTypes).forEach(type => {
+              const count = golds.filter(tag => tag.gold_type === type).length;
+              if (count >= 0) { 
+          %>
+              <td style="padding: 10px; text-align: center; border: 1px solid black; width: 20%;background-color: white;">
+                <span style="color: black; font-size: 20px;"><%= count %> ชิ้น</span>
+              </td>
+          <% 
+              }
+            }); 
+          %>
+        </tr>
+    </table>
+
+    <!-- พื้นที่แสดงข้อมูลขนาดทอง -->
+    <div id="type-details" style="display:none; margin-top: 20px; margin-left: 50px;"></div>
+
+    <!-- Form for Ordering Gold -->
+    <form action="/order_gold" method="POST" style="margin-top: 20px; margin-left: 2.5%; width: 25%;">
+        <div class="form-group">
+            <label for="goldType">ประเภททอง</label>
+            <select name="goldType" id="goldType" class="form-control" required>
+                <% Object.keys(goldTypes).forEach(type => { %>
+                    <option value="<%= type %>"><%= type %></option>
+                <% }); %>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="goldSize">ขนาดทอง</label>
+            <select name="goldSize" id="goldSize" class="form-control" required>
+                <option value="ครึ่งสลึง">ครึ่งสลึง</option>
+                <option value="1 สลึง">1 สลึง</option>
+                <option value="2 สลึง">2 สลึง</option>
+                <option value="1 บาท">1 บาท</option>
+                <option value="2 บาท">2 บาท</option>
+                <option value="3 บาท">3 บาท</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="quantity">จำนวนที่ต้องการสั่ง</label>
+            <input type="number" id="quantity" name="quantity" class="form-control" min="1" required>
+        </div>
+
+        <div class="form-group">
+            <label for="dealer">เลือกผู้จัดจำหน่าย</label>
+            <select name="dealer" id="dealer" class="form-control" required>
+                <% dealers.forEach(dealer => { %>
+                    <option value="<%= dealer.dealer_name %>"><%= dealer.dealer_name %></option>
+                <% }); %>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-success mt-3">สั่งทอง</button>
+    </form>
+</div>
+
+<%- include('footer') %>
+
+<script>
+  const golds = <%- JSON.stringify(golds) %>;
+
+  function showTypeDetails(type) {
+    const typeGolds = golds.filter(gold => gold.gold_type === type);
+    
+    const sizes = {
+      'ครึ่งสลึง': 0,
+      '1 สลึง': 0,
+      '2 สลึง': 0,
+      '1 บาท': 0,
+      '2 บาท': 0,
+      '3 บาท': 0
+    };
+
+    // นับจำนวนขนาดทองตามประเภท (gold_size)
+    typeGolds.forEach(gold => {
+      if (sizes[gold.gold_size] !== undefined) {
+        sizes[gold.gold_size]++;
+      }
+    });
+
+    let detailsHTML = `<h3>ประเภท: ${type}</h3><ul>`;
+    Object.keys(sizes).forEach(size => {
+      detailsHTML += `<li>${size}: ${sizes[size]} ชิ้น</li>`;
+    });
+    detailsHTML += `</ul>`;
+
+    const typeDetailsDiv = document.getElementById('type-details');
+    typeDetailsDiv.innerHTML = detailsHTML;
+    typeDetailsDiv.style.display = 'block';
+  }
+
+  // ปรับ CSS เมื่อกดปุ่ม
+  document.querySelectorAll('.type-button').forEach(button => {
+    button.addEventListener('click', function() {
+      document.querySelectorAll('.type-button').forEach(btn => {
+        btn.style.backgroundColor = '#f0f8ff';  // สีปกติ
+      });
+      this.style.backgroundColor = '#d0e8ff';   // สีเมื่อกด
+    });
+  });
+
+  // ฟังก์ชันเติมขนาดทองเมื่อเลือกประเภท
+  function populateGoldSizes() {
+    const selectedType = document.getElementById('goldType').value;
+    const goldSizeSelect = document.getElementById('goldSize');
+
+    // รีเซ็ต dropdown ขนาดทอง
+    goldSizeSelect.innerHTML = '<option value="">เลือกขนาดทอง</option>';
+    goldSizeSelect.disabled = true;
+
+    if (selectedType) {
+      const sizes = [...new Set(golds.filter(gold => gold.gold_type === selectedType).map(gold => gold.gold_size))];
+      
+      sizes.forEach(size => {
+        const option = document.createElement('option');
+        option.value = size;
+        option.textContent = size;
+        goldSizeSelect.appendChild(option);
+      });
+
+      goldSizeSelect.disabled = false;
+    }
+  }
+</script>
+
