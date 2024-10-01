@@ -67,6 +67,25 @@
     <!-- พื้นที่แสดงข้อมูลขนาดทอง -->
     <div id="type-details" style="display:none; margin-top: 20px; margin-left: 50px;"></div>
 
+    <!-- ตารางสำหรับแสดงรายการสินค้าที่เพิ่มลงตะกร้า -->
+    <div style="float: right; margin-right: 5%; margin-top: 30px; width: 40%;">
+      <h4>รายการสั่งซื้อ</h4>
+      <table id="cartTable" style="width: 100%; border-collapse: collapse; margin: 10px auto; table-layout: fixed; border: 1px solid black;">
+          <thead>
+              <tr>
+                  <th>รหัสสินค้า</th>
+                  <th>ประเภททองคำ</th>
+                  <th>ขนาด</th>
+                  <th>จำนวน</th>
+                  <th></th>
+              </tr>
+          </thead>
+          <tbody id="cartItems">
+              <!-- รายการที่เพิ่มจะถูกแสดงในตารางนี้ -->
+          </tbody>
+      </table>
+    </div>
+
     <!-- Form for Ordering Gold -->
     <form action="/order_gold" method="POST" style="margin-top: 30px; margin-left: 2.5%; width: 25%;">
         <h5>ข้อมูลผู้จัดจำหน่าย</h5>
@@ -128,9 +147,10 @@
             <label for="quantity">จำนวนที่ต้องการสั่ง</label>
             <input type="number" id="quantity" name="quantity" class="form-control" min="1" required>
         </div>
-
-        <button type="submit" class="btn btn-success mt-3">เพิ่มรายการ</button>
+        <button type="submit" class="btn btn-success mt-3">บันทึก</button>
+        <button type="button" id="addToCartBtn" class="btn btn-primary mt-3">เพิ่มรายการ</button>
     </form>
+
 </div>
 
 <%- include('footer') %>
@@ -251,6 +271,44 @@
     goldTypeIdInput.value = typeId;
 });
 
+  // ฟังก์ชันสำหรับเพิ่มรายการลงในตะกร้า
+  document.getElementById('addToCartBtn').addEventListener('click', function() {
+    const goldType = document.getElementById('goldType').value;
+    const goldSize = document.getElementById('goldSize').value;
+    const quantity = document.getElementById('quantity').value;
+    const goldTypeId = document.getElementById('gold_type_id').value;
+
+    // ตรวจสอบว่าข้อมูลที่จำเป็นถูกเลือกแล้ว
+    if (!goldType || !goldSize || !quantity || quantity <= 0) {
+      alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+      return;
+    }
+
+    // สร้างแถวใหม่ในตาราง
+    const cartTable = document.getElementById('cartItems');
+    const newRow = document.createElement('tr');
+
+    newRow.innerHTML = `
+      <td>${goldTypeId}</td> <!-- เพิ่มรหัสสินค้า -->
+      <td>${goldType}</td>
+      <td>${goldSize}</td>
+      <td>${quantity}</td>
+      <td><button class="remove-btn btn btn-danger">ลบ</button></td>
+    `;
+
+    // เพิ่มแถวใหม่ลงในตาราง
+    cartTable.appendChild(newRow);
+
+    // ลบรายการออกจากตะกร้า
+    newRow.querySelector('.remove-btn').addEventListener('click', function() {
+      newRow.remove();
+    });
+
+    // เคลียร์ฟอร์มหลังจากเพิ่มรายการ
+    document.getElementById('goldType').value = '';
+    document.getElementById('goldSize').value = '';
+    document.getElementById('quantity').value = '';
+    document.getElementById('gold_type_id').value = '';
+  });
+
 </script>
-
-
