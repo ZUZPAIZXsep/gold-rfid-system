@@ -2501,16 +2501,46 @@ router.get('/gold_order', isLogin, async(req, res) => {
       return trayOrder[a.gold_tray] - trayOrder[b.gold_tray];
     });
 
+    // กำหนดวันที่ปัจจุบัน
+    const currentDate = dayjs().format('DD-MM-YYYY');
+
     res.render('gold_order', {
       golds: golds,
       dealers: dealers,
       dayjs: dayjs,
+      currentDate: currentDate
     });
     } catch (error) {
       console.error('Error deleting records:', error);
       res.status(500).json({ error: 'Internal Server Error' });
     }
 });
+
+router.get('/dealer_info/:name', isLogin, async (req, res) => {
+  try {
+    const dealerName = req.params.name;
+    
+    // ค้นหาผู้จัดจำหน่ายตาม dealer_name
+    const dealer = await GoldDealer.findOne({ dealer_name: dealerName });
+
+    if (dealer) {
+      res.json({
+        success: true,
+        dealer: {
+          address: dealer.dealer_address,
+          phone: dealer.dealer_phone,
+          fax: dealer.dealer_fax
+        }
+      });
+    } else {
+      res.json({ success: false, message: 'Dealer not found' });
+    }
+  } catch (error) {
+    console.error('Error fetching dealer info:', error);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+});
+
 
 router.post('/order_gold', isLogin, async (req, res) => {
   try {
