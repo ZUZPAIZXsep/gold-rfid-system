@@ -70,8 +70,8 @@
     <!-- ตารางสำหรับแสดงรายการสินค้าที่เพิ่มลงตะกร้า -->
     <div style="float: right; margin-right: 5%; margin-top: 30px; width: 40%;">
       <h4>รายการสั่งซื้อ</h4>
-      <table id="cartTable" style="width: 100%; border-collapse: collapse; margin: 10px auto; table-layout: fixed; border: 1px solid black;">
-          <thead>
+      <table id="cartTable" class="table table-bordered mt-3" style="width: 100%; border-collapse: collapse; margin: 10px auto; table-layout: fixed;">
+          <thead class="table-success">
               <tr>
                   <th>รหัสสินค้า</th>
                   <th>ประเภททองคำ</th>
@@ -149,6 +149,7 @@
         </div>
         <button type="submit" class="btn btn-success mt-3">บันทึก</button>
         <button type="button" id="addToCartBtn" class="btn btn-primary mt-3">เพิ่มรายการ</button>
+        <button type="button" id="resetFormBtn" class="btn btn-warning mt-3">รีเซ็ต</button>
     </form>
 
 </div>
@@ -277,19 +278,23 @@
     const goldSize = document.getElementById('goldSize').value;
     const quantity = document.getElementById('quantity').value;
     const goldTypeId = document.getElementById('gold_type_id').value;
+    const dealer = document.getElementById('dealer');
 
     // ตรวจสอบว่าข้อมูลที่จำเป็นถูกเลือกแล้ว
-    if (!goldType || !goldSize || !quantity || quantity <= 0) {
+    if (!goldType || !goldSize || !quantity || quantity <= 0 || !dealer.value) {
       alert('กรุณากรอกข้อมูลให้ครบถ้วน');
       return;
     }
+
+    // ล็อคร้านค้าหลังจากเพิ่มรายการแล้ว
+    dealer.disabled = true;
 
     // สร้างแถวใหม่ในตาราง
     const cartTable = document.getElementById('cartItems');
     const newRow = document.createElement('tr');
 
     newRow.innerHTML = `
-      <td>${goldTypeId}</td> <!-- เพิ่มรหัสสินค้า -->
+      <td>${goldTypeId}</td>
       <td>${goldType}</td>
       <td>${goldSize}</td>
       <td>${quantity}</td>
@@ -302,6 +307,10 @@
     // ลบรายการออกจากตะกร้า
     newRow.querySelector('.remove-btn').addEventListener('click', function() {
       newRow.remove();
+      // ถ้าไม่มีรายการในตารางอีก ให้ปลดล็อคร้านค้า
+      if (cartTable.childElementCount === 0) {
+        dealer.disabled = false;
+      }
     });
 
     // เคลียร์ฟอร์มหลังจากเพิ่มรายการ
@@ -309,6 +318,29 @@
     document.getElementById('goldSize').value = '';
     document.getElementById('quantity').value = '';
     document.getElementById('gold_type_id').value = '';
+  });
+
+  // ฟังก์ชันรีเซ็ตข้อมูลในฟอร์มและตาราง
+  document.getElementById('resetFormBtn').addEventListener('click', function() {
+    // ล้างข้อมูลในฟอร์ม
+    document.getElementById('goldType').value = '';
+    document.getElementById('goldSize').value = '';
+    document.getElementById('quantity').value = '';
+    document.getElementById('gold_type_id').value = '';
+    
+    // ล้างตาราง
+    const cartTable = document.getElementById('cartItems');
+    cartTable.innerHTML = '';
+
+    // ปลดล็อคร้านค้าและรีเซ็ตเป็นค่าเริ่มต้น
+    const dealer = document.getElementById('dealer');
+    dealer.disabled = false;
+    dealer.value = '';
+    
+    // ล้างข้อมูลที่อยู่ เบอร์โทร และแฟกซ์
+    document.querySelector('textarea[name="dealer_address"]').value = '';
+    document.querySelector('input[name="dealer_phone"]').value = '';
+    document.querySelector('input[name="dealer_fax"]').value = '';
   });
 
 </script>
