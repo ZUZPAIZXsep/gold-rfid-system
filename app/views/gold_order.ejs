@@ -272,75 +272,86 @@
     goldTypeIdInput.value = typeId;
 });
 
-  // ฟังก์ชันสำหรับเพิ่มรายการลงในตะกร้า
-  document.getElementById('addToCartBtn').addEventListener('click', function() {
+// ฟังก์ชันสำหรับเพิ่มรายการลงในตะกร้า
+document.getElementById('addToCartBtn').addEventListener('click', function() {
     const goldType = document.getElementById('goldType').value;
     const goldSize = document.getElementById('goldSize').value;
-    const quantity = document.getElementById('quantity').value;
+    const quantity = parseInt(document.getElementById('quantity').value, 10);
     const goldTypeId = document.getElementById('gold_type_id').value;
-    const dealer = document.getElementById('dealer');
 
     // ตรวจสอบว่าข้อมูลที่จำเป็นถูกเลือกแล้ว
-    if (!goldType || !goldSize || !quantity || quantity <= 0 || !dealer.value) {
-      alert('กรุณากรอกข้อมูลให้ครบถ้วน');
-      return;
+    if (!goldType || !goldSize || !quantity || quantity <= 0) {
+        alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+        return;
     }
 
-    // ล็อคร้านค้าหลังจากเพิ่มรายการแล้ว
-    dealer.disabled = true;
-
-    // สร้างแถวใหม่ในตาราง
-    const cartTable = document.getElementById('cartItems');
-    const newRow = document.createElement('tr');
-
-    newRow.innerHTML = `
-      <td>${goldTypeId}</td>
-      <td>${goldType}</td>
-      <td>${goldSize}</td>
-      <td>${quantity}</td>
-      <td><button class="remove-btn btn btn-danger">ลบ</button></td>
-    `;
-
-    // เพิ่มแถวใหม่ลงในตาราง
-    cartTable.appendChild(newRow);
-
-    // ลบรายการออกจากตะกร้า
-    newRow.querySelector('.remove-btn').addEventListener('click', function() {
-      newRow.remove();
-      // ถ้าไม่มีรายการในตารางอีก ให้ปลดล็อคร้านค้า
-      if (cartTable.childElementCount === 0) {
-        dealer.disabled = false;
-      }
+    // ตรวจสอบว่ามีชนิดและขนาดที่ซ้ำอยู่ในตารางหรือไม่
+    const existingRow = Array.from(document.querySelectorAll('#cartItems tr')).find(row => {
+        const rowGoldType = row.children[1].textContent;
+        const rowGoldSize = row.children[2].textContent;
+        return rowGoldType === goldType && rowGoldSize === goldSize;
     });
+
+    if (existingRow) {
+        // ถ้าพบชนิดและขนาดซ้ำ ให้อัปเดตจำนวนรวม
+        const existingQuantityCell = existingRow.children[3];
+        const existingQuantity = parseInt(existingQuantityCell.textContent, 10);
+        const newQuantity = existingQuantity + quantity;
+        existingQuantityCell.textContent = newQuantity;
+    } else {
+        // ถ้าไม่มีซ้ำ ให้สร้างแถวใหม่ในตาราง
+        const cartTable = document.getElementById('cartItems');
+        const newRow = document.createElement('tr');
+
+        newRow.innerHTML = `
+            <td>${goldTypeId}</td>
+            <td>${goldType}</td>
+            <td>${goldSize}</td>
+            <td>${quantity}</td>
+            <td><button class="remove-btn btn btn-danger">ลบ</button></td>
+        `;
+
+        // เพิ่มแถวใหม่ลงในตาราง
+        cartTable.appendChild(newRow);
+
+        // ฟังก์ชันลบรายการออกจากตะกร้า
+        newRow.querySelector('.remove-btn').addEventListener('click', function() {
+            newRow.remove();
+        });
+    }
 
     // เคลียร์ฟอร์มหลังจากเพิ่มรายการ
     document.getElementById('goldType').value = '';
     document.getElementById('goldSize').value = '';
     document.getElementById('quantity').value = '';
     document.getElementById('gold_type_id').value = '';
-  });
 
-  // ฟังก์ชันรีเซ็ตข้อมูลในฟอร์มและตาราง
-  document.getElementById('resetFormBtn').addEventListener('click', function() {
-    // ล้างข้อมูลในฟอร์ม
-    document.getElementById('goldType').value = '';
-    document.getElementById('goldSize').value = '';
+    // ล็อคฟิลด์ผู้จัดจำหน่าย
+    document.getElementById('dealer').disabled = true; // ล็อคฟิลด์ผู้จัดจำหน่าย
+});
+
+
+// ฟังก์ชันรีเซ็ตข้อมูลในฟอร์มและตาราง
+document.getElementById('resetFormBtn').addEventListener('click', function() {
+    // ล้างข้อมูลในฟอร์มและรีเซ็ตเป็น placeholder
+    document.getElementById('goldType').value = 'เลือกประเภททองคำ';
+    document.getElementById('goldSize').value = 'เลือกขนาดทองคำ';
     document.getElementById('quantity').value = '';
     document.getElementById('gold_type_id').value = '';
-    
+
     // ล้างตาราง
     const cartTable = document.getElementById('cartItems');
     cartTable.innerHTML = '';
 
     // ปลดล็อคร้านค้าและรีเซ็ตเป็นค่าเริ่มต้น
     const dealer = document.getElementById('dealer');
-    dealer.disabled = false;
-    dealer.value = '';
-    
+    dealer.disabled = false; // ปลดล็อคฟิลด์ผู้จัดจำหน่าย
+    dealer.value = 'เลือกผู้จัดจำหน่าย'; // ใช้ placeholder สำหรับผู้จัดจำหน่าย
+
     // ล้างข้อมูลที่อยู่ เบอร์โทร และแฟกซ์
     document.querySelector('textarea[name="dealer_address"]').value = '';
     document.querySelector('input[name="dealer_phone"]').value = '';
     document.querySelector('input[name="dealer_fax"]').value = '';
-  });
+});
 
 </script>

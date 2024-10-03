@@ -71,7 +71,7 @@
     <img id="goldIcon" src="/images/gold-bars.png" alt="icon" style="height: 96px; width: 96px; margin-right: 10px;"/>
     <!-- ปุ่มสร้าง PDF -->
     <button class="btn btn-secondary mt-3" onclick="printReceipt()">พิมพ์ใบเสร็จ</button>
-    <button class="btn btn-secondary mt-3" onclick="generatePDF()">ดาวน์โหลด PDF</button>
+    <button class="btn btn-secondary mt-3" onclick="previewReceipt()">ดูตัวอย่างใบเสร็จ</button>
     <a href="/gold_salesHistory" class="btn btn-primary mt-3">กลับไปหน้ารายการทั้งหมด</a>
 </div>
 
@@ -85,11 +85,9 @@
         window.print();
     }
 
-    function generatePDF() {
-        var element = document.querySelector('.container-fluid');
-        html2pdf()
-            .from(element)
-            .save('receipt<%= dayjs(details[0].gold_outDateTime)%>.pdf');
+    function previewReceipt() {
+        const orderNumber = '<%= details.length > 0 ? details[0].order_number : "" %>';
+        window.open(`/gold_salesHistory/${orderNumber}/preview`, '_blank', 'width=768,height=1366');
     }
 
 </script>
@@ -128,8 +126,27 @@
 
         /* แสดง watermark */
         .watermark {
-            visibility: visible;
-            opacity: 1; /* แสดง watermark */
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 50px;
+            color: rgba(0, 0, 0, 0.1);
+            z-index: 10000;
+            pointer-events: none;
+            opacity: 1;
+        }
+
+        /* การแบ่งหน้า: แบ่งหน้าทุกๆ 15 รายการ */
+        table {
+            page-break-inside: auto;
+        }
+        tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+        tr:nth-child(15n) {
+            page-break-after: always;
         }
 
         /* ซ่อนคอลัมน์ gold_id และ dealer_name */
@@ -139,13 +156,13 @@
         }
         /* แสดงรูปภาพเฉพาะตอนพิมพ์ */
         #goldIcon {
-            display: block;        /* แสดงรูปภาพ */
-            filter: hue-rotate(180deg); /* เปลี่ยนสีรูปเป็นสีน้ำเงิน */
-            position: absolute;    /* ใช้ absolute เพื่อควบคุมตำแหน่ง */
-            right: 50px;           /* วางรูปภาพทางด้านขวา */
-            margin-top: 50px; /* เพิ่มระยะห่างด้านบน */
-            transform: translate(-50%, -50%) rotate(-10deg); /* หมุนเป็นแนวทแยง */
-            opacity: 0.3;                /* ปรับความโปร่งใสให้สีจางลง */
+            display: block;
+            filter: hue-rotate(180deg);
+            opacity: 0.3;
+            position: absolute;
+            right: 50px;
+            margin-top: 50px;
+            transform: translate(-50%, -50%) rotate(-10deg);
         }
 
         /* ปรับตำแหน่งของราคารวมให้สอดคล้องกับรูปภาพ */

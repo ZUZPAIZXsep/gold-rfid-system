@@ -1700,6 +1700,32 @@ router.get('/gold_salesHistory/:orderNumber', isLogin, async (req, res, next) =>
   }
 });
 
+router.get('/gold_salesHistory/:orderNumber/preview', isLogin, async (req, res, next) => {
+  try {
+      const orderNumber = req.params.orderNumber;
+
+      // ค้นหาข้อมูลใน Goldhistory โดยใช้ order_number
+      const details = await Goldhistory.find({ order_number: orderNumber });
+
+      // นับจำนวนรายการที่ขายออกทั้งหมด
+      const outStockCount = details.length;
+
+      // คำนวณผลรวมของราคาทั้งหมด
+      const totalPrice = details.reduce((sum, detail) => sum + parseFloat(detail.gold_price), 0);
+
+      res.render('gold_salesHistoryPreview', {
+          details: details,
+          outStockCount: outStockCount,
+          totalPrice: totalPrice,
+          dayjs: dayjs
+      });
+  } catch (error) {
+      console.error(error);
+      res.status(500).send('Internal Server Error');
+  }
+});
+
+
 router.get('/gold_saleDetails', isLogin, async (req, res, next) => {
   try {
       const goldId = req.query.gold_id;
