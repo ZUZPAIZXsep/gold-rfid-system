@@ -130,6 +130,36 @@ const goldDealerSchema = new mongoose.Schema({
 
 const GoldDealer = mongoose.model('GoldDealer', goldDealerSchema);
 
+// สร้าง schema สำหรับใบสั่งซื้อ
+const orderSchema = new mongoose.Schema({
+  order_number: {
+      type: String,
+      required: true,
+      unique: true
+  },
+  order_date: {
+      type: Date,
+      required: true
+  },
+  dealer_name: String,
+  dealer_address: String,
+  dealer_phone: String,
+  dealer_fax: String,
+  items: [
+      {
+          gold_type_id: String,
+          gold_type: String,
+          gold_size: String,
+          quantity: Number
+      }
+  ]},{
+    collection: 'gold_order',
+    versionKey: false
+});
+
+// สร้าง model
+const goldOrder = mongoose.model('goldOrder', orderSchema);
+
 // ฟังก์ชันสำหรับจัดถาด
 function assignTray(gold_type) {
   switch(gold_type) {
@@ -2567,19 +2597,57 @@ router.get('/dealer_info/:name', isLogin, async (req, res) => {
   }
 });
 
+async function generateOrderNumber() {
+  // ดึง order ที่มี order_number มากที่สุด
+  const lastOrder = await goldOrder.findOne().sort({ order_number: -1 });
 
-router.post('/order_gold', isLogin, async (req, res) => {
+  let nextOrderNumber = 1; // เริ่มที่ 1 หากยังไม่มี order ในฐานข้อมูล
+
+  if (lastOrder) {
+      // ดึงเฉพาะเลขจาก order_number ล่าสุด (ORD-XXX)
+      const lastOrderNumber = parseInt(lastOrder.order_number.split('-')[1], 10);
+
+      // เพิ่ม 1 เพื่อให้ได้เลข order ใหม่
+      nextOrderNumber = lastOrderNumber + 1;
+    }
+
+    // สร้างเลข order ใหม่โดยใช้ prefix และเลขที่เพิ่มขึ้น
+    const prefix = "ORD";
+    return `${prefix}-${nextOrderNumber}`;
+}
+
+// Route สำหรับบันทึกใบสั่งซื้อ
+router.post('/gold_order', async (req, res) => {
   try {
-    const { goldType, goldSize, quantity, dealer } = req.body;
+      const { order_date, dealer, dealer_address, dealer_phone, dealer_fax, items } = req.body;
 
-    // Logic to place an order for gold
-    console.log(`Ordering ${quantity} of ${goldType} (size: ${goldSize}) from dealer: ${dealer}`);
-    
-    // After processing the order, redirect or send a success message
-    res.redirect('/order_confirmation');
-  } catch (error) {
-    console.error('Error placing order:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+
+      // สร้าง order_number ใหม่โดยอิงจากจำนวน order ที่มีในฐานข้อมูล
+      const orderNumber = await generateOrderNumber();
+
+      // สร้าง order ใหม่
+      const newOrder = new goldOrder({
+          order_number: orderNumber,
+          order_date: new Date(order_date),
+          dealer_name: dealer,
+          dealer_address: dealer_address,
+          dealer_phone: dealer_phone,
+          dealer_fax: dealer_fax,
+          items: items.map(item => ({
+              gold_type_id: item.gold_type_id,
+              gold_type: item.gold_type,
+              gold_size: item.gold_size,
+              quantity: item.quantity
+          }))
+      });
+
+      // บันทึกข้อมูลใน MongoDB
+      await newOrder.save();
+
+      res.status(200).json({ success: true, message: 'Order saved successfully!' });
+  } catch (err) {
+      console.error(err);
+      res.status(500).json({ success: false, message: 'Error saving order' });
   }
 });
 
