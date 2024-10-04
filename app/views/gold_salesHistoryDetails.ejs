@@ -67,11 +67,13 @@
         </h5>
         <h4>ราคารวม: <%= totalPrice.toLocaleString() %> บาท</h4>
     </div>
+    
     <!-- รูปภาพ -->
     <img id="goldIcon" src="/images/gold-bars.png" alt="icon" style="height: 96px; width: 96px; margin-right: 10px;"/>
+
     <!-- ปุ่มสร้าง PDF -->
-    <button class="btn btn-secondary mt-3" onclick="printReceipt()">พิมพ์ใบเสร็จ</button>
-    <button class="btn btn-secondary mt-3" onclick="previewReceipt()">ดูตัวอย่างใบเสร็จ</button>
+    <button class="btn btn-success mt-3" onclick="printReceipt()">พิมพ์ใบรับประกัน</button>
+    <button class="btn btn-warning mt-3" onclick="previewReceipt()">ดูตัวอย่างใบรับประกันออนไลน์</button>
     <a href="/gold_salesHistory" class="btn btn-primary mt-3">กลับไปหน้ารายการทั้งหมด</a>
 </div>
 
@@ -86,9 +88,17 @@
     }
 
     function previewReceipt() {
-        const orderNumber = '<%= details.length > 0 ? details[0].order_number : "" %>';
-        window.open(`/gold_salesHistory/${orderNumber}/preview`, '_blank', 'width=768,height=1366');
-    }
+    const orderNumber = '<%= details.length > 0 ? details[0].order_number : "" %>';
+    
+    // เปิดหน้าต่างใหม่
+    const newWindow = window.open(`/gold_salesHistory/${orderNumber}/preview`, '_blank', 'width=1920,height=1080');
+
+    // รอจนกว่าเนื้อหาของหน้าต่างใหม่จะโหลดเสร็จ
+    newWindow.onload = function() {
+        newWindow.focus(); // ทำให้หน้าต่างใหม่นี้เป็นหน้าต่างหลัก
+    };
+}
+
 
 </script>
 
