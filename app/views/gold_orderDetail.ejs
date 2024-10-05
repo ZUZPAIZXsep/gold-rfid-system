@@ -1,27 +1,28 @@
 <%- include('header') %>
 
 <div class="container-fluid mt-3">
+    <div class="watermark">Gold Inventory System</div> <!-- Watermark -->
     <h3 style="font-weight: bold;">รายละเอียดคำสั่งซื้อ</h3>
 
     <div class="mt-3">
         <div class="row mb-2">
-            <div class="col-1"><strong>เลขคำสั่งซื้อ :</strong></div>
+            <div class="col-3"><strong>เลขคำสั่งซื้อ :</strong></div>
             <div class="col-6"><%= orderDetail.order_number %></div>
         </div>
         <div class="row mb-2">
-            <div class="col-1"><strong>วันที่สั่งซื้อ :</strong></div>
+            <div class="col-3"><strong>วันที่สั่งซื้อ :</strong></div>
             <div class="col-6"><%= dayjs(orderDetail.order_date).format('DD/MM/YYYY') %></div>
         </div>
         <div class="row mb-2">
-            <div class="col-1"><strong>ร้านที่สั่ง :</strong></div>
+            <div class="col-3"><strong>ร้านที่สั่ง :</strong></div>
             <div class="col-6"><%= orderDetail.dealer_name %></div>
         </div>
         <div class="row mb-2">
-            <div class="col-1"><strong>เบอร์โทรร้าน :</strong></div>
+            <div class="col-3"><strong>เบอร์โทรร้าน :</strong></div>
             <div class="col-6"><%= orderDetail.dealer_phone %></div>
         </div>
         <div class="row mb-2">
-            <div class="col-1"><strong>เบอร์แฟ็กซ์ :</strong></div>
+            <div class="col-3"><strong>เบอร์แฟ็กซ์ :</strong></div>
             <div class="col-6"><%= orderDetail.dealer_fax %></div>
         </div>
     </div>
@@ -47,7 +48,94 @@
             <% }) %>
         </tbody>
     </table>
+
+    <!-- รูปภาพ -->
+    <img id="goldIcon" src="/images/gold-bars.png" alt="icon" style="height: 96px; width: 96px; margin-right: 10px;"/>
+
+    <button class="btn btn-success mt-2 mb-3" onclick="printReceipt()">พิมพ์ใบรับประกัน</button>
     <a href="/gold_orderHistory/<%= dayjs(orderDetail.order_date).format('YYYY-MM-DD') %>" class="btn btn-secondary mt-2 mb-3">กลับไปหน้าก่อนหน้า</a>
 </div>
 
 <%- include('footer') %>
+
+<script>
+        function printReceipt() {
+            window.print();
+        }
+</script>
+
+<style>
+    /* ซ่อน watermark ในสภาวะปกติ */
+    .watermark {
+        visibility: hidden;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-45deg); /* หมุนเป็นแนวทแยง */
+        font-size: 50px;
+        color: rgba(0, 0, 0, 0.1); /* สีจาง */
+        white-space: nowrap;
+        z-index: 10000;
+        pointer-events: none;
+        opacity: 0; /* ซ่อนแบบใช้ opacity */
+    }
+    /* ปกติซ่อนรูปภาพ */
+    #goldIcon {
+        display: none;
+    }
+
+    /* ซ่อนคอลัมน์ gold_id และ dealer_name ตอนพิมพ์ */
+    @media print {
+        /* ซ่อน header, ปุ่ม, และส่วนที่ไม่ต้องการ */
+        header, .navbar, footer, .gold-icon, .btn, .mt-4.d-flex {
+            display: none;
+        }
+
+        /* แสดงเนื้อหาหลัก */
+        .container-fluid, .container-fluid * {
+            visibility: visible;
+        }
+
+        /* แสดง watermark */
+        .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 50px;
+            color: rgba(0, 0, 0, 0.1);
+            z-index: 10000;
+            pointer-events: none;
+            opacity: 1;
+        }
+
+        /* การแบ่งหน้า: แบ่งหน้าทุกๆ 15 รายการ */
+        table {
+            page-break-inside: auto;
+        }
+        tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+        tr:nth-child(15n) {
+            page-break-after: always;
+        }
+
+        /* แสดงรูปภาพเฉพาะตอนพิมพ์ */
+        #goldIcon {
+            display: block;
+            filter: hue-rotate(180deg);
+            opacity: 0.3;
+            position: absolute;
+            right: 50px;
+            margin-top: 50px;
+            transform: translate(-50%, -50%) rotate(-10deg);
+        }
+
+        /* ปรับตำแหน่งของราคารวมให้สอดคล้องกับรูปภาพ */
+        .mt-4.d-flex {
+            display: block;
+            position: relative;    /* ใช้ relative เพื่อให้ภาพอ้างอิงตำแหน่งนี้ */
+        }
+    }
+</style>
