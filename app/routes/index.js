@@ -2620,6 +2620,7 @@ async function generateOrderNumber() {
 router.post('/gold_order', async (req, res) => {
   try {
       const { order_date, dealer, dealer_address, dealer_phone, dealer_fax, items } = req.body;
+      const currentDate = dayjs().locale('th').format('YYYY-MM-DD');
 
 
       // สร้าง order_number ใหม่โดยอิงจากจำนวน order ที่มีในฐานข้อมูล
@@ -2628,7 +2629,7 @@ router.post('/gold_order', async (req, res) => {
       // สร้าง order ใหม่
       const newOrder = new goldOrder({
           order_number: orderNumber,
-          order_date: new Date(order_date),
+          order_date: currentDate,
           dealer_name: dealer,
           dealer_address: dealer_address,
           dealer_phone: dealer_phone,
@@ -2648,6 +2649,126 @@ router.post('/gold_order', async (req, res) => {
   } catch (err) {
       console.error(err);
       res.status(500).json({ success: false, message: 'Error saving order' });
+  }
+});
+
+
+router.get('/gold_orderHistory', isLogin, async (req, res, next) => {
+    try {
+        let condition = {};
+
+        if (req.query.start_date && req.query.end_date) {
+            const startDate = new Date(req.query.start_date);
+            const endDate = new Date(req.query.end_date);
+            condition.order_date = {
+                $gte: startDate,
+                $lt: dayjs(endDate).endOf('day').toDate()
+            };
+        } else if (req.query.start_date) {
+            const startDate = new Date(req.query.start_date);
+            condition.order_date = { $gte: startDate };
+        } else if (req.query.end_date) {
+            const endDate = new Date(req.query.end_date);
+            condition.order_date = { $lt: dayjs(endDate).endOf('day').toDate() };
+        }
+
+        // Pagination logic
+        const page = parseInt(req.query.page) || 1;
+        const skip = (page - 1) * ITEMS_PER_PAGE;
+
+        // Grouping orders by date
+        const groupedOrders = await goldOrder.aggregate([
+            { $match: condition },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$order_date" } }, // Group by date
+                    orders: { $push: "$$ROOT" }, // Push all orders of that date
+                    count: { $sum: 1 }, // Count number of orders in each group
+                }
+            },
+            { $sort: { _id: -1 } }, // Sort by date
+            { $skip: skip },
+            { $limit: ITEMS_PER_PAGE }
+        ]);
+
+        // Count total unique dates
+        const totalItems = await goldOrder.aggregate([
+            { $match: condition },
+            { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$order_date" } } } },
+            { $count: "total" }
+        ]);
+        
+
+        const totalPages = Math.ceil((totalItems[0]?.total || 0) / ITEMS_PER_PAGE);
+
+        res.render('gold_orderHistory', {
+            groupedOrders: groupedOrders,
+            dayjs: dayjs,
+            startDate: req.query.start_date,
+            endDate: req.query.end_date,
+            currentUrl: req.originalUrl,
+            totalPages: totalPages,
+            currentPage: page
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+router.get('/gold_orderHistory/:date', isLogin, async (req, res, next) => {
+  try {
+      const selectedDate = req.params.date;
+      const startOfDay = dayjs(selectedDate).startOf('day').toDate();
+      const endOfDay = dayjs(selectedDate).endOf('day').toDate();
+      const currentPage = parseInt(req.query.page) || 1; // Get current page from query params
+      const startDate = req.query.start_date || ''; // Get start date from query params
+      const endDate = req.query.end_date || ''; // Get end date from query params
+
+      // Fetch orders for the selected date
+      const orders = await goldOrder.find({
+          order_date: { $gte: startOfDay, $lt: endOfDay }
+      }).sort({ order_date: -1 });
+
+      console.log("Orders for the selected date:", orders);  // Debugging line
+
+      res.render('gold_orderDate', {
+          orders: orders,
+          dayjs: dayjs,
+          currentPage: currentPage, // Pass current page to the view
+          startDate: startDate, // Pass start date to the view
+          endDate: endDate, // Pass end date to the view
+      });
+
+  } catch (error) {
+      console.error(error);
+      res.status(500).send('Internal Server Error');
+  }
+});
+
+
+
+
+router.get('/gold_orderDetail/:orderNumber', isLogin, async (req, res, next) => {
+  try {
+      const orderNumber = req.params.orderNumber;
+
+      // Fetch order details using the order_number
+      const orderDetail = await goldOrder.findOne({ order_number: orderNumber });
+
+      // Check if orderDetail exists
+      if (!orderDetail) {
+          return res.status(404).send('Order not found');
+      }
+
+      console.log("Order Detail:", orderDetail);  // Debugging line
+
+      res.render('gold_orderDetail', { orderDetail: orderDetail, dayjs: dayjs });
+
+  } catch (error) {
+      console.error(error);
+      res.status(500).send('Internal Server Error');
   }
 });
 

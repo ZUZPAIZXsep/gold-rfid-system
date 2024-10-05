@@ -1,0 +1,105 @@
+<%- include('header') %>
+
+<form method="GET">
+    <div class="container-fluid mt-3">
+        <h3 style="font-weight: bold;">ประวัติการสั่งซื้อ</h3>
+
+        <!-- Filter by date -->
+        <div class="row mt-1">
+            <div class="col-2">
+                <label for="start_date_input" style="font-weight: 600;">เลือกวันที่เริ่มต้น</label>
+                <input type="date" class="form-control" id="start_date_input" name="start_date" value="<%= startDate %>" placeholder="เลือกวันที่เริ่มต้น">
+            </div>
+            <div class="col-2">
+                <label for="end_date_input" style="font-weight: 600;">ถึงวันที่</label>
+                <input type="date" class="form-control" id="end_date_input" name="end_date" value="<%= endDate %>" placeholder="ถึงวันที่">
+            </div>
+            <div class="col-2 align-self-end">
+                <a type="button" class="btn btn-danger" style="margin-left: 4px;" href="./gold_orderHistory">
+                    <span class="material-icon material-symbols-outlined">
+                        close
+                    </span>
+                    ล้างค่า
+                </a>
+            </div>
+        </div>
+
+        <div class="mt-3">
+            <% if (groupedOrders.length > 0) { %>
+                <table class="table table-bordered mt-3">
+                    <thead class="table-success">
+                        <tr>
+                            <th>วันที่สั่งซื้อ</th>
+                            <th>จำนวนรายการ</th>
+                            <th>รายละเอียด</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% groupedOrders.forEach(group => { %>
+                            <tr>
+                                <td><%= dayjs(group._id).format('DD/MM/YYYY') %></td>
+                                <td><%= group.count %> รายการ</td>
+                                <td>
+                                    <a href="/gold_orderHistory/<%= group._id %>" class="btn btn-info">ดูรายการ</a>
+                                </td>
+                            </tr>
+                        <% }) %>                        
+                    </tbody>
+                </table>
+            <% } else { %>
+                <p>ไม่มีข้อมูลการสั่งซื้อในช่วงที่คุณเลือก</p>
+            <% } %>
+        </div>
+
+        <!-- Pagination controls -->
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center mt-3">
+                <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+                    <a class="page-link" href="?page=1">หน้าแรก</a>
+                </li>
+                <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+                    <a class="page-link" href="?page=<%= currentPage - 1 %>">&laquo;</a>
+                </li>
+                <% for (let i = 1; i <= totalPages; i++) { %>
+                    <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                        <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+                    </li>
+                <% } %>
+                <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+                    <a class="page-link" href="?page=<%= currentPage + 1 %>">&raquo;</a>
+                </li>
+                <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+                    <a class="page-link" href="?page=<%= totalPages %>">หน้าสุดท้าย</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</form>
+
+<%- include('footer') %>
+
+
+<script>
+    document.getElementById('start_date_input').addEventListener('change', function () {
+        this.form.submit(); // ส่งฟอร์มอัตโนมัติเมื่อมีการเลือกวันที่เริ่มต้น
+    });
+
+    document.getElementById('end_date_input').addEventListener('change', function () {
+        this.form.submit(); // ส่งฟอร์มอัตโนมัติเมื่อมีการเลือกวันที่สิ้นสุด
+    });
+</script>
+
+<style>
+    .page-item.active .page-link {
+        background-color: #007bff;
+        color: #ffffff;
+    }
+    .color-nextpage {
+        background-color: #007bff; /* สีเน้นของหน้าปัจจุบัน */
+        color: #ffffff; /* สีข้อความของหน้าปัจจุบัน */
+    }
+    .color-previouspage {
+        background-color: #f88379; /* สีเน้นของหน้าปัจจุบัน */
+        color: #ffffff; /* สีข้อความของหน้าปัจจุบัน */
+    }
+</style>

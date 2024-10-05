@@ -1,0 +1,40 @@
+<%- include('header') %>
+
+<div class="container-fluid mt-3">
+    <h3 style="font-weight: bold;">รายละเอียดการสั่งซื้อของวันที่ <%= orders.length > 0 ? dayjs(orders[0].order_date).format('DD/MM/YYYY') : 'ไม่มีข้อมูล' %></h3>
+
+    <% if (orders.length > 0) { %>
+        <table class="table table-bordered mt-3">
+            <thead class="table-success">
+                <tr>
+                    <th>เลขที่ใบสั่ง</th>
+                    <th>วันที่ใบสั่ง</th>
+                    <th>ชื่อผู้สั่ง</th>
+                    <th>รายละเอียดการสั่งซื้อ</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% orders.forEach(order => { %>
+                    <tr>
+                        <td><%= order.order_number %></td>
+                        <td><%= dayjs(order.order_date).format('DD/MM/YYYY') %></td>
+                        <td><%= order.dealer_name %></td>
+                        <td>
+                            <a href="/gold_orderDetail/<%= order.order_number %>" class="btn btn-info">
+                                รายละเอียด
+                            </a>
+                        </td>                                               
+                    </tr>
+                <% }) %>                        
+            </tbody>
+        </table>
+    <% } else { %>
+        <p>ไม่มีข้อมูลการสั่งซื้อในวันนี้</p>
+    <% } %>
+
+    <!-- Back button with current page parameter -->
+    <a href="/gold_orderHistory?start_date=<%= startDate %>&end_date=<%= endDate %>&page=<%= currentPage %>" class="btn btn-secondary mt-2 mb-3">กลับไปหน้าประวัติการสั่งซื้อ</a>
+</div>
+</div>
+
+<%- include('footer') %>

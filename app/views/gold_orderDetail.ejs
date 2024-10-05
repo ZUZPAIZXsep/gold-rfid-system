@@ -1,0 +1,53 @@
+<%- include('header') %>
+
+<div class="container-fluid mt-3">
+    <h3 style="font-weight: bold;">รายละเอียดคำสั่งซื้อ</h3>
+
+    <div class="mt-3">
+        <div class="row mb-2">
+            <div class="col-1"><strong>เลขคำสั่งซื้อ :</strong></div>
+            <div class="col-6"><%= orderDetail.order_number %></div>
+        </div>
+        <div class="row mb-2">
+            <div class="col-1"><strong>วันที่สั่งซื้อ :</strong></div>
+            <div class="col-6"><%= dayjs(orderDetail.order_date).format('DD/MM/YYYY') %></div>
+        </div>
+        <div class="row mb-2">
+            <div class="col-1"><strong>ร้านที่สั่ง :</strong></div>
+            <div class="col-6"><%= orderDetail.dealer_name %></div>
+        </div>
+        <div class="row mb-2">
+            <div class="col-1"><strong>เบอร์โทรร้าน :</strong></div>
+            <div class="col-6"><%= orderDetail.dealer_phone %></div>
+        </div>
+        <div class="row mb-2">
+            <div class="col-1"><strong>เบอร์แฟ็กซ์ :</strong></div>
+            <div class="col-6"><%= orderDetail.dealer_fax %></div>
+        </div>
+    </div>
+
+    <h4 class="mt-3">รายละเอียดรายการสั่งซื้อ :</h4>
+    <table class="table table-bordered mt-3">
+        <thead class="table-success">
+            <tr>
+                <th>รหัสสินค้า</th>
+                <th>ประเภททองคำ</th>
+                <th>ขนาด</th>
+                <th>จำนวน (ชิ้น)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% orderDetail.items.forEach(item => { %>
+                <tr>
+                    <td><%= item.gold_type_id %></td>
+                    <td><%= item.gold_type %></td>
+                    <td><%= item.gold_size %></td>
+                    <td><%= item.quantity %></td>
+                </tr>
+            <% }) %>
+        </tbody>
+    </table>
+    <a href="/gold_orderHistory/<%= dayjs(orderDetail.order_date).format('YYYY-MM-DD') %>" class="btn btn-secondary mt-2 mb-3">กลับไปหน้าก่อนหน้า</a>
+</div>
+
+<%- include('footer') %>
