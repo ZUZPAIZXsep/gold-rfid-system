@@ -49,9 +49,6 @@
         </tbody>
     </table>
 
-    <!-- รูปภาพ -->
-    <img id="goldIcon" src="/images/gold-bars.png" alt="icon" style="height: 96px; width: 96px; margin-right: 10px;"/>
-
     <button class="btn btn-success mt-2 mb-3" onclick="printReceipt()">พิมพ์ใบรับประกัน</button>
     <a href="/gold_orderHistory/<%= dayjs(orderDetail.order_date).format('YYYY-MM-DD') %>" class="btn btn-secondary mt-2 mb-3">กลับไปหน้าก่อนหน้า</a>
 </div>
@@ -119,17 +116,6 @@
         }
         tr:nth-child(15n) {
             page-break-after: always;
-        }
-
-        /* แสดงรูปภาพเฉพาะตอนพิมพ์ */
-        #goldIcon {
-            display: block;
-            filter: hue-rotate(180deg);
-            opacity: 0.3;
-            position: absolute;
-            right: 50px;
-            margin-top: 50px;
-            transform: translate(-50%, -50%) rotate(-10deg);
         }
 
         /* ปรับตำแหน่งของราคารวมให้สอดคล้องกับรูปภาพ */
