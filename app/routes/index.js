@@ -1730,6 +1730,20 @@ router.get('/gold_salesHistory/:orderNumber', isLogin, async (req, res, next) =>
   }
 });
 
+//GET route เพื่อลบข้อมูลทองคำโดยใช้ gold_id และ order_number
+router.get('/delete_goldsalesHistory/:orderNumber/:gold_id', async (req, res) => {
+  try {
+      const { orderNumber, gold_id } = req.params; // รับ order_number และ gold_id ที่ต้องการลบจาก URL
+      await Goldhistory.findOneAndDelete({ order_number: orderNumber, gold_id: gold_id }); // ค้นหาและลบข้อมูลที่ตรงกัน
+
+      res.redirect(`/gold_salesHistory/${orderNumber}?deleteSuccess=true`); // ส่งกลับไปยังหน้ารายการทั้งหมดของ order_number เดิม
+
+  } catch (error) {
+      console.error(error);
+      res.status(500).send('Internal Server Error');
+  }
+});
+
 router.get('/gold_salesHistory/:orderNumber/preview', isLogin, async (req, res, next) => {
   try {
       const orderNumber = req.params.orderNumber;
