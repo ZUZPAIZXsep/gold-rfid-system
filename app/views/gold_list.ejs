@@ -49,6 +49,66 @@
                 </span>
                 ล้างค่า</a>
         </div>
+        <!-- New table to show gold counts by type -->
+        <table style="width: 95%; border-collapse: collapse; margin: 20px auto; table-layout: fixed;">
+            <!-- Row 1: Total gold count (No border) -->
+            <tr>
+              <th colspan="5" style="color: white; background-color: #4CAF50; padding: 25px; border-radius: 5px; font-size: 28px; text-align: center;">
+                จำนวนทองคำในระบบที่คงเหลือ<br>
+              </th>
+            </tr>
+    
+            <!-- Row 2: Types of gold (With border) -->
+            <tr>
+              <% 
+                const goldTypes = { 
+                  'สร้อยคอ': 'necklace', 
+                  'แหวน': 'ring', 
+                  'กำไลข้อมือ': 'bangle', 
+                  'สร้อยข้อมือ': 'bracelet', 
+                  'ต่างหู': 'earrings' 
+                }; 
+          
+                const icons = {
+                  'สร้อยคอ': '/images/gold-necklace.png',
+                  'แหวน': '/images/gold-ring.png',
+                  'กำไลข้อมือ': '/images/gold-bangle.png',
+                  'สร้อยข้อมือ': '/images/gold-bracelet.png',
+                  'ต่างหู': '/images/gold-earrings.png'
+                };
+                
+                Object.keys(goldTypes).forEach(type => {
+                  const count = goldslist.filter(tag => tag.gold_type === type).length;
+                  if (count >= 0) { 
+              %>
+                  <td style="padding: 10px; background-color: #f0f8ff; border-radius: 5px; text-align: center; border: 1px solid black; width: 20%;">
+                    <button class="type-button" type="button" onclick="showTypeDetails('<%= type %>')" style="width: 100%; padding: 10px; background-color: #f0f8ff; border: none;">
+                        <span style="font-weight: bold; color: green;font-size: 20px;"><%= type %></span><br>
+                        <img src="<%= icons[type] %>" alt="Icon" style="width: 30px; height: 30px; vertical-align: middle; margin-top: 8px;">
+                      </button>
+                  </td>
+              <% 
+                  }
+                }); 
+              %>
+            </tr>
+    
+            <!-- Row 3: Gold counts (With border) -->
+            <tr>
+              <% 
+                Object.keys(goldTypes).forEach(type => {
+                  const count = goldslist.filter(tag => tag.gold_type === type).length;
+                  if (count >= 0) { 
+              %>
+                  <td style="padding: 10px; text-align: center; border: 1px solid black; width: 20%;background-color: white;">
+                    <span style="color: black; font-size: 20px;"><%= count %> ชิ้น</span>
+                  </td>
+              <% 
+                  }
+                }); 
+              %>
+            </tr>
+        </table>
         <%
         let totalGold = goldslist.length;
         %>
@@ -115,6 +175,24 @@
 </form>
 
 <%- include('footer') %>
+
+    <!-- Modal สำหรับแสดงข้อมูลขนาดของทอง -->
+    <div class="modal fade" id="goldSizeModal" tabindex="-1" aria-labelledby="goldSizeModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h5 class="modal-title" id="goldSizeModalLabel">รายละเอียดประเภททองคำ</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modal-body-content">
+            <!-- ข้อมูลขนาดทองจะถูกแสดงที่นี่ -->
+            </div>
+            <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+            </div>
+        </div>
+        </div>
+    </div>
 
 <!-- Modal
 <div class="modal fade" id="confirmSellModal" tabindex="-1" aria-labelledby="confirmSellModalLabel" aria-hidden="true">
@@ -234,7 +312,78 @@ document.addEventListener('DOMContentLoaded', function() {
           // โหลดหน้าใหม่ด้วย query string ที่สร้างขึ้น
           window.location.href = `/gold_list${queryString}`;
       }
+
+        const goldslist = JSON.parse('<%- JSON.stringify(goldslist) %>');
+
+  function showTypeDetails(type) {
+    const typeGolds = goldslist.filter(gold => gold.gold_type === type);
+    
+    const sizes = {
+      'ครึ่งสลึง': 0,
+      '1 สลึง': 0,
+      '2 สลึง': 0,
+      '1 บาท': 0,
+      '2 บาท': 0,
+      '3 บาท': 0
+    };
+
+    // นับจำนวนขนาดทอง
+    typeGolds.forEach(gold => {
+      if (sizes[gold.gold_size] !== undefined) {
+        sizes[gold.gold_size]++;
+      }
+    });
+
+    // สร้างเนื้อหาใน modal
+    let modalContent = `<h6>จำนวนขนาดของทองในประเภท ${type}:</h6>`;
+    Object.keys(sizes).forEach(size => {
+      modalContent += `<p>${size}: ${sizes[size]} ชิ้น</p>`;
+    });
+
+    // แสดงข้อมูลใน modal
+    document.getElementById('modal-body-content').innerHTML = modalContent;
+
+    // เปิด modal
+    $('#goldSizeModal').modal('show');
+  }
   });
+
+  const goldslist = JSON.parse('<%- JSON.stringify(goldslist) %>');
+
+  function showTypeDetails(type) {
+    const typeGolds = goldslist.filter(gold => gold.gold_type === type);
+    
+    const sizes = {
+      'ครึ่งสลึง': 0,
+      '1 สลึง': 0,
+      '2 สลึง': 0,
+      '1 บาท': 0,
+      '2 บาท': 0,
+      '3 บาท': 0
+    };
+
+    // นับจำนวนขนาดทองตามประเภท (gold_size)
+    typeGolds.forEach(gold => {
+      if (sizes[gold.gold_size] !== undefined) {
+        sizes[gold.gold_size]++;
+      }
+    });
+
+    let detailsHTML = `<h5>ประเภท: ${type}</h5><ul>`;
+    Object.keys(sizes).forEach(size => {
+      detailsHTML += `<li>${size}: ${sizes[size]} ชิ้น</li>`;
+    });
+    detailsHTML += `</ul>`;
+
+    // นำข้อมูลไปแสดงใน Modal
+    const modalBody = document.getElementById('modal-body-content');
+    modalBody.innerHTML = detailsHTML;
+
+    // เปิด Modal
+    const goldSizeModal = new bootstrap.Modal(document.getElementById('goldSizeModal'));
+    goldSizeModal.show();
+  }
+
 </script>
 
 

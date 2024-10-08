@@ -1730,13 +1730,34 @@ router.get('/gold_salesHistory/:orderNumber', isLogin, async (req, res, next) =>
   }
 });
 
-//GET route เพื่อลบข้อมูลทองคำโดยใช้ gold_id และ order_number
-router.get('/delete_goldsalesHistory/:orderNumber/:_id', async (req, res) => {
+router.post('/gold_salesHistory/updateStatus/:id', isLogin, async (req, res, next) => {
   try {
-      const { orderNumber, _id } = req.params; // รับ order_number และ gold_id ที่ต้องการลบจาก URL
-      await Goldhistory.findOneAndDelete({ _id:_id }); // ค้นหาและลบข้อมูลที่ตรงกัน
+      const goldId = req.params.id;
+      console.log("Gold ID received:", goldId);
+      // Update ทองชิ้นนั้นด้วยเงื่อนไข `_id` ที่ได้จากปุ่ม delete
+      const updatedGold = await Goldhistory.findByIdAndUpdate(goldId, {
+          gold_status: "in stock", // เปลี่ยนสถานะทองเป็น "in stock"
+          $unset: {
+              customer_name: "", // ลบ field
+              customer_phone: "",
+              customer_surname: "",
+              gold_outDateTime: "",
+              order_number: "",
+              seller_name: "",
+              seller_role: "",
+              seller_username: ""
+          },
+          $rename: { 
+              gold_price: "gold_oldprice" // เปลี่ยนชื่อ field
+          }
+      });
 
-      res.redirect(`/gold_salesHistory/${order_number}?deleteSuccess=true`); // ส่งกลับไปยังหน้ารายการทั้งหมดของ order_number เดิม
+      // ตรวจสอบว่า update สำเร็จไหม
+      if (!updatedGold) {
+          return res.status(404).send('ไม่พบข้อมูลทองคำที่ต้องการแก้ไข');
+      }
+
+      res.redirect(`/gold_salesHistory/${updatedGold.order_number}?deleteSuccess=true`);
 
   } catch (error) {
       console.error(error);

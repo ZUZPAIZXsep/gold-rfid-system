@@ -38,9 +38,9 @@
                     <% if (session.role != "Employee"){ %>
                     <td class="text-center">                   
                         <a class="btn btn-danger" data-bs-toggle="modal" href="#confirmDeleteModal" data-id="<%= detail._id %>">
-                          <span class="material-icon material-symbols-outlined">
-                              delete
-                          </span>
+                            <span class="material-icon material-symbols-outlined">
+                                delete
+                            </span>
                         </a>
                     </td>
                     <% } %>
@@ -136,24 +136,22 @@
         newWindow.focus(); // ทำให้หน้าต่างใหม่นี้เป็นหน้าต่างหลัก
     };
 
-    $('#confirmDeleteModal').on('show.bs.modal', function (event) {
-        const button = $(event.relatedTarget); // Button ที่กดเปิด Modal
-        const goldId = button.data('id'); // รับค่า gold_id จาก data-id ในปุ่มที่กด
-
-        const orderNumber = '<%= details.length > 0 ? details[0].order_number : "" %>';
-
-        var modal = $(this);
-        modal.find('#confirmDeleteBtn').attr('href', '/delete_goldsalesHistory/' + orderNumber + '/' + goldId);
+    // รับค่า _id จากปุ่ม delete และใส่ลงใน href ของปุ่มยืนยัน
+    const confirmDeleteModal = document.getElementById('confirmDeleteModal');
+    confirmDeleteModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const goldId = button.getAttribute('data-id');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        confirmDeleteBtn.href = `/gold_salesHistory/updateGoldStatus/${goldId}`;
     });
 
-
-    // Display success message if query parameter is set
+    // แสดงข้อความสำเร็จในการลบถ้ามีการตั้ง query parameter
     document.addEventListener('DOMContentLoaded', function() {
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('deleteSuccess')) {
             const deleteSuccessMessage = document.getElementById('deleteSuccessMessage');
             deleteSuccessMessage.classList.remove('d-none');
-            // Hide the message after 2 seconds
+            // ซ่อนข้อความหลังจาก 2 วินาที
             setTimeout(() => {
                 deleteSuccessMessage.classList.add('d-none');
             }, 2000);
