@@ -21,7 +21,9 @@
                 <th>น้ำหนัก (กรัม)</th>
                 <th>ร้านผู้จัดจำหน่าย</th>
                 <th>ราคา</th>
+                <% if (session.role != "Employee"){ %>
                 <th></th>
+                <% } %>
             </tr>
         </thead>
         <tbody>
@@ -33,13 +35,15 @@
                     <td><%= detail.gold_weight %></td>
                     <td><%= detail.dealer_name %></td>
                     <td><%= detail.gold_price %></td>
+                    <% if (session.role != "Employee"){ %>
                     <td class="text-center">                   
-                        <a class="btn btn-danger" data-bs-toggle="modal" href="#confirmDeleteModal" data-id="<%= detail.gold_id %>">
+                        <a class="btn btn-danger" data-bs-toggle="modal" href="#confirmDeleteModal" data-id="<%= detail._id %>">
                           <span class="material-icon material-symbols-outlined">
                               delete
                           </span>
                         </a>
                     </td>
+                    <% } %>
                 </tr>
             <% }); %>
         </tbody>
@@ -133,12 +137,10 @@
     };
 
     $('#confirmDeleteModal').on('show.bs.modal', function (event) {
-        var button = $(event.relatedTarget); // Button ที่กดเปิด Modal
-        var goldId = button.data('id'); // รับค่า gold_id จาก data-id ในปุ่มที่กด
+        const button = $(event.relatedTarget); // Button ที่กดเปิด Modal
+        const goldId = button.data('id'); // รับค่า gold_id จาก data-id ในปุ่มที่กด
 
-        // ดึง order_number จาก URL ปัจจุบัน
-        var pathArray = window.location.pathname.split('/');
-        var orderNumber = pathArray[pathArray.length - 1]; // order_number จะอยู่ตำแหน่งสุดท้ายของพาธ
+        const orderNumber = '<%= details.length > 0 ? details[0].order_number : "" %>';
 
         var modal = $(this);
         modal.find('#confirmDeleteBtn').attr('href', '/delete_goldsalesHistory/' + orderNumber + '/' + goldId);
