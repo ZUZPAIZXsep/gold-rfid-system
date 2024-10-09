@@ -2,13 +2,13 @@
 
 <div class="container-fluid">
     <div class="watermark">ห้างทองอิฐศิลป์</div> <!-- Watermark -->
-    <div class="row">
-        <div class="col-3">
-            <div id="deleteSuccessMessage" class="alert alert-danger d-none" role="alert">
-                ลบข้อมูลแท็กเรียบร้อยแล้ว
+        <div class="row mt-4">
+            <div class="col-3">
+                <div id="deleteSuccessMessage" class="alert alert-danger d-none" role="alert">
+                    ยกเลิกการขายเรียบร้อย
+                </div>
             </div>
         </div>
-    </div>
     <h1 class="mt-3">รายละเอียดการขายทองคำ</h1>
     <h5 class="mt-3">จำนวนรายการทองคำที่ขายทั้งหมด: <%= outStockCount %> รายการ</h5>
 
@@ -22,7 +22,7 @@
                 <th>ร้านผู้จัดจำหน่าย</th>
                 <th>ราคา</th>
                 <% if (session.role != "Employee"){ %>
-                <th></th>
+                <th width="150px"></th>
                 <% } %>
             </tr>
         </thead>
@@ -36,13 +36,11 @@
                     <td><%= detail.dealer_name %></td>
                     <td><%= detail.gold_price %></td>
                     <% if (session.role != "Employee"){ %>
-                    <td class="text-center">                   
+                    <td class="text-center">
                         <a class="btn btn-danger" data-bs-toggle="modal" href="#confirmDeleteModal" data-id="<%= detail._id %>">
-                            <span class="material-icon material-symbols-outlined">
-                                delete
-                            </span>
+                            ยกเลิกการขาย
                         </a>
-                    </td>
+                    </td>                  
                     <% } %>
                 </tr>
             <% }); %>
@@ -110,9 +108,12 @@
           คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?
         </div>
         <div class="modal-footer">
-          <a id="confirmDeleteBtn" href="" class="btn btn-danger">ลบ</a>
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
-        </div>
+            <form id="deleteForm" method="POST" action="">
+              <input type="hidden" id="goldId" name="goldId" value="">
+              <button type="submit" class="btn btn-danger">ยกเลิกการขาย</button>
+            </form>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+          </div>          
       </div>
     </div>
 </div>
@@ -136,27 +137,6 @@
         newWindow.focus(); // ทำให้หน้าต่างใหม่นี้เป็นหน้าต่างหลัก
     };
 
-    // รับค่า _id จากปุ่ม delete และใส่ลงใน href ของปุ่มยืนยัน
-    const confirmDeleteModal = document.getElementById('confirmDeleteModal');
-    confirmDeleteModal.addEventListener('show.bs.modal', function (event) {
-        const button = event.relatedTarget;
-        const goldId = button.getAttribute('data-id');
-        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
-        confirmDeleteBtn.href = `/gold_salesHistory/updateGoldStatus/${goldId}`;
-    });
-
-    // แสดงข้อความสำเร็จในการลบถ้ามีการตั้ง query parameter
-    document.addEventListener('DOMContentLoaded', function() {
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has('deleteSuccess')) {
-            const deleteSuccessMessage = document.getElementById('deleteSuccessMessage');
-            deleteSuccessMessage.classList.remove('d-none');
-            // ซ่อนข้อความหลังจาก 2 วินาที
-            setTimeout(() => {
-                deleteSuccessMessage.classList.add('d-none');
-            }, 2000);
-        }
-    });
 }
 
 
@@ -243,3 +223,33 @@
         }
     }
 </style>
+
+<script>
+    const confirmDeleteModal = document.getElementById('confirmDeleteModal');
+    confirmDeleteModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const goldId = button.getAttribute('data-id');
+
+        // Update form action and hidden input value
+        const deleteForm = document.getElementById('deleteForm');
+        const goldIdInput = document.getElementById('goldId');
+        deleteForm.action = `/gold_salesHistory/updateGoldStatus/${goldId}`;
+        goldIdInput.value = goldId;
+
+        console.log('Form action:', deleteForm.action);
+    });
+
+    // แสดงข้อความสำเร็จในการลบถ้ามีการตั้ง query parameter
+    document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('deleteSuccess')) {
+        const deleteSuccessMessage = document.getElementById('deleteSuccessMessage');
+        deleteSuccessMessage.classList.remove('d-none');
+        // ซ่อนข้อความหลังจาก 2 วินาที
+        setTimeout(() => {
+            deleteSuccessMessage.classList.add('d-none');
+        }, 2000);
+        }
+    });
+
+</script>

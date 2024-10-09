@@ -1730,41 +1730,6 @@ router.get('/gold_salesHistory/:orderNumber', isLogin, async (req, res, next) =>
   }
 });
 
-router.post('/gold_salesHistory/updateStatus/:id', isLogin, async (req, res, next) => {
-  try {
-      const goldId = req.params.id;
-      console.log("Gold ID received:", goldId);
-      // Update ทองชิ้นนั้นด้วยเงื่อนไข `_id` ที่ได้จากปุ่ม delete
-      const updatedGold = await Goldhistory.findByIdAndUpdate(goldId, {
-          gold_status: "in stock", // เปลี่ยนสถานะทองเป็น "in stock"
-          $unset: {
-              customer_name: "", // ลบ field
-              customer_phone: "",
-              customer_surname: "",
-              gold_outDateTime: "",
-              order_number: "",
-              seller_name: "",
-              seller_role: "",
-              seller_username: ""
-          },
-          $rename: { 
-              gold_price: "gold_oldprice" // เปลี่ยนชื่อ field
-          }
-      });
-
-      // ตรวจสอบว่า update สำเร็จไหม
-      if (!updatedGold) {
-          return res.status(404).send('ไม่พบข้อมูลทองคำที่ต้องการแก้ไข');
-      }
-
-      res.redirect(`/gold_salesHistory/${updatedGold.order_number}?deleteSuccess=true`);
-
-  } catch (error) {
-      console.error(error);
-      res.status(500).send('Internal Server Error');
-  }
-});
-
 router.get('/gold_salesHistory/:orderNumber/preview', isLogin, async (req, res, next) => {
   try {
       const orderNumber = req.params.orderNumber;
@@ -1789,6 +1754,66 @@ router.get('/gold_salesHistory/:orderNumber/preview', isLogin, async (req, res, 
       res.status(500).send('Internal Server Error');
   }
 });
+
+// Route สำหรับอัปเดตสถานะจาก 'out of stock' เป็น 'in stock' และลบข้อมูลบางฟิลด์
+router.post('/gold_salesHistory/updateGoldStatus/:goldId', isLogin, async (req, res) => {
+  try {
+    const goldId = req.params.goldId;
+
+    // ค้นหาข้อมูลใน Goldhistory เพื่อดึง gold_id และ order_number
+    const goldDetail = await Goldhistory.findById(goldId);
+    if (!goldDetail) {
+      return res.status(404).send('Gold item not found');
+    }
+
+    const goldIdToUpdate = goldDetail.gold_id; // ใช้ gold_id จาก Goldhistory
+    const orderNumber = goldDetail.order_number; // ดึง order_number จาก Goldhistory
+
+    // อัปเดตสถานะใน Goldhistory
+    await Goldhistory.updateOne(
+      { _id: goldId },
+      {
+        $set: { gold_status: 'in stock' },
+        $unset: {
+          customer_name: "",
+          customer_surname: "",
+          customer_phone: "",
+          gold_outDateTime: "",
+          gold_price: "",
+          order_number: "",
+          seller_name: "",
+          seller_role: "",
+          seller_username: ""
+        }
+      }
+    );
+
+    // อัปเดตสถานะใน Goldtagscount
+    await Goldtagscount.updateOne(
+      { gold_id: goldIdToUpdate }, // เช็คจาก gold_id
+      {
+        $set: { gold_status: 'in stock' }, // เปลี่ยนสถานะ
+        $unset: { gold_outDateTime: "" } // ลบข้อมูล gold_outDateTime
+      }
+    );
+
+    // ตรวจสอบจำนวนรายการใน Goldhistory สำหรับ order_number นี้
+    const details = await Goldhistory.find({ order_number: orderNumber });
+    const outStockCount = details.length;
+
+    // กำหนดเงื่อนไขสำหรับการ redirect
+    if (outStockCount > 1) {
+      res.redirect(`/gold_salesHistory/${orderNumber}?deleteSuccess=true`);
+    } else {
+      res.redirect('/gold_salesHistory');
+    }
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
 
 
 router.get('/gold_saleDetails', isLogin, async (req, res, next) => {
