@@ -25,6 +25,10 @@
             <div class="col-3"><strong>เบอร์แฟ็กซ์ :</strong></div>
             <div class="col-6"><%= orderDetail.dealer_fax %></div>
         </div>
+        <div class="row mb-2">
+            <div class="col-3"><strong>สถานะ :</strong></div>
+            <div class="col-6"><%= orderDetail.status === 'pending' ? 'ยังไม่ดำเนินการ' : 'ดำเนินการเสร็จสิ้น' %></div> <!-- แสดงสถานะ -->
+        </div>
     </div>
 
     <h4 class="mt-3">รายละเอียดรายการสั่งซื้อ :</h4>

@@ -152,7 +152,13 @@ const orderSchema = new mongoose.Schema({
           gold_size: String,
           quantity: Number
       }
-  ]},{
+  ],
+  status: {
+    type: String,
+    enum: ['pending', 'completed'],
+    default: 'pending'
+  }},
+  {
     collection: 'gold_order',
     versionKey: false
 });
@@ -2445,7 +2451,7 @@ router.get('/edit_user/:id', isLogin, async (req, res) => {
 // Route สำหรับอัปเดตข้อมูลผู้ใช้
 router.post('/edit_user/:id', isLogin, async (req, res) => {
   try {
-    const { usr, name, role, phone, email, pwd } = req.body;
+    const { usr, name, role, phone, email, newPwd, confirmPwd } = req.body;
 
     // ตรวจสอบว่าผู้ใช้ที่แก้ไขมีอยู่จริง
     const user = await Golduser.findById(req.params.id);
@@ -2461,9 +2467,11 @@ router.post('/edit_user/:id', isLogin, async (req, res) => {
     user.phone = phone;
     user.email = email;
 
-    // หากมีการกรอกรหัสผ่านใหม่ ให้แฮชและอัปเดต
-    if (pwd) {
-      user.pwd = await hashPassword(pwd);
+    // หากมีการกรอกรหัสผ่านใหม่ ให้ตรวจสอบและอัปเดต
+    if (newPwd && newPwd === confirmPwd) {
+      user.pwd = await hashPassword(newPwd);
+    } else if (newPwd && newPwd !== confirmPwd) {
+      return res.status(400).send('รหัสผ่านใหม่และการยืนยันไม่ตรงกัน');
     }
 
     // บันทึกการเปลี่ยนแปลงลงฐานข้อมูล
@@ -2831,6 +2839,22 @@ router.get('/gold_orderDetail/:orderNumber', isLogin, async (req, res, next) => 
       res.status(500).send('Internal Server Error');
   }
 });
+
+router.post('/changeOrderStatus/:orderId', isLogin, async (req, res) => {
+  try {
+      const orderId = req.params.orderId;
+      const { status } = req.body;
+
+      // อัพเดตสถานะของคำสั่งซื้อ
+      await goldOrder.findByIdAndUpdate(orderId, { status: status });
+
+      res.status(200).send('Status updated');
+  } catch (error) {
+      console.error(error);
+      res.status(500).send('Internal Server Error');
+  }
+});
+
 
 
 module.exports = router;

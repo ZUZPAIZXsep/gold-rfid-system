@@ -341,6 +341,11 @@ document.getElementById('addToCartBtn').addEventListener('click', function() {
         // ฟังก์ชันลบรายการออกจากตะกร้า
         newRow.querySelector('.remove-btn').addEventListener('click', function() {
             newRow.remove();
+
+            // ตรวจสอบว่าตารางมีรายการเหลืออยู่หรือไม่
+            if (document.querySelectorAll('#cartItems tr').length === 0) {
+                document.getElementById('dealer').disabled = false; // ปลดล็อคฟิลด์ผู้จัดจำหน่ายเมื่อไม่มีรายการสินค้า
+            }
         });
     }
 

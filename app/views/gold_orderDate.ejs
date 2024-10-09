@@ -10,6 +10,7 @@
                     <th>เลขที่ใบสั่ง</th>
                     <th>วันที่ใบสั่ง</th>
                     <th>ชื่อผู้สั่ง</th>
+                    <th>สถานะ</th>
                     <th>รายละเอียดการสั่งซื้อ</th>
                 </tr>
             </thead>
@@ -20,9 +21,17 @@
                         <td><%= dayjs(order.order_date).format('DD/MM/YYYY') %></td>
                         <td><%= order.dealer_name %></td>
                         <td>
-                            <a href="/gold_orderDetail/<%= order.order_number %>" class="btn btn-info">
-                                รายละเอียด
-                            </a>
+                            <!-- แสดงสถานะด้วย badge -->
+                            <span class="badge <%= order.status === 'pending' ? 'bg-danger' : 'bg-success' %>">
+                                <%= order.status === 'pending' ? 'ยังไม่ดำเนินการ' : 'ดำเนินการเสร็จสิ้น' %>
+                            </span>
+                            <!-- ปุ่มเปลี่ยนสถานะพร้อมยืนยัน -->
+                            <% if (order.status === 'pending') { %>
+                                <button class="btn btn-success btn-sm" onclick="confirmChangeStatus('<%= order._id %>')">ยืนยันการดำเนินการ</button>
+                            <% } %>
+                        </td>
+                        <td>
+                            <a href="/gold_orderDetail/<%= order.order_number %>" class="btn btn-info">รายละเอียด</a>
                         </td>                                               
                     </tr>
                 <% }) %>                        
@@ -38,3 +47,54 @@
 </div>
 
 <%- include('footer') %>
+
+<!-- Confirm Modal -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmModalLabel">ยืนยันการเปลี่ยนสถานะ</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        คุณต้องการเปลี่ยนสถานะคำสั่งซื้อนี้เป็น "ดำเนินการเสร็จสิ้น" ใช่หรือไม่?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-success" id="confirmBtn">ยืนยัน</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    let selectedOrderId = null;
+
+    function confirmChangeStatus(orderId) {
+        selectedOrderId = orderId;
+        const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+        confirmModal.show();
+    }
+
+    document.getElementById('confirmBtn').addEventListener('click', async function() {
+        if (selectedOrderId) {
+            try {
+                const response = await fetch(`/changeOrderStatus/${selectedOrderId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ status: 'completed' })
+                });
+
+                if (response.ok) {
+                    window.location.reload(); // Reload the page after status change
+                } else {
+                    console.error('Failed to update status');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+    });
+</script>
