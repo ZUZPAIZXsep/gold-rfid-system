@@ -1808,7 +1808,7 @@ router.post('/gold_salesHistory/updateGoldStatus/:goldId', isLogin, async (req, 
     const outStockCount = details.length;
 
     // กำหนดเงื่อนไขสำหรับการ redirect
-    if (outStockCount > 1) {
+    if (outStockCount > 0) {
       res.redirect(`/gold_salesHistory/${orderNumber}?deleteSuccess=true`);
     } else {
       res.redirect('/gold_salesHistory');
