@@ -2485,6 +2485,30 @@ router.post('/edit_user/:id', isLogin, async (req, res) => {
   }
 });
 
+// Route สำหรับลบข้อมูลผู้ใช้
+
+router.post('/delete_user/:id', isLogin, async (req, res) => {
+  try {
+    const userId = req.params.id;
+    
+    // ค้นหาและลบผู้ใช้ตาม id
+
+    const user = await Golduser.findByIdAndDelete(userId);
+
+    if (!user) {
+      return res.status(404).send('User not found'); // ส่งข้อความถ้าไม่พบผู้ใช้
+
+    }
+
+    // ส่งกลับไปยังหน้า home หลังจากลบผู้ใช้สำเร็จ
+
+    res.redirect('/home');
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
 // GET route สำหรับแสดงฟอร์มเพิ่มผู้จัดจำหน่าย
 router.get('/add_dealer', isLogin, (req, res) => {
   res.render('add_dealer');
