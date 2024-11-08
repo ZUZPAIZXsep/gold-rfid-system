@@ -310,10 +310,10 @@ router.post('/login', isnotLogin , async (req, res) => {
 
         res.redirect('/home');
       } else {
-        res.render('login', { errorMessage: 'Incorrect username or password' });
+        res.render('login', { errorMessage: 'ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง' });
       }
     } else {
-      res.render('login', { errorMessage: 'Incorrect username or password' });
+      res.render('login', { errorMessage: 'ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง' });
     }
   } catch (err) {
     console.error(err);
