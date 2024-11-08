@@ -23,7 +23,7 @@ function ShowTagData(data) {
     var tagID = data.slice(19, 31).toString('hex'); // แปลงข้อมูลใน Buffer เป็นรหัสฐาน 16
     if (!rfidTags.includes(tagID)) { // ถ้ารหัสแท็กยังไม่เคยเห็น
         rfidTags.push(tagID); // เพิ่มรหัสแท็กลงในอาร์เรย์
-        console.log('tag:', tagID); // แสดงรหัสแท็กเป็นรหัสฐาน 16
+        // console.log('tag:', tagID); // แสดงรหัสแท็กเป็นรหัสฐาน 16
     }
 }
 
