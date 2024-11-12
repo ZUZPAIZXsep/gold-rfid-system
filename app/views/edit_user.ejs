@@ -2,7 +2,7 @@
 
 <div class="container mt-5">
   <h2>แก้ไขข้อมูลผู้ใช้</h2>
-  <form action="/edit_user/<%= user._id %>" method="POST" style="width: 30%;">
+  <form action="/edit_user/<%= user._id %>" method="POST" style="width: 400px;">
     <div class="mb-3">
       <label for="name" class="form-label">ชื่อพนักงาน</label>
       <input type="text" class="form-control" id="name" name="name" value="<%= user.name %>" required>

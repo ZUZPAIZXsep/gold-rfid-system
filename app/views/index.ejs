@@ -19,13 +19,13 @@
         <a type="button" class="btn btn-warning mt-2" style="margin-left: 4px;" href="/edit_goldTagData">
           <span class="material-icon material-symbols-outlined">edit_note</span> แก้ไขข้อมูลแท็ก
         </a>
+        <% } %>
         <a type="button" class="btn btn-secondary mt-2" style="margin-left: 4px;" href="/gold_salesHistory">
-          <span class="material-icon material-symbols-outlined">sell</span> ประวัติการซื้อขาย
+          <span class="material-icon material-symbols-outlined">sell</span> ประวัติการขาย
         </a>
         <a type="button" class="btn btn-info mt-2" style="margin-left: 4px;" href="/gold_history">
-          <span class="material-icon material-symbols-outlined">schedule</span> ประวัติ
+          <span class="material-icon material-symbols-outlined">schedule</span> ประวัติทองคำ
         </a>
-        <% } %>
     </div>
     <%
       let totalGold = golds.length;
@@ -162,7 +162,6 @@
         </div>
       </div>
     </div>
-    <% if (session.role != "Employee"){ %>
     <div>
       <table class="table table-bordered">
         <thead class="table-success">
@@ -206,7 +205,6 @@
               <td><%= dayjs(gold.gold_timestamp).locale('th').format('DD-MM-YYYY HH:mm:ss') %></td>
             </tr>
           <% }); %>
-          <% } %>
           <% } %>
         </tbody>
       </table>
