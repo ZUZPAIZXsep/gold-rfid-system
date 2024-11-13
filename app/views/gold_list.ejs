@@ -315,40 +315,7 @@ document.addEventListener('DOMContentLoaded', function() {
           window.location.href = `/gold_list${queryString}`;
       }
 
-        const goldslist = JSON.parse('<%- JSON.stringify(goldslist) %>');
-
-  function showTypeDetails(type) {
-    const typeGolds = goldslist.filter(gold => gold.gold_type === type);
-    
-    const sizes = {
-      'ครึ่งสลึง': 0,
-      '1 สลึง': 0,
-      '2 สลึง': 0,
-      '1 บาท': 0,
-      '2 บาท': 0,
-      '3 บาท': 0
-    };
-
-    // นับจำนวนขนาดทอง
-    typeGolds.forEach(gold => {
-      if (sizes[gold.gold_size] !== undefined) {
-        sizes[gold.gold_size]++;
-      }
-    });
-
-    // สร้างเนื้อหาใน modal
-    let modalContent = `<h6>จำนวนขนาดของทองในประเภท ${type}:</h6>`;
-    Object.keys(sizes).forEach(size => {
-      modalContent += `<p>${size}: ${sizes[size]} ชิ้น</p>`;
-    });
-
-    // แสดงข้อมูลใน modal
-    document.getElementById('modal-body-content').innerHTML = modalContent;
-
-    // เปิด modal
-    $('#goldSizeModal').modal('show');
-  }
-  });
+});
 
   const goldslist = JSON.parse('<%- JSON.stringify(goldslist) %>');
 
@@ -385,6 +352,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const goldSizeModal = new bootstrap.Modal(document.getElementById('goldSizeModal'));
     goldSizeModal.show();
   }
+
+    // ปรับ CSS เมื่อกดปุ่ม
+    document.querySelectorAll('.type-button').forEach(button => {
+    button.addEventListener('click', function() {
+      document.querySelectorAll('.type-button').forEach(btn => {
+        btn.style.backgroundColor = '#f0f8ff';  // สีปกติ
+      });
+      this.style.backgroundColor = '#d0e8ff';   // สีเมื่อกด
+    });
+  });
 
 </script>
 

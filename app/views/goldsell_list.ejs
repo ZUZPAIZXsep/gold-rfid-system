@@ -233,4 +233,14 @@
         const goldSizeModal = new bootstrap.Modal(document.getElementById('goldSizeModal'));
         goldSizeModal.show();
         }
+
+        // ปรับ CSS เมื่อกดปุ่ม
+        document.querySelectorAll('.type-button').forEach(button => {
+            button.addEventListener('click', function() {
+            document.querySelectorAll('.type-button').forEach(btn => {
+                btn.style.backgroundColor = '#f0f8ff';  // สีปกติ
+            });
+            this.style.backgroundColor = '#d0e8ff';   // สีเมื่อกด
+            });
+        });
     </script>
