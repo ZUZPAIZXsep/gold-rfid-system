@@ -2007,6 +2007,7 @@ router.get('/gold_sales_summary', isLogin, async (req, res) => {
 
     const summarizedGoldHistory = summarizeGoldHistory2(salesData);
     const paginatedData = summarizedGoldHistory.slice(skip, skip + limit);
+    const monthlySummaries = {};
 
     const totalCount = summarizedGoldHistory.length;
     const totalPages = Math.ceil(totalCount / limit);
@@ -2016,8 +2017,21 @@ router.get('/gold_sales_summary', isLogin, async (req, res) => {
 
     const userSales = {};
     salesData.forEach((sale) => {
+      const monthYear = dayjs(sale.gold_outDateTime).format('MM/YYYY');
       const sellerName = sale.seller_username;
+      const sellerrealName = sale.seller_name;
       const saleAmount = parseFloat(sale.gold_price) || 0;
+
+      if (!monthlySummaries[monthYear]) {
+        monthlySummaries[monthYear] = [];
+      }
+
+      let seller = monthlySummaries[monthYear].find(entry => entry.username === sellerName);
+      if (!seller) {
+        seller = { username: sellerName, name: sellerrealName, monthlySale: 0 };
+        monthlySummaries[monthYear].push(seller);
+      }
+      seller.monthlySale += saleAmount;
 
       if (!userSales[sellerName]) {
         userSales[sellerName] = {
@@ -2085,6 +2099,7 @@ router.get('/gold_sales_summary', isLogin, async (req, res) => {
       startDate,
       endDate,
       summarizedGoldHistory: paginatedData,
+      monthlySummaries,
       currentPage: currentPage,
       totalPages: totalPages,
       queryParams: queryParams.toString()
@@ -2204,13 +2219,6 @@ router.get('/gold_sales_employee', isLogin, async (req, res) => {
       query.gold_Datetime = { $gte: start, $lte: end };
     }
 
-    const startOfDay = selectedDay.startOf('day').toDate();
-    const endOfDay = selectedDay.endOf('day').toDate();
-    const startOfMonth = selectedDay.startOf('month').toDate();
-    const endOfMonth = selectedDay.endOf('month').toDate();
-    const startOfWeek = selectedDay.startOf('isoWeek').toDate(); // Monday
-    const endOfWeek = selectedDay.endOf('isoWeek').toDate(); // Sunday
-
     const currentUser = await Golduser.findOne({ usr: req.session.usr });
 
     if (!currentUser) {
@@ -2253,9 +2261,25 @@ router.get('/gold_sales_employee', isLogin, async (req, res) => {
       total_sale: 0
     };
 
+    // คำนวณยอดขายตามเดือน
+    const monthSales = [];
+    salesData.forEach(sale => {
+      const month = dayjs(sale.gold_outDateTime).format('MM/YYYY');
+      const existingMonth = monthSales.find(item => item.month === month);
+      if (existingMonth) {
+        existingMonth.totalSales += parseFloat(sale.gold_price) || 0;
+      } else {
+        monthSales.push({
+          month: month,
+          totalSales: parseFloat(sale.gold_price) || 0
+        });
+      }
+    });
+
     res.render('gold_salesEmployee', { 
       currentUser, 
       totals,
+      monthSales,
       date: selectedDate,
       dayjs,
       startDate,
