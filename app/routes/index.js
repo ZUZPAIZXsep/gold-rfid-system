@@ -2720,16 +2720,25 @@ async function generateOrderNumber() {
   let nextOrderNumber = 1; // เริ่มที่ 1 หากยังไม่มี order ในฐานข้อมูล
 
   if (lastOrder) {
-      // ดึงเฉพาะเลขจาก order_number ล่าสุด (ORD-XXX)
       const lastOrderNumber = parseInt(lastOrder.order_number.split('-')[1], 10);
 
-      // เพิ่ม 1 เพื่อให้ได้เลข order ใหม่
-      nextOrderNumber = lastOrderNumber + 1;
-    }
+      if (!isNaN(lastOrderNumber)) {
+          nextOrderNumber = lastOrderNumber + 1;
+      }
+  }
 
-    // สร้างเลข order ใหม่โดยใช้ prefix และเลขที่เพิ่มขึ้น
-    const prefix = "ORD";
-    return `${prefix}-${nextOrderNumber}`;
+  const prefix = "ORD";
+  let newOrderNumber = `${prefix}-${nextOrderNumber}`;
+
+  // ตรวจสอบว่าหมายเลขใหม่ซ้ำหรือไม่
+  let existingOrder = await goldOrder.findOne({ order_number: newOrderNumber });
+  while (existingOrder) {
+      nextOrderNumber++;
+      newOrderNumber = `${prefix}-${nextOrderNumber}`;
+      existingOrder = await goldOrder.findOne({ order_number: newOrderNumber });
+  }
+
+  return newOrderNumber;
 }
 
 // Route สำหรับบันทึกใบสั่งซื้อ
