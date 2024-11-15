@@ -53,15 +53,19 @@
         <div class="col-6 d-flex justify-content-end align-self-end">
           <button id="monthlySummaryBtn" class="btn btn-success">
             <span class="material-icon material-symbols-outlined">sync</span>
-            สรุปรายการขาย
+            สรุปยอดขายรายเดือน
           </button>
           <button id="defaultViewBtn" class="btn btn-warning" style="display: none;">
             <span class="material-icon material-symbols-outlined">sync</span>
-            สรุปยอดขายรายเดือน
+            รายการขายรายวัน
           </button>
         </div>
     </div>
     <!-- เพิ่มตาราง summarizedGoldHistory -->
+    <div><br>
+      <h3 id="daily">รายการขายรายวัน</h3>
+      <h3 id="monthly" style="display: none;">ยอดการขายรายเดือน</h3>
+    </div>
     <div id="defaultView" class="mt-3">
         <% if (summarizedGoldHistory.length > 0) { %>
           <table class="table table-bordered mt-3">
@@ -95,9 +99,9 @@
           <table class="table table-bordered mt-3">
             <thead class="table-warning">
               <tr>
-                <th width="200px">ชื่อในระบบ</th>
+                <th width="100px">ชื่อในระบบ</th>
                 <th width="200px">ชื่อพนักงาน</th>
-                <th width="150px">ยอดขายในเดือนนี้</th>
+                <th width="100px">ยอดขายในเดือนนี้</th>
               </tr>
             </thead>
             <tbody>
@@ -186,11 +190,15 @@
         document.getElementById('monthlySummaryView').style.display = 'block';
         document.getElementById('monthlySummaryBtn').style.display = 'none';
         document.getElementById('defaultViewBtn').style.display = 'inline-block';
+        document.getElementById('daily').style.display = 'none';
+        document.getElementById('monthly').style.display = 'block';
       } else {
         document.getElementById('defaultView').style.display = 'block';
         document.getElementById('monthlySummaryView').style.display = 'none';
         document.getElementById('monthlySummaryBtn').style.display = 'inline-block';
         document.getElementById('defaultViewBtn').style.display = 'none';
+        document.getElementById('daily').style.display = 'block';
+        document.getElementById('monthly').style.display = 'none';
       }
     }
 
@@ -214,16 +222,18 @@
     document.querySelectorAll('.viewButton').forEach(button => {
       button.addEventListener('click', function() {
         saveScrollPosition();
-        // เพิ่มโค้ดเปลี่ยนมุมมองที่นี่
-
       });
     });
-
 
     // เรียกคืนตำแหน่งการเลื่อนเมื่อหน้าโหลดหรือหลังจากอัปเดต DOM
 
     document.addEventListener('DOMContentLoaded', () => {
       restoreScrollPosition();
+    });
+
+    // ตรวจสอบการออกจากหน้าและรีเซ็ต viewState
+    window.addEventListener('beforeunload', function () {
+      saveScrollPosition(); // รีเซ็ต viewState เมื่อหน้าไม่แสดงผลแล้ว
     });
 
     document.getElementById('monthlySummaryBtn').addEventListener('click', function() {
@@ -232,6 +242,8 @@
       document.getElementById('monthlySummaryView').style.display = 'block';
       document.getElementById('monthlySummaryBtn').style.display = 'none';
       document.getElementById('defaultViewBtn').style.display = 'inline-block';
+      document.getElementById('daily').style.display = 'none';
+      document.getElementById('monthly').style.display = 'block';
       localStorage.setItem('salesViewState', 'monthly'); // เก็บสถานะใน localStorage
     });
 
@@ -241,6 +253,8 @@
       document.getElementById('monthlySummaryView').style.display = 'none';
       document.getElementById('monthlySummaryBtn').style.display = 'inline-block';
       document.getElementById('defaultViewBtn').style.display = 'none';
+      document.getElementById('daily').style.display = 'block';
+      document.getElementById('monthly').style.display = 'none';
       localStorage.setItem('salesViewState', 'default'); // เก็บสถานะใน localStorage
     });
   </script>

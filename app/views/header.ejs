@@ -133,7 +133,7 @@
               </li>
               <li class="nav-item">
                 <div class="dropdown">
-                  <a  class="nav-link" href="#" class="dropdown-toggle text-decoration-none text-dark d-flex align-items-center" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                  <a class="nav-link" href="#" class="dropdown-toggle text-decoration-none text-dark d-flex align-items-center" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                     <span class="material-icon material-symbols-outlined">schedule</span>
                     ประวัติ
                     <span class="material-symbols-outlined">arrow_drop_down</span>
@@ -166,20 +166,20 @@
                   <hr class="dropdown-divider">
                   <% if (session.role == "Owner"){ %>
                   <li>
-                    <a class="dropdown-item text-center" href="/gold_sales_summary">
+                    <a id="salesSummaryLink" class="dropdown-item text-center" href="/gold_sales_summary">
                       รายงานยอดขาย
                     </a>
                   </li>
                   <% } %>
                   <% if (session.role == "Employee"){ %>
                     <li>
-                      <a class="dropdown-item text-center" href="/gold_sales_employee">
+                      <a id="salesSummaryLink" class="dropdown-item text-center" href="/gold_sales_employee">
                         รายงานยอดขาย
                       </a>
                     </li>
                   <% } %>
                   <li>
-                    <a class="dropdown-item text-center" href="/logout" onclick="return confirm('คุณต้องการที่จะออกจากระบบใช่หรือไม่?')">
+                    <a id="salesSummaryLink" class="dropdown-item text-center" href="/logout" onclick="return confirm('คุณต้องการที่จะออกจากระบบใช่หรือไม่?')">
                       ออกจากระบบ
                     </a>
                   </li>
@@ -207,6 +207,10 @@
             $(this).addClass('active');
           }
         });
+      });
+
+      document.getElementById('salesSummaryLink').addEventListener('click', function() {
+        localStorage.setItem('salesViewState', 'default'); // เก็บสถานะใน localStorage
       });
     </script>
   </body>
