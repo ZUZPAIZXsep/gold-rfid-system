@@ -391,7 +391,7 @@ router.get('/home', isLogin, async (req, res, next) => {
           cost_threeBaht: pricePerGram * 3
         };
 
-        //ราคาขายออก
+        //ราคาขายออก ราคาบวกค่ากำเหน็ด
         const prices = {
           halfSalung: (pricePerGram * 3.81 / 15.244 / 2) + 400,
           oneSalung: (pricePerGram * 3.81 / 15.244) + 400,
@@ -799,31 +799,6 @@ router.post('/save_goldtags', isLogin, async (req, res) => {
         });
       }
     }
-
-    // // Update status to `in stock` and remove customer-related fields for records that are not `in stock`
-    // await Goldhistory.updateMany(
-    //   {
-    //     gold_Datetime: {
-    //       $gte: startOfCurrentDay,
-    //       $lte: endOfCurrentDay
-    //     },
-    //     gold_id: { $in: rfidTags },
-    //     gold_status: { $ne: 'in stock' } // Check if status is not `in stock`
-    //   },
-    //   {
-    //     $set: {
-    //       gold_status: 'in stock',
-    //       gold_timestamp: newTimestamp // Update timestamp to current time
-    //     },
-    //     $unset: {
-    //       gold_outDateTime: 1,  // Explicitly unset `gold_outDateTime`
-    //       customer_name: 1,     // Explicitly unset `customer_name`
-    //       customer_surname: 1,  // Explicitly unset `customer_surname`
-    //       customer_phone: 1,    // Explicitly unset `customer_phone`
-    //       gold_price: 1         // Explicitly unset `gold_price`
-    //     }
-    //   }
-    // );
 
     res.json({ message: 'Records updated successfully' });
   } catch (error) {
@@ -1822,34 +1797,34 @@ router.post('/gold_salesHistory/updateGoldStatus/:goldId', isLogin, async (req, 
 
 
 
-router.get('/gold_saleDetails', isLogin, async (req, res, next) => {
-  try {
-      const goldId = req.query.gold_id;
-      console.log("Gold ID:", goldId);  // ตรวจสอบว่า gold_id ถูกส่งมาถูกต้องหรือไม่
+// router.get('/gold_saleDetails', isLogin, async (req, res, next) => {
+//   try {
+//       const goldId = req.query.gold_id;
+//       console.log("Gold ID:", goldId);  // ตรวจสอบว่า gold_id ถูกส่งมาถูกต้องหรือไม่
 
-      const saleDetails = await Goldhistory.findOne({ _id: goldId, gold_status: 'out of stock' });
+//       const saleDetails = await Goldhistory.findOne({ _id: goldId, gold_status: 'out of stock' });
 
-      if (saleDetails) {
-          console.log("Sale Details:", saleDetails);  // ตรวจสอบผลลัพธ์จากฐานข้อมูล
+//       if (saleDetails) {
+//           console.log("Sale Details:", saleDetails);  // ตรวจสอบผลลัพธ์จากฐานข้อมูล
 
-          res.json({
-              customer_name: saleDetails.customer_name,
-              customer_surname: saleDetails.customer_surname,
-              customer_phone: saleDetails.customer_phone,
-              gold_outDateTime: dayjs(saleDetails.gold_outDateTime).locale('th').format('DD-MM-YYYY HH:mm:ss'),
-              gold_price: saleDetails.gold_price,
-              seller_username: saleDetails.seller_username,
-              seller_role: saleDetails.seller_role,
-              seller_name: saleDetails.seller_name
-          });
-      } else {
-          res.status(404).json({ error: 'Sale details not found' });
-      }
-  } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
+//           res.json({
+//               customer_name: saleDetails.customer_name,
+//               customer_surname: saleDetails.customer_surname,
+//               customer_phone: saleDetails.customer_phone,
+//               gold_outDateTime: dayjs(saleDetails.gold_outDateTime).locale('th').format('DD-MM-YYYY HH:mm:ss'),
+//               gold_price: saleDetails.gold_price,
+//               seller_username: saleDetails.seller_username,
+//               seller_role: saleDetails.seller_role,
+//               seller_name: saleDetails.seller_name
+//           });
+//       } else {
+//           res.status(404).json({ error: 'Sale details not found' });
+//       }
+//   } catch (error) {
+//       console.error(error);
+//       res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// });
 
 // Function to summarize the gold history by date
 // สรุปข้อมูลโดยกรองเฉพาะรายการที่มีสถานะเป็น 'in stock'
@@ -1982,7 +1957,7 @@ router.get('/gold_sales_summary', isLogin, async (req, res) => {
     const page = req.query.page;
 
     const currentPage = parseInt(page) || 1;
-    const limit = 10;
+    const limit = 15;
     const skip = (currentPage - 1) * limit;
 
     const users = await Golduser.find({ role: { $ne: 'Admin' } });
@@ -2209,7 +2184,7 @@ router.get('/gold_sales_employee', isLogin, async (req, res) => {
     const page = req.query.page;
 
     const currentPage = parseInt(page) || 1;
-    const limit = 10;
+    const limit = 15;
     const skip = (currentPage - 1) * limit;
 
     const query = {};
@@ -2608,14 +2583,14 @@ router.post('/delete_dealer/:id', isLogin, async (req, res) => {
   }
 });
 
-router.get('/delete_history', isLogin, async (req, res) => {
-  try {
-    res.render('delete_history');
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+// router.get('/delete_history', isLogin, async (req, res) => {
+//   try {
+//     res.render('delete_history');
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
 
 // // Route to handle deletion of all records in Goldhistory
 // router.post('/delete_goldhistory', async (req, res) => {
@@ -2630,26 +2605,26 @@ router.get('/delete_history', isLogin, async (req, res) => {
 //   }
 // });
 
-router.post('/delete_goldhistory', async (req, res) => {
-  try {
-    const startDate = dayjs('2024-08-22').startOf('day').toDate(); // เริ่มต้นวันที่ 23/08/2024
-    const endDate = dayjs('2024-08-30').endOf('day').toDate();     // สิ้นสุดวันที่ 30/08/2024
+// router.post('/delete_goldhistory', async (req, res) => {
+//   try {
+//     const startDate = dayjs('2024-08-22').startOf('day').toDate(); // เริ่มต้นวันที่ 23/08/2024
+//     const endDate = dayjs('2024-08-30').endOf('day').toDate();     // สิ้นสุดวันที่ 30/08/2024
 
-    // ลบข้อมูลในช่วงวันที่ที่กำหนดใน Goldhistory
-    await Goldhistory.deleteMany({
-      gold_Datetime: {
-        $gte: startDate,
-        $lte: endDate
-      }
-    });
+//     // ลบข้อมูลในช่วงวันที่ที่กำหนดใน Goldhistory
+//     await Goldhistory.deleteMany({
+//       gold_Datetime: {
+//         $gte: startDate,
+//         $lte: endDate
+//       }
+//     });
 
-    console.log(`Records from ${startDate} to ${endDate} have been deleted from Goldhistory`);
-    res.json({ message: `Records from 22/08/2024 to 30/08/2024 have been deleted successfully` });
-  } catch (error) {
-    console.error('Error deleting records:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
+//     console.log(`Records from ${startDate} to ${endDate} have been deleted from Goldhistory`);
+//     res.json({ message: `Records from 22/08/2024 to 30/08/2024 have been deleted successfully` });
+//   } catch (error) {
+//     console.error('Error deleting records:', error);
+//     res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// });
 
 router.get('/gold_order', isLogin, async(req, res) => {
   try {

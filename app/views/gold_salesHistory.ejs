@@ -123,50 +123,7 @@
     });
 </script>
 
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        // เลือก element ที่เป็น modal
-        const saleDetailsModal = document.getElementById('saleDetailsModal');
-        const customerNameSpan = document.getElementById('customerName');
-        const customerSurnameSpan = document.getElementById('customerSurname');
-        const customerPhoneSpan = document.getElementById('customerPhone');
-        const goldOutDateTimeSpan = document.getElementById('goldOutDateTime');
-        const goldPriceSpan = document.getElementById('goldPrice');
 
-        // เพิ่ม event listener สำหรับปุ่ม "รายละเอียด"
-        const viewDetailsButtons = document.querySelectorAll('.view-details-btn');
-        viewDetailsButtons.forEach(button => {
-            button.addEventListener('click', async function(event) {
-                event.preventDefault(); // ป้องกันการกระทำปกติของปุ่ม
-                const goldId = button.getAttribute('data-gold-id');
-                try {
-                    // ส่ง request ไปที่ endpoint ของเซิร์ฟเวอร์
-                    const response = await fetch(`/gold_saleDetails?gold_id=${goldId}`);
-                    if (!response.ok) {
-                        throw new Error('เกิดข้อผิดพลาดในการเรียกข้อมูล');
-                    }
-                    const data = await response.json();
-                    // กำหนดค่าของข้อมูลที่ได้รับเข้าไปใน modal
-                    customerNameSpan.textContent = data.customer_name;
-                    customerSurnameSpan.textContent = data.customer_surname;
-                    customerPhoneSpan.textContent = data.customer_phone;
-                    goldOutDateTimeSpan.textContent = data.gold_outDateTime;
-                    goldPriceSpan.textContent = data.gold_price;
-                    sellerUsername.textContent = data.seller_username;
-                    sellerRole.textContent = data.seller_role;
-                    sellerName.textContent = data.seller_name;
-                    // เปิด modal
-                    const modal = new bootstrap.Modal(saleDetailsModal);
-                    modal.show();
-                } catch (error) {
-                    console.error('Error:', error);
-                    // แจ้งเตือนเมื่อเกิดข้อผิดพลาด
-                    alert('ไม่สามารถดึงข้อมูลได้ กรุณาลองใหม่อีกครั้ง');
-                }
-            });
-        });
-    });
-</script>
 
 <script>
     document.getElementById('start_date_input').addEventListener('change', function () {
@@ -177,31 +134,6 @@
         this.form.submit(); // ส่งฟอร์มอัตโนมัติเมื่อมีการเลือกวันที่สิ้นสุด
     });
 </script>
-
-<!-- Modal -->
-<div class="modal fade" id="saleDetailsModal" tabindex="-1" aria-labelledby="saleDetailsModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="saleDetailsModalLabel">รายละเอียดการซื้อขาย</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <p><strong>ชื่อ:</strong> <span id="customerName"></span></p>
-          <p><strong>นามสกุล:</strong> <span id="customerSurname"></span></p>
-          <p><strong>เบอร์โทรศัพท์:</strong> <span id="customerPhone"></span></p>
-          <p><strong>วันที่ขายออก:</strong> <span id="goldOutDateTime"></span></p>
-          <p><strong>ราคาขาย:</strong> <span id="goldPrice"></span>  บาท</p>
-          <p><strong>รหัสผู้ขาย:</strong> <span id="sellerUsername"></span> (<span id="sellerRole"></span>)</p>
-          <p><strong>ชื่อผู้ขาย:</strong> <span id="sellerName"></span></p>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
 
 
 <style>
