@@ -10,7 +10,7 @@
         <h2 style="font-size: 2rem; font-weight: bold;">พนักงาน: <%= currentUser.name %></h2>
       </div>
       <div id="sales-summary">
-        <%- include('partials/sales_employee_partial', { totals }) %>
+        <%- include('partials/sales_employee_partial', { totals }) %> <!--ดึงตารางจาก partial-->
       </div>
       <!-- ฟิลเตอร์เลือกช่วงวันที่ (ส่วนที่เพิ่มเข้ามา) -->
       <div class="row mt-1">
@@ -166,9 +166,9 @@
       const viewState = localStorage.getItem('salesViewState');
       if (viewState === 'monthly') {
         document.getElementById('gold-history-summary').style.display = 'none';
-        document.getElementById('monthly-sales-summary').style.display = 'block';
+        document.getElementById('monthly-sales-summary').style.display = 'block'; //เริ่มต้นบรรทัดใหม่, ยืดความกว้างเต็ม
         document.getElementById('monthlySummaryBtn').style.display = 'none';
-        document.getElementById('defaultViewBtn').style.display = 'inline-block';
+        document.getElementById('defaultViewBtn').style.display = 'inline-block'; //วางในบรรทัดเดียวกันกับองค์ประกอบอื่นได้, ปรับขนาดได้
       } else {
         document.getElementById('gold-history-summary').style.display = 'block';
         document.getElementById('monthly-sales-summary').style.display = 'none';

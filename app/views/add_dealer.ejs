@@ -53,15 +53,14 @@
     // Display success message if query parameter is set
     document.addEventListener('DOMContentLoaded', function() {
         const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has('success')) {
+        if (urlParams.has('success')) { //ถ้ามีคำว่า success อยู่ใน url
             const successMessage = document.getElementById('successMessage');
             successMessage.classList.remove('d-none');
-            // Hide the message after 3 seconds
+            // ซ่อนหลัง 3 วินาที
             setTimeout(() => {
                 successMessage.classList.add('d-none');
-                // Remove the 'success' parameter from the URL without refreshing the page
                 const newUrl = window.location.href.split('?')[0];
-                window.history.replaceState({}, document.title, newUrl);
+                window.history.replaceState({}, document.title, newUrl); //เอาคำว่า success ออกให้เหลือแค่ url เดิมโดยไม่ refresh หน้าจอ
             }, 3000);
         }
     });

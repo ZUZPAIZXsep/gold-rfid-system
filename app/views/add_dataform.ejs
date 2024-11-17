@@ -50,7 +50,7 @@
             <div class="col-3">
                 <select name="dealer_name" id="dealer_name" class="form-select">
                     <option selected disabled>เลือกร้านตัวแทนจำหน่ายที่รับมาขาย</option>
-                    <% dealers.forEach(function(dealer) { %>
+                    <% dealers.forEach(function(dealer) { %> <!-- ดึงข้อมูลผู้จัดจำหน่ายทุกร้าน -->
                         <option value="<%= dealer.dealer_name %>">
                             <%= dealer.dealer_name %>
                         </option>
@@ -79,7 +79,7 @@
 
 <script>
     function updateWeight() {
-        var sizeSelect = document.getElementById('gold_size');
+        var sizeSelect = document.getElementById('gold_size'); //ดึงข้อมูลจาก form
         var weightInput = document.getElementById('gold_weight');
         var sizeValue = sizeSelect.value;
         switch(sizeValue) {

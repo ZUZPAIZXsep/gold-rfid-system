@@ -93,13 +93,13 @@
             });
     }
 
-    // Display success message if query parameter is set
+    // แสดงข้อความหลังจากเพิ่มข้อมูลเสร็จสิ้น
     document.addEventListener('DOMContentLoaded', function() {
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('success')) {
             const successMessage = document.getElementById('successMessage');
             successMessage.classList.remove('d-none');
-            // Hide the message after 3 seconds
+            // ซ่อนข้อความหลังจาก 3 วินาที
             setTimeout(() => {
                 successMessage.classList.add('d-none');
             }, 3000);

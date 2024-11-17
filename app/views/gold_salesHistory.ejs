@@ -95,9 +95,9 @@
         const form = document.querySelector('form');
         form.addEventListener('submit', function(event) {
             event.preventDefault(); // Prevent form submission
-            const formData = new FormData(form);
+            const formData = new FormData(form); //รับค่าจาก form
             const queryString = new URLSearchParams(formData).toString();
-            window.location.href = `/gold_salesHistory?${queryString}`;
+            window.location.href = `/gold_salesHistory?${queryString}`; //เข้าลิ้งค์จากรายการที่เลือก
         });
 
         // เพิ่ม event listener สำหรับ input date และ select

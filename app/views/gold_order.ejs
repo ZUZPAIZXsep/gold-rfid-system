@@ -301,15 +301,15 @@ document.getElementById('addToCartBtn').addEventListener('click', function() {
 
     // ตรวจสอบว่ามีชนิดและขนาดที่ซ้ำอยู่ในตารางหรือไม่
     const existingRow = Array.from(document.querySelectorAll('#cartItems tr')).find(row => {
-        const rowGoldType = row.children[1].textContent;
-        const rowGoldSize = row.children[2].textContent;
+        const rowGoldType = row.children[1].textContent; //Column ประเภท
+        const rowGoldSize = row.children[2].textContent; //Column ขนาด
         return rowGoldType === goldType && rowGoldSize === goldSize;
     });
 
     if (existingRow) {
         // ถ้าพบชนิดและขนาดซ้ำ ให้อัปเดตจำนวนรวม
-        const existingQuantityCell = existingRow.children[3];
-        const existingQuantity = parseInt(existingQuantityCell.textContent, 10);
+        const existingQuantityCell = existingRow.children[3]; //Column จำนวน
+        const existingQuantity = parseInt(existingQuantityCell.textContent, 10); //เลขฐาน 10
         const newQuantity = existingQuantity + quantity;
         existingQuantityCell.textContent = newQuantity;
     } else {
