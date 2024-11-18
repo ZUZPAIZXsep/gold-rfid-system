@@ -105,13 +105,22 @@
               </tr>
             </thead>
             <tbody>
-              <% monthlySummaries[month].forEach((entry) => { %>
+              <% 
+                let totalMonthlySale = 0; // ตัวแปรสำหรับเก็บยอดรวม
+                monthlySummaries[month].forEach((entry) => {
+                  totalMonthlySale += entry.monthlySale; // เพิ่มยอดขายของแต่ละ entry
+              %>
                 <tr>
                   <td><%= entry.username %></td>
                   <td><%= entry.name %></td>
                   <td><%= entry.monthlySale.toFixed(2) %></td>
                 </tr>
               <% }); %>
+              <!-- แสดงยอดรวม -->
+              <tr class="table-warning">
+                <td colspan="2" style="text-align: right; font-weight: bold;">ยอดรวมทั้งหมด</td>
+                <td><%= totalMonthlySale.toFixed(2) %></td>
+              </tr>
             </tbody>
           </table>
         <% } %>
