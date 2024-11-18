@@ -137,7 +137,7 @@
                 const trays = { 'ถาดที่ 1': 'สร้อยคอ', 'ถาดที่ 2': 'แหวน', 'ถาดที่ 3': 'กำไลข้อมือ', 'ถาดที่ 4': 'สร้อยข้อมือ', 'ถาดที่ 5': 'ต่างหู' };
                 traySummary.innerHTML = '';
 
-                Object.keys(trays).forEach(tray => {
+                Object.keys(trays).forEach(tray => { //ดึง key จาก tray ทั้งหมด
                     const count = data.filter(tag => tag.gold_tray === tray).length;
                     if (count > 0) {
                         traySummary.innerHTML += `<li>${tray} มี ${trays[tray]} ${count} ชิ้น</li>`;

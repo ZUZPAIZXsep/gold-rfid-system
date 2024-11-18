@@ -269,7 +269,7 @@ async function copyPreviousDayRecords() {
 }
 
 // ตั้ง schedule ให้ทำงานทุกวันเวลาเที่ยงคืน
-cron.schedule('0 0 * * *', () => {
+cron.schedule('0 0 * * *', () => { // นาที ชั่วโมง ทุกวันในเดือน ทุกเดือน ทุกวันในสัปดาห์
   copyPreviousDayRecords();
   console.log('Scheduled task executed: Previous day records copied');
 });
@@ -301,7 +301,7 @@ router.post('/login', isnotLogin , async (req, res) => {
 
       if (isMatch) {
         // Login successful
-        const token = jwt.sign({ id: foundUser._id, name: foundUser.name, role: foundUser.role }, secretCode);
+        const token = jwt.sign({ id: foundUser._id, name: foundUser.name, role: foundUser.role }, secretCode); //เข้ารหัสแบบ jwt โดยมี secretCode เป็น key
 
         req.session.token = token;
         req.session.usr = foundUser.usr;
@@ -367,8 +367,8 @@ router.get('/home', isLogin, async (req, res, next) => {
 
     const dataUrl = 'http://www.thaigold.info/RealTimeDataV2/gtdata_.txt';
 
-        const response = await axios.get(dataUrl);
-        const data = response.data;
+        const response = await axios.get(dataUrl); //เป็น asynchronous ต้องรอการ request ให้เสร็จก่อน
+        const data = response.data; //ดึงข้อมูลที่ได้รับ
 
         // console.log('Data from API:', data);
 
@@ -854,8 +854,8 @@ router.post('/save_goldtags', isLogin, async (req, res) => {
 
         const dataUrl = 'http://www.thaigold.info/RealTimeDataV2/gtdata_.txt';
 
-        const response = await axios.get(dataUrl);
-        const data = response.data;
+        const response = await axios.get(dataUrl); //เป็น asynchronous ต้องรอการ request ให้เสร็จก่อน
+        const data = response.data; //ดึงข้อมูลที่ได้รับ
 
         // console.log('Data from API:', data);
 
@@ -934,8 +934,8 @@ router.post('/save_goldtags', isLogin, async (req, res) => {
 
         const dataUrl = 'http://www.thaigold.info/RealTimeDataV2/gtdata_.txt';
 
-        const response = await axios.get(dataUrl);
-        const data = response.data;
+        const response = await axios.get(dataUrl); //เป็น asynchronous ต้องรอการ request ให้เสร็จก่อน
+        const data = response.data; //ดึงข้อมูลที่ได้รับ
 
         // console.log('Data from API:', data);
 
