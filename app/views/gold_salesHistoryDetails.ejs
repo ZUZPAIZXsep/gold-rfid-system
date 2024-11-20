@@ -55,6 +55,13 @@
                 ไม่มีข้อมูลผู้ซื้อ
             <% } %>
         </h6>
+        <h6>เบอร์ติดต่อผู้ซื้อ: 
+            <% if (details.length > 0) { %>
+                <%= details[0].customer_phone %> 
+            <% } else { %>
+                ไม่มีข้อมูลผู้ซื้อ
+            <% } %>
+        </h6>
         <h6>ผู้ทำการขาย: 
             <% if (details.length > 0) { %>
                 <%= details[0].seller_name %>
@@ -172,6 +179,11 @@
         /* แสดงเนื้อหาหลัก */
         .container-fluid, .container-fluid * {
             visibility: visible;
+        }
+
+        /* ซ่อนเบอร์ติดต่อผู้ซื้อ */
+        h6:nth-of-type(2) {
+            display: none;
         }
 
         /* แสดง watermark */
