@@ -2954,6 +2954,21 @@ router.post('/changeOrderStatus/:orderId', isLogin, async (req, res) => {
   }
 });
 
+/* GET old golds page */
+router.get('/old_golds', isLogin, async (req, res, next) => {
+  try {
+    const condition = { gold_status: 'in stock' };
+    const golds = await Goldtagscount.find(condition);
+
+    const oneMonthAgo = dayjs().subtract(1, 'week').toDate();
+    const oldGolds = golds.filter(gold => new Date(gold.gold_timestamp) < oneMonthAgo);
+
+    res.render('old_golds', { oldGolds, dayjs }); // ส่ง oldGolds ไปที่ View
+  } catch (error) {
+    next(error);
+  }
+});
+
 
 
 module.exports = router;

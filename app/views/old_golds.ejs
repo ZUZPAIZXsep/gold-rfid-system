@@ -1,0 +1,34 @@
+<%- include('header') %>
+<div class="container mt-3">
+  <h3>รายการทองที่อยู่ในคลังนานเกิน 1 สัปดาห์</h3>
+  <div class="table-responsive mt-3">
+    <table class="table table-bordered">
+      <thead class="table-success">
+        <tr>
+          <th>ลำดับที่</th>
+          <th>ถาด</th>
+          <th>ชนิด</th>
+          <th>ขนาด</th>
+          <th>น้ำหนัก</th>
+          <th>Gold_Tag_id</th>
+          <th>วันที่บันทึกเข้าระบบ</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% oldGolds.forEach((gold, index) => { %>
+          <tr>
+            <td><%= index + 1 %></td>
+            <td><%= gold.gold_tray %></td>
+            <td><%= gold.gold_type %></td>
+            <td><%= gold.gold_size %></td>
+            <td><%= gold.gold_weight %> กรัม</td>
+            <td><%= gold.gold_id %></td>
+            <td><%= dayjs(gold.gold_timestamp).locale('th').format('DD-MM-YYYY HH:mm:ss') %></td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+  <a href="/home" class="btn btn-secondary mt-3">กลับหน้าหลัก</a>
+</div>
+<%- include('footer') %>
