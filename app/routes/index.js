@@ -367,7 +367,7 @@ router.get('/home', isLogin, async (req, res, next) => {
 
     const dataUrl = 'http://www.thaigold.info/RealTimeDataV2/gtdata_.txt';
 
-    const oneMonthAgo = dayjs().subtract(1, 'month').toDate();
+    const oneMonthAgo = dayjs().subtract(1, 'week').toDate();
     const oldGolds = golds.filter(gold => new Date(gold.gold_timestamp) < oneMonthAgo);
 
         const response = await axios.get(dataUrl); //เป็น asynchronous ต้องรอการ request ให้เสร็จก่อน
