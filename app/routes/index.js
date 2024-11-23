@@ -2962,7 +2962,20 @@ router.get('/old_golds', isLogin, async (req, res, next) => {
 
     const oneMonthAgo = dayjs().subtract(1, 'week').toDate();
     const oldGolds = golds.filter(gold => new Date(gold.gold_timestamp) < oneMonthAgo);
+    
+    // เรียงข้อมูลตามลำดับถาด
+    golds.sort((a, b) => {
+      const trayOrder = {
+        'ถาดที่ 1': 1,
+        'ถาดที่ 2': 2,
+        'ถาดที่ 3': 3,
+        'ถาดที่ 4': 4,
+        'ถาดที่ 5': 5,
+        'ถาดอื่นๆ': 6
+      };
 
+      return trayOrder[a.gold_tray] - trayOrder[b.gold_tray];
+    });
     res.render('old_golds', { oldGolds, dayjs }); // ส่ง oldGolds ไปที่ View
   } catch (error) {
     next(error);

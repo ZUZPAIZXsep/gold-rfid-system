@@ -1,9 +1,20 @@
 <%- include('header') %>
 <div class="container mt-3">
-  <h3>รายการทองที่อยู่ในคลังนานเกิน 1 สัปดาห์</h3>
+  <h3 style="font-weight: bold;">รายการทองคำที่อยู่ในคลังนานเกิน 1 สัปดาห์</h3>
+    <%
+        let totalTags = oldGolds.length;
+    %>
+  <h4>จำนวนทั้งหมด: <%= totalTags %> รายการ</h3>
+  <% const trays = { 'ถาดที่ 1': 'สร้อยคอ', 'ถาดที่ 2': 'แหวน', 'ถาดที่ 3': 'กำไลข้อมือ', 'ถาดที่ 4': 'สร้อยข้อมือ', 'ถาดที่ 5': 'ต่างหู' }; %>
+  <% Object.keys(trays).forEach(tray => { %>
+    <% const count = oldGolds.filter(tag => tag.gold_tray === tray).length; %>
+    <% if (count > 0) { %>
   <div class="table-responsive mt-3">
     <table class="table table-bordered">
       <thead class="table-success">
+        <tr>
+            <th colspan="8" style="font-size: large;"><%= tray %> มี <%= trays[tray] %> <%= count %> ชิ้น</th>
+        </tr>
         <tr>
           <th>ลำดับที่</th>
           <th>ถาด</th>
@@ -15,7 +26,7 @@
         </tr>
       </thead>
       <tbody>
-        <% oldGolds.forEach((gold, index) => { %>
+        <% oldGolds.filter(tag => tag.gold_tray === tray).forEach((gold, index) => { %>
           <tr>
             <td><%= index + 1 %></td>
             <td><%= gold.gold_tray %></td>
@@ -28,6 +39,8 @@
         <% }); %>
       </tbody>
     </table>
+    <% } %>
+    <% }); %>
   </div>
   <a href="/home" class="btn btn-secondary mt-3">กลับหน้าหลัก</a>
 </div>
