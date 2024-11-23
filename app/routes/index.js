@@ -367,6 +367,9 @@ router.get('/home', isLogin, async (req, res, next) => {
 
     const dataUrl = 'http://www.thaigold.info/RealTimeDataV2/gtdata_.txt';
 
+    const oneMonthAgo = dayjs().subtract(1, 'month').toDate();
+    const oldGolds = golds.filter(gold => new Date(gold.gold_timestamp) < oneMonthAgo);
+
         const response = await axios.get(dataUrl); //เป็น asynchronous ต้องรอการ request ให้เสร็จก่อน
         const data = response.data; //ดึงข้อมูลที่ได้รับ
 
@@ -424,7 +427,8 @@ router.get('/home', isLogin, async (req, res, next) => {
       currentUrl: req.originalUrl, 
       cost_prices, 
       prices,
-      updateTime});
+      updateTime,
+      oldGolds});
   } catch (error) {
     console.error(error);
     res.status(500).send('Internal Server Error');
