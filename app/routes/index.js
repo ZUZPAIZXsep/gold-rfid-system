@@ -659,133 +659,92 @@ router.get('/count_goldtags_partial', isLogin, async (req, res) => {
   }
 });
 
-// router.post('/save_goldtags', async (req, res) => {
-//   try {
-//       let rfidTags = rfidModule.getRfidTags(); // Get RFID tags
-//       let countgoldtags = await GoldTag.find({ gold_id: { $in: rfidTags } });
-
-//       // Create objects to be inserted into `goldtags_count`
-//       let newGoldtagscount = countgoldtags.map(count_tag => ({
-//           gold_id: count_tag.gold_id,
-//           gold_type: count_tag.gold_type,
-//           gold_size: count_tag.gold_size,
-//           gold_weight: count_tag.gold_weight,
-//           gold_tray: assignTray(count_tag.gold_type),
-//           gold_timestamp: dayjs().locale('th').format('YYYY-MM-DD HH:mm:ss'), // Current timestamp (Thai date and time format)
-//           gold_status: 'in stock' // Change status to 'in stock'
-//       }));
-
-//       // Delete old records first
-//       await Goldtagscount.deleteMany({});
-//       // Insert new records into `goldtags_count`
-//       await Goldtagscount.insertMany(newGoldtagscount);
-
-//       let currentDate = dayjs().locale('th').startOf('day').toDate(); // Start of the current day
-//       let endOfCurrentDate = dayjs().locale('th').endOf('day').toDate(); // End of the current day
-
-//       // Update the status in `Goldhistory` for records read on the same day
-//       await Goldhistory.updateMany(
-//         {
-//           gold_timestamp: {
-//             $gte: currentDate,
-//             $lte: endOfCurrentDate
-//           },
-//           gold_id: { $in: rfidTags } // Only update records matching the RFID tags
-//         },
-//         {
-//           $set: { gold_status: 'in stock' } // Change status to 'in stock'
-//         }
-//       );
-
-//       res.json({ message: 'Records updated successfully' });
-//   } catch (error) {
-//       console.error(error);
-//       res.status(500).json({ error: 'Internal Server Error' });
-//   }
-// });
-
 router.post('/save_goldtags', isLogin, async (req, res) => {
   try {
     let rfidTags = rfidModule.getRfidTags(); // Get RFID tags
     let countgoldtags = await GoldTag.find({ gold_id: { $in: rfidTags } });
 
     // Use dayjs to get the start and end of the current day in local time and convert to UTC
-    let startOfCurrentDay = dayjs().tz('Asia/Bangkok').startOf('day').utc().toDate(); // Start of the current day in UTC
-    let endOfCurrentDay = dayjs().tz('Asia/Bangkok').endOf('day').utc().toDate(); // End of the current day in UTC
+    let startOfCurrentDay = dayjs().tz('Asia/Bangkok').startOf('day').utc().toDate();
+    let endOfCurrentDay = dayjs().tz('Asia/Bangkok').endOf('day').utc().toDate();
     let newTimestamp = dayjs().locale('th').format('YYYY-MM-DD HH:mm:ss'); // Current timestamp
-    let goldDatetime = dayjs().tz('Asia/Bangkok').startOf('day').utc().format('YYYY-MM-DDTHH:mm:ss.SSS[Z]'); // Current date in UTC format
+    let goldDatetime = dayjs().tz('Asia/Bangkok').startOf('day').utc().format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
 
-    // Update records in `Goldtagscount`
     for (let tag of countgoldtags) {
+      // Fetch the existing record in Goldtagscount
+      let existingTag = await Goldtagscount.findOne({ gold_id: tag.gold_id });
+
+      let updatedFields = {
+        gold_id: tag.gold_id,
+        gold_type: tag.gold_type,
+        gold_size: tag.gold_size,
+        gold_weight: tag.gold_weight,
+        gold_tray: assignTray(tag.gold_type),
+        gold_status: 'in stock',
+        gold_Datetime: goldDatetime, // Ensure `gold_Datetime` is set to the start of the current day in UTC
+        dealer_name: tag.dealer_name
+      };
+
+      // Check the existing `gold_status` and decide the update logic
+      if (existingTag) {
+        if (existingTag.gold_status === 'ready to sell') {
+          updatedFields.gold_timestamp = existingTag.gold_timestamp; // Keep the existing timestamp
+        } else if (existingTag.gold_status === 'out of stock') {
+          updatedFields.gold_timestamp = newTimestamp; // Update to current timestamp
+        }
+      } else {
+        // If no existing record, set the new timestamp
+        updatedFields.gold_timestamp = newTimestamp;
+      }
+
       await Goldtagscount.updateOne(
         { gold_id: tag.gold_id },
         {
-          $set: {
-            gold_id: tag.gold_id,
-            gold_type: tag.gold_type,
-            gold_size: tag.gold_size,
-            gold_weight: tag.gold_weight,
-            gold_tray: assignTray(tag.gold_type),
-            gold_status: 'in stock',
-            gold_timestamp: newTimestamp, // Update the timestamp
-            gold_Datetime: goldDatetime,// Ensure `gold_Datetime` is set to the start of the current day in UTC
-            dealer_name: tag.dealer_name 
-          },
+          $set: updatedFields,
           $unset: {
-            gold_outDateTime: 1,  // Remove `gold_outDateTime`
+            gold_outDateTime: 1 // Remove `gold_outDateTime`
           }
         },
-        { upsert: true } // Create new if it doesn't exist
+        { upsert: true } // Create new record if it doesn't exist
       );
-    }
 
-    // Update status from `ready to sell` to `in stock` in `Goldtagscount`
-    await Goldtagscount.updateMany(
-      {
-        gold_id: { $in: rfidTags },
-        gold_status: 'ready to sell'
-      },
-      {
-        $set: { 
-          gold_status: 'in stock',
-          gold_timestamp: newTimestamp // Update timestamp to current time
-        }
-      }
-    );
-
-    // Create or update records in `Goldhistory`
-    for (let tag of countgoldtags) {
-      // Check if a record with the same gold_id and gold_Datetime exists
-      let existingRecord = await Goldhistory.findOne({
+      // Process `Goldhistory` similarly
+      let existingHistory = await Goldhistory.findOne({
         gold_id: tag.gold_id,
         gold_Datetime: goldDatetime
       });
 
-      if (existingRecord) {
-        // If the record exists and gold_Datetime matches, update the record
+      if (existingHistory) {
+        let historyUpdateFields = {
+          gold_type: tag.gold_type,
+          gold_size: tag.gold_size,
+          gold_weight: tag.gold_weight,
+          gold_tray: assignTray(tag.gold_type),
+          gold_status: 'in stock',
+          dealer_name: tag.dealer_name
+        };
+
+        if (existingTag.gold_status === 'ready to sell') {
+          historyUpdateFields.gold_timestamp = existingHistory.gold_timestamp; // Keep the existing timestamp
+        } else if (existingTag.gold_status === 'out of stock') {
+          historyUpdateFields.gold_timestamp = newTimestamp; // Update to current timestamp
+        }
+
         await Goldhistory.updateOne(
           { gold_id: tag.gold_id, gold_Datetime: goldDatetime },
           {
-            $set: {
-              gold_type: tag.gold_type,
-              gold_size: tag.gold_size,
-              gold_weight: tag.gold_weight,
-              gold_tray: assignTray(tag.gold_type),
-              gold_status: 'in stock',
-              gold_timestamp: newTimestamp, // Update the timestamp
-              dealer_name: tag.dealer_name 
-            },
+            $set: historyUpdateFields,
             $unset: {
-              gold_outDateTime: 1,  // Remove `gold_outDateTime`
-              customer_name: 1,     // Remove `customer_name`
-              customer_surname: 1,  // Remove `customer_surname`
-              customer_phone: 1,    // Remove `customer_phone`
-              gold_price: 1         // Remove `gold_price`
+              gold_outDateTime: 1,
+              customer_name: 1,
+              customer_surname: 1,
+              customer_phone: 1,
+              gold_price: 1
             }
           }
         );
       } else {
-        // If no matching record exists, insert a new one
+        // Create a new record if it doesn't exist
         await Goldhistory.create({
           gold_id: tag.gold_id,
           gold_type: tag.gold_type,
@@ -793,9 +752,9 @@ router.post('/save_goldtags', isLogin, async (req, res) => {
           gold_weight: tag.gold_weight,
           gold_tray: assignTray(tag.gold_type),
           gold_status: 'in stock',
-          dealer_name: tag.dealer_name ,
-          gold_timestamp: newTimestamp, // Set the timestamp
-          gold_Datetime: goldDatetime // Set to the start of the current day in UTC
+          dealer_name: tag.dealer_name,
+          gold_timestamp: newTimestamp,
+          gold_Datetime: goldDatetime
         });
       }
     }
@@ -806,6 +765,110 @@ router.post('/save_goldtags', isLogin, async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+
+// router.post('/save_goldtags', isLogin, async (req, res) => {
+//   try {
+//     let rfidTags = rfidModule.getRfidTags(); // Get RFID tags
+//     let countgoldtags = await GoldTag.find({ gold_id: { $in: rfidTags } });
+
+//     // Use dayjs to get the start and end of the current day in local time and convert to UTC
+//     let startOfCurrentDay = dayjs().tz('Asia/Bangkok').startOf('day').utc().toDate(); // Start of the current day in UTC
+//     let endOfCurrentDay = dayjs().tz('Asia/Bangkok').endOf('day').utc().toDate(); // End of the current day in UTC
+//     let newTimestamp = dayjs().locale('th').format('YYYY-MM-DD HH:mm:ss'); // Current timestamp
+//     let goldDatetime = dayjs().tz('Asia/Bangkok').startOf('day').utc().format('YYYY-MM-DDTHH:mm:ss.SSS[Z]'); // Current date in UTC format
+
+//     // Update records in `Goldtagscount`
+//     for (let tag of countgoldtags) {
+//       await Goldtagscount.updateOne(
+//         { gold_id: tag.gold_id },
+//         {
+//           $set: {
+//             gold_id: tag.gold_id,
+//             gold_type: tag.gold_type,
+//             gold_size: tag.gold_size,
+//             gold_weight: tag.gold_weight,
+//             gold_tray: assignTray(tag.gold_type),
+//             gold_status: 'in stock',
+//             gold_timestamp: newTimestamp, // Update the timestamp
+//             gold_Datetime: goldDatetime,// Ensure `gold_Datetime` is set to the start of the current day in UTC
+//             dealer_name: tag.dealer_name 
+//           },
+//           $unset: {
+//             gold_outDateTime: 1,  // Remove `gold_outDateTime`
+//           }
+//         },
+//         { upsert: true } // Create new if it doesn't exist
+//       );
+//     }
+
+//     // Update status from `ready to sell` to `in stock` in `Goldtagscount`
+//     await Goldtagscount.updateMany(
+//       {
+//         gold_id: { $in: rfidTags },
+//         gold_status: 'ready to sell'
+//       },
+//       {
+//         $set: { 
+//           gold_status: 'in stock',
+//           gold_timestamp: newTimestamp // Update timestamp to current time
+//         }
+//       }
+//     );
+
+//     // Create or update records in `Goldhistory`
+//     for (let tag of countgoldtags) {
+//       // Check if a record with the same gold_id and gold_Datetime exists
+//       let existingRecord = await Goldhistory.findOne({
+//         gold_id: tag.gold_id,
+//         gold_Datetime: goldDatetime
+//       });
+
+//       if (existingRecord) {
+//         // If the record exists and gold_Datetime matches, update the record
+//         await Goldhistory.updateOne(
+//           { gold_id: tag.gold_id, gold_Datetime: goldDatetime },
+//           {
+//             $set: {
+//               gold_type: tag.gold_type,
+//               gold_size: tag.gold_size,
+//               gold_weight: tag.gold_weight,
+//               gold_tray: assignTray(tag.gold_type),
+//               gold_status: 'in stock',
+//               gold_timestamp: newTimestamp, // Update the timestamp
+//               dealer_name: tag.dealer_name 
+//             },
+//             $unset: {
+//               gold_outDateTime: 1,  // Remove `gold_outDateTime`
+//               customer_name: 1,     // Remove `customer_name`
+//               customer_surname: 1,  // Remove `customer_surname`
+//               customer_phone: 1,    // Remove `customer_phone`
+//               gold_price: 1         // Remove `gold_price`
+//             }
+//           }
+//         );
+//       } else {
+//         // If no matching record exists, insert a new one
+//         await Goldhistory.create({
+//           gold_id: tag.gold_id,
+//           gold_type: tag.gold_type,
+//           gold_size: tag.gold_size,
+//           gold_weight: tag.gold_weight,
+//           gold_tray: assignTray(tag.gold_type),
+//           gold_status: 'in stock',
+//           dealer_name: tag.dealer_name ,
+//           gold_timestamp: newTimestamp, // Set the timestamp
+//           gold_Datetime: goldDatetime // Set to the start of the current day in UTC
+//         });
+//       }
+//     }
+
+//     res.json({ message: 'Records updated successfully' });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// });
 
   router.get('/clear_goldtags_count', isLogin, async (req, res) => {
     try {
