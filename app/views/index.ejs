@@ -3,6 +3,14 @@
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <% if (session.role != "Admin"){ %>
         <h3 style="font-weight: bold;">ระบบตรวจนับทองคำรูปพรรณ</h3>
+        <% if (oldGolds.length > 0) { %>
+          <div class="alert alert-danger" style="display: flex; align-items: center; margin-left: auto; padding: 8px 12px; height: auto;">
+            <strong>แจ้งเตือน:</strong> มีทองคำ <%= oldGolds.length %> รายการที่อยู่ในคลังนานเกิน 1 เดือน
+            <button class="btn btn-warning btn-sm ml-3" onclick="showOldGolds()" style="padding: 4px 8px; font-size: 0.9rem;">
+              ดูรายการ
+            </button>
+          </div>
+        <% } %>
         <a type="button" class="btn btn-success" style="margin-left: 4px;" href="/gold_sales">
           <span class="material-icon material-symbols-outlined">shopping_cart</span> ไปยังหน้าการขาย
         </a>
@@ -99,7 +107,6 @@
           </table>
         </div>
       </div>
-      
       <div class="table-container rounded bg-warning p-3 custom-padding-bottom">
         <h3>ราคาทองคำ</h3>
         <p>อัปเดตล่าสุด: <%= updateTime %> น.</p>
@@ -283,6 +290,31 @@
       </div>
   </div>
 
+  <div class="modal fade" id="oldGoldsModal" tabindex="-1" aria-labelledby="oldGoldsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="oldGoldsModalLabel">รายการทองที่อยู่ในคลังนานเกิน 1 เดือน</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <ul>
+            <% oldGolds.forEach((gold, index) => { %>
+              <li>
+                <strong>ทองคำ:</strong> <%= gold.gold_id %> 
+                <strong>ชนิด:</strong> <%= gold.gold_type %> 
+                <strong>วันที่เพิ่ม:</strong> <%= dayjs(gold.gold_timestamp).format('DD-MM-YYYY') %>
+              </li>
+            <% }); %>
+          </ul>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
@@ -351,4 +383,8 @@
   goldSizeModal.show();
   }
 
+  function showOldGolds() {
+    const oldGoldsModal = new bootstrap.Modal(document.getElementById('oldGoldsModal'));
+    oldGoldsModal.show();
+  }
 </script>
