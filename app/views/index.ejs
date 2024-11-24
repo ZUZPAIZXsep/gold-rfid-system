@@ -3,19 +3,14 @@
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <% if (session.role != "Admin"){ %>
         <h3 style="font-weight: bold;">ระบบตรวจนับทองคำรูปพรรณ</h3>
-        <% if (oldGolds.length > 0) { %>
-          <div class="alert alert-danger" style="display: flex; align-items: center; margin-left: auto; padding: 8px 12px; height: auto;">
-            <strong>แจ้งเตือน:</strong> มีทองคำ <%= oldGolds.length %> รายการที่อยู่ในคลังนานเกิน 1 สัปดาห์
-            <a class="btn btn-warning btn-sm ml-3" href="/old_golds" style="padding: 4px 8px; font-size: 0.9rem;">
-              ดูรายการ
-            </a>
-          </div>
-        <% } %>
+        
         <a type="button" class="btn btn-success" style="margin-left: 4px;" href="/gold_sales">
           <span class="material-icon material-symbols-outlined">shopping_cart</span> ไปยังหน้าการขาย
         </a>
       </div>    
-      <div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
         <a type="button" class="btn btn-primary mt-2" style="margin-left: 4px;" href="/count_page">
           <span class="material-icon material-symbols-outlined">inventory</span> 
           ระบบตรวจนับ
@@ -34,11 +29,50 @@
         <a type="button" class="btn btn-info mt-2" style="margin-left: 4px;" href="/gold_history">
           <span class="material-icon material-symbols-outlined">schedule</span> ประวัติทองคำ
         </a>
+      </div>
+      <% if (oldGolds.length > 0) { %>
+        <div id="alert-box" class="alert alert-danger mt-2" style="display: flex; align-items: center; margin-left: auto; padding: 8px 12px; height: 47px;">
+          <strong>แจ้งเตือน:&nbsp;</strong> มีทองคำ <%= oldGolds.length %> รายการที่อยู่ในคลังนานเกิน 1 สัปดาห์ &nbsp;
+          <a class="btn btn-warning btn-sm ml-3" href="/old_golds" style="padding: 4px 8px; font-size: 0.9rem;">
+            <span class="material-icon material-symbols-outlined">format_list_bulleted</span>&nbsp;ดูรายการ
+          </a>
+          &nbsp;
+          <!-- ปุ่มซ่อนเป็นไอคอน -->
+          <span id="hide-btn" class="material-icon material-symbols-outlined hide-icon" style="margin-left: auto; cursor: pointer;">
+            visibility_off
+          </span>
+        </div>
+        <script>
+          document.addEventListener('DOMContentLoaded', function () {
+            const hideButton = document.getElementById('hide-btn');
+            const alertBox = document.getElementById('alert-box');
+            if (hideButton && alertBox) {
+              hideButton.addEventListener('click', function () {
+                alertBox.style.display = 'none';
+              });
+            }
+          });
+        </script>
+        <style>
+          /* ปรับแต่งไอคอนให้สีอ่อนจาง */
+          .hide-icon {
+            color: #6d0e0e;        /* สีเทาอ่อน */
+            font-size: 1.5rem;  /* ขนาดไอคอน */
+            transition: color 0.3s ease; /* เพิ่มเอฟเฟกต์เวลาเปลี่ยนสี */
+          }
+        
+          /* เปลี่ยนสีเมื่อเมาส์วางบนไอคอน */
+          .hide-icon:hover {
+            color: #888; /* สีเข้มขึ้นเมื่อ hover */
+          }
+        </style>
+        <% } %>
+                
     </div>
     <%
       let totalGold = golds.length;
     %>
-    <div class="flex-container" style="padding-bottom: 10px;padding-top: 5px;">
+    <div class="flex-container " style="padding-bottom: 10px;padding-top: 5px;">
       <div class="flex-item">
         <div class="rounded p-3 custom-padding-bottom" style="background-color: #4CAF50;">
           <table style="width: 100%; border-collapse: collapse; margin: 10px auto; table-layout: fixed; ">
