@@ -184,7 +184,7 @@
                     </li>
                   <% } %>
                   <li>
-                    <a id="salesSummaryLink" class="dropdown-item text-center" href="/logout" onclick="return confirm('คุณต้องการที่จะออกจากระบบใช่หรือไม่?')">
+                    <a id="logoutBtn" class="dropdown-item text-center" href="/logout" onclick="return confirm('คุณต้องการที่จะออกจากระบบใช่หรือไม่?')">
                       ออกจากระบบ
                     </a>
                   </li>
@@ -216,6 +216,10 @@
 
       document.getElementById('salesSummaryLink').addEventListener('click', function() {
         localStorage.setItem('salesViewState', 'default'); // เก็บสถานะใน localStorage
+      });
+      document.getElementById('logoutBtn').addEventListener('click', function() {
+        localStorage.setItem('salesViewState', 'default'); // เก็บสถานะใน localStorage
+        localStorage.setItem('alert-box-hidden', 'false');
       });
     </script>
   </body>

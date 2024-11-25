@@ -2958,25 +2958,85 @@ router.post('/changeOrderStatus/:orderId', isLogin, async (req, res) => {
 router.get('/old_golds', isLogin, async (req, res, next) => {
   try {
     const condition = { gold_status: 'in stock' };
+
+    // ตัวกรองประเภททองคำ
+    if (req.query.select_goldType && req.query.select_goldType !== 'เลือกประเภททองคำ') {
+      condition.gold_type = req.query.select_goldType;
+    }
+
+    // ตัวกรองขนาดทองคำ
+    if (req.query.select_goldSize && req.query.select_goldSize !== 'เลือกขนาดทองคำ') {
+      condition.gold_size = req.query.select_goldSize;
+    }
+
+    // ตัวกรองเลข Gold ID
+    if (req.query.gold_id) {
+      condition.gold_id = req.query.gold_id;
+    }
+
+    // ตัวเลือกช่วงเวลา
+    let timeRange = req.query.select_timeRange;
+    let timeFilter;
+
+    if (timeRange === '1_month') {
+      timeFilter = dayjs().subtract(1, 'month').toDate();
+    } else {
+      // ค่าเริ่มต้นเป็น 1 สัปดาห์
+      timeFilter = dayjs().subtract(1, 'week').toDate();
+    }
+
+    // ดึงข้อมูลจากฐานข้อมูล
     const golds = await Goldtagscount.find(condition);
 
-    const oneMonthAgo = dayjs().subtract(1, 'week').toDate();
-    const oldGolds = golds.filter(gold => new Date(gold.gold_timestamp) < oneMonthAgo);
-    
-    // เรียงข้อมูลตามลำดับถาด
-    golds.sort((a, b) => {
+    // กรองทองคำที่อยู่นานกว่า timeFilter
+    const oldGolds = golds.filter(gold => new Date(gold.gold_timestamp) < timeFilter);
+
+    // เรียงลำดับถาด
+    oldGolds.sort((a, b) => {
       const trayOrder = {
         'ถาดที่ 1': 1,
         'ถาดที่ 2': 2,
         'ถาดที่ 3': 3,
         'ถาดที่ 4': 4,
         'ถาดที่ 5': 5,
-        'ถาดอื่นๆ': 6
+        'ถาดอื่นๆ': 6,
       };
-
       return trayOrder[a.gold_tray] - trayOrder[b.gold_tray];
     });
-    res.render('old_golds', { oldGolds, dayjs }); // ส่ง oldGolds ไปที่ View
+
+    // ดึงราคาทองคำจาก API
+    const dataUrl = 'http://www.thaigold.info/RealTimeDataV2/gtdata_.txt';
+    const response = await axios.get(dataUrl);
+    const data = response.data;
+    const pricePerGram = parseFloat(data[5]?.bid);
+
+    if (isNaN(pricePerGram)) {
+      console.error('Invalid price data:', pricePerGram);
+      res.status(500).send('Invalid price data from API');
+      return;
+    }
+
+    // คำนวณราคาทองคำ
+    const prices = {
+      halfSalung: (pricePerGram * 3.81 / 15.244 / 2) + 400,
+      oneSalung: (pricePerGram * 3.81 / 15.244) + 400,
+      twoSalung: (pricePerGram * 3.81 * 2 / 15.244) + 400,
+      oneBaht: (pricePerGram) + 400,
+      twoBaht: (pricePerGram * 2) + (400 * 2),
+      threeBaht: (pricePerGram * 3) + (400 * 3),
+    };
+
+    res.render('old_golds', {
+      oldGolds,
+      dayjs,
+      select_goldType: req.query.select_goldType,
+      select_goldSize: req.query.select_goldSize,
+      select_timeRange: timeRange,
+      _id: req.query._id,
+      gold_id: req.query.gold_id,
+      currentUrl: req.originalUrl,
+      prices,
+    });
   } catch (error) {
     next(error);
   }

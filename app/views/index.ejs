@@ -46,9 +46,20 @@
           document.addEventListener('DOMContentLoaded', function () {
             const hideButton = document.getElementById('hide-btn');
             const alertBox = document.getElementById('alert-box');
+
+            // ตรวจสอบสถานะใน LocalStorage และซ่อนข้อความถ้าพบ
+            if (alertBox) {
+              const isHidden = localStorage.getItem('alert-box-hidden');
+              if (isHidden === 'true') {
+                alertBox.style.display = 'none';
+              }
+            }
+
+            // เมื่อผู้ใช้กดปุ่มซ่อน ให้ซ่อนข้อความและบันทึกสถานะใน LocalStorage
             if (hideButton && alertBox) {
               hideButton.addEventListener('click', function () {
                 alertBox.style.display = 'none';
+                localStorage.setItem('alert-box-hidden', 'true');
               });
             }
           });

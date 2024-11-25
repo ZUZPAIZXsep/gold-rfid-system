@@ -1,5 +1,55 @@
 <%- include('header') %>
-<div class="container mt-3">
+<form method="GET">
+  <div class="container mt-3">
+    <div class="row mt-1">
+      <div class="col-2">
+        <label style="font-weight: 600;">ประเภทของทองคำ</label>
+          <select class="form-select" name="select_goldType">
+              <option value="">เลือกประเภททองคำ</option>
+              <option value="สร้อยคอ" <%= select_goldType === 'สร้อยคอ' ? 'selected' : '' %>>สร้อยคอ</option>
+              <option value="แหวน" <%= select_goldType === 'แหวน' ? 'selected' : '' %>>แหวน</option>
+              <option value="กำไลข้อมือ" <%= select_goldType === 'กำไลข้อมือ' ? 'selected' : '' %>>กำไลข้อมือ</option>
+              <option value="สร้อยข้อมือ" <%= select_goldType === 'สร้อยข้อมือ' ? 'selected' : '' %>>สร้อยข้อมือ</option>
+              <option value="ต่างหู" <%= select_goldType === 'ต่างหู' ? 'selected' : '' %>>ต่างหู</option>
+          </select>                
+      </div>
+      <div class="col-2">
+        <label style="font-weight: 600;">ขนาดของทองคำ</label>
+          <select class="form-select" name="select_goldSize">
+              <option value="">เลือกขนาดทองคำ</option>
+              <option value="ครึ่งสลึง" <%= select_goldSize === 'ครึ่งสลึง' ? 'selected' : '' %>>ครึ่งสลึง</option>
+              <option value="1 สลึง" <%= select_goldSize === '1 สลึง' ? 'selected' : '' %>>1 สลึง</option>
+              <option value="2 สลึง" <%= select_goldSize === '2 สลึง' ? 'selected' : '' %>>2 สลึง</option>
+              <option value="1 บาท" <%= select_goldSize === '1 บาท' ? 'selected' : '' %>>1 บาท</option>
+              <option value="2 บาท" <%= select_goldSize === '2 บาท' ? 'selected' : '' %>>2 บาท</option>
+              <option value="3 บาท" <%= select_goldSize === '3 บาท' ? 'selected' : '' %>>3 บาท</option>
+          </select>
+      </div>
+      <div class="col-2">
+        <label style="font-weight: 600;">ช่วงเวลา</label>
+        <select class="form-select" name="select_timeRange">
+          <option value="">เลือกช่วงเวลา</option>
+          <option value="1_week" <%= select_timeRange === '1_week' ? 'selected' : '' %>>1 สัปดาห์</option>
+          <option value="1_month" <%= select_timeRange === '1_month' ? 'selected' : '' %>>1 เดือน</option>
+        </select>
+      </div>
+      <div class="col-2">
+        <label style="font-weight: 600;">ค้นหาด้วยเลข Gold_Tag_id</label>
+        <input type="text" class="form-control" name="gold_id" placeholder="กรอกเลข Gold_Tag_id" value="<%= gold_id %>">
+      </div>
+  </div>
+  <div>
+      <button type="submit" class="btn btn-primary mt-3">
+          <span class="material-icon material-symbols-outlined">
+              search
+          </span>
+          ค้นหา</button>
+      <a type="button" class="btn btn-danger mt-3" style="margin-left: 4px;" href="./old_golds">
+          <span class="material-icon material-symbols-outlined">
+              close
+          </span>
+          ล้างค่า</a>
+  </div>
   <h3 style="font-weight: bold;">รายการทองคำที่อยู่ในคลังนานเกิน 1 สัปดาห์</h3>
     <%
         let totalTags = oldGolds.length;
@@ -10,10 +60,10 @@
     <% const count = oldGolds.filter(tag => tag.gold_tray === tray).length; %>
     <% if (count > 0) { %>
   <div class="table-responsive mt-3">
-    <table class="table table-bordered">
+    <table class="table table-bordered style=width: 95%; margin: 20px auto; margin-right: 50px;">
       <thead class="table-success">
         <tr>
-            <th colspan="8" style="font-size: large;"><%= tray %> มี <%= trays[tray] %> <%= count %> ชิ้น</th>
+            <th colspan="9" style="font-size: large;"><%= tray %> มี <%= trays[tray] %> <%= count %> ชิ้น</th>
         </tr>
         <tr>
           <th>ลำดับที่</th>
@@ -22,6 +72,8 @@
           <th>ขนาด</th>
           <th>น้ำหนัก</th>
           <th>Gold_Tag_id</th>
+          <th>ราคาทองคำ (บาท)</th>
+          <th>ร้านผู้จัดจำหน่าย</th>
           <th>วันที่บันทึกเข้าระบบ</th>
         </tr>
       </thead>
@@ -34,6 +86,24 @@
             <td><%= gold.gold_size %></td>
             <td><%= gold.gold_weight %> กรัม</td>
             <td><%= gold.gold_id %></td>
+            <td>
+              <% if (gold.gold_size === 'ครึ่งสลึง' && gold.gold_weight == 1.9) { %>
+                  <%= prices.halfSalung.toFixed(2) %>
+              <% } else if (gold.gold_size === '1 สลึง' && gold.gold_weight == 3.8) { %>
+                  <%= prices.oneSalung.toFixed(2) %>
+              <% } else if (gold.gold_size === '2 สลึง' && gold.gold_weight == 7.6) { %>
+                  <%= prices.twoSalung.toFixed(2) %>
+              <% } else if (gold.gold_size === '1 บาท' && gold.gold_weight == 15.16) { %>
+                  <%= prices.oneBaht.toFixed(2) %>
+              <% } else if (gold.gold_size === '2 บาท' && gold.gold_weight == 30.4) { %>
+                  <%= prices.twoBaht.toFixed(2) %>
+              <% } else if (gold.gold_size === '3 บาท' && gold.gold_weight == 45.6) { %>
+                  <%= prices.threeBaht.toFixed(2) %>
+              <% } else { %>
+                  N/A
+              <% } %>
+            </td>    
+            <td><%= gold.dealer_name %></td>             
             <td><%= dayjs(gold.gold_timestamp).locale('th').format('DD-MM-YYYY HH:mm:ss') %></td>
           </tr>
         <% }); %>
@@ -44,4 +114,43 @@
   </div>
   <a href="/home" class="btn btn-secondary mt-3">กลับหน้าหลัก</a>
 </div>
+</form>
 <%- include('footer') %>
+
+<script>
+  // รอให้หน้าเว็บโหลดเสร็จก่อนที่จะทำงาน
+  document.addEventListener("DOMContentLoaded", function() {
+      // เลือก element ที่ต้องการกรองข้อมูล
+      const goldTypeSelect = document.querySelector('select[name="select_goldType"]');
+      const goldSizeSelect = document.querySelector('select[name="select_goldSize"]');
+      const timeRangeSelect = document.querySelector('select[name="select_timeRange"]');
+      const form = document.querySelector('form');
+      form.addEventListener('submit', function(event) {
+          event.preventDefault(); // Prevent form submission
+          const formData = new FormData(form);
+          const queryString = new URLSearchParams(formData).toString();
+          window.location.href = `/old_golds?${queryString}`;
+      });
+
+      // เพิ่ม event listener สำหรับ input date และ select
+      goldTypeSelect.addEventListener('change', filterData);
+      goldSizeSelect.addEventListener('change', filterData);
+      timeRangeSelect.addEventListener('change', filterData);
+      
+      // function สำหรับกรองข้อมูล
+      function filterData() {
+          // เก็บค่าที่กรองไว้
+          const goldType = goldTypeSelect.value;
+          const goldSize = goldSizeSelect.value;
+          const timeRange = timeRangeSelect.value;
+          
+          // สร้าง query string สำหรับส่งไปที่ server
+          let queryString = `?select_goldType=${goldType}&select_goldSize=${goldSize}&time_range=${timeRange}`;
+          
+          // โหลดหน้าใหม่ด้วย query string ที่สร้างขึ้น
+          window.location.href = `/old_golds${queryString}`;
+      }
+
+  });
+
+</script>
