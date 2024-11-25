@@ -1,6 +1,6 @@
 <%- include('header') %>
 <form method="GET">
-  <div class="container mt-3">
+  <div class="container-fluid mt-3">
     <div class="row mt-1">
       <div class="col-2">
         <label style="font-weight: 600;">ประเภทของทองคำ</label>
@@ -26,31 +26,38 @@
           </select>
       </div>
       <div class="col-2">
-        <label style="font-weight: 600;">ช่วงเวลา</label>
-        <select class="form-select" name="select_timeRange">
-          <option value="">เลือกช่วงเวลา</option>
-          <option value="1_week" <%= select_timeRange === '1_week' ? 'selected' : '' %>>1 สัปดาห์</option>
-          <option value="1_month" <%= select_timeRange === '1_month' ? 'selected' : '' %>>1 เดือน</option>
-        </select>
-      </div>
-      <div class="col-2">
         <label style="font-weight: 600;">ค้นหาด้วยเลข Gold_Tag_id</label>
         <input type="text" class="form-control" name="gold_id" placeholder="กรอกเลข Gold_Tag_id" value="<%= gold_id %>">
       </div>
+      <div class="row mt-1">
+        <div class="col-2">
+          <label style="font-weight: 600;">ระยะเวลา</label>
+          <select class="form-select" name="select_timeRange">
+            <option value="" disabled <%= select_timeRange === '' ? 'selected' : '' %>>เลือกช่วงเวลา</option>
+            <option value="1_week" <%= select_timeRange === '1_week' ? 'selected' : '' %>>1 สัปดาห์</option>
+            <option value="1_month" <%= select_timeRange === '1_month' ? 'selected' : '' %>>1 เดือน</option>
+          </select>
+        </div>                
+        <div class="col-2 mt-2">
+          <button type="submit" class="btn btn-primary mt-3">
+              <span class="material-icon material-symbols-outlined">
+                  search
+              </span>
+              ค้นหา</button>
+          <a type="button" class="btn btn-danger mt-3" style="margin-left: 4px;" href="./old_golds">
+              <span class="material-icon material-symbols-outlined">
+                  close
+              </span>
+              ล้างค่า</a>
+        </div>
+      </div>
   </div>
-  <div>
-      <button type="submit" class="btn btn-primary mt-3">
-          <span class="material-icon material-symbols-outlined">
-              search
-          </span>
-          ค้นหา</button>
-      <a type="button" class="btn btn-danger mt-3" style="margin-left: 4px;" href="./old_golds">
-          <span class="material-icon material-symbols-outlined">
-              close
-          </span>
-          ล้างค่า</a>
-  </div>
-  <h3 style="font-weight: bold;">รายการทองคำที่อยู่ในคลังนานเกิน 1 สัปดาห์</h3>
+    
+  
+    <h3 class="mt-3" style="font-weight: bold;">
+      รายการทองคำที่อยู่ในคลังนานเกิน <%= timeRangeText %>
+    </h3>
+  
     <%
         let totalTags = oldGolds.length;
     %>

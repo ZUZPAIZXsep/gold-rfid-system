@@ -2954,7 +2954,6 @@ router.post('/changeOrderStatus/:orderId', isLogin, async (req, res) => {
   }
 });
 
-/* GET old golds page */
 router.get('/old_golds', isLogin, async (req, res, next) => {
   try {
     const condition = { gold_status: 'in stock' };
@@ -2974,19 +2973,31 @@ router.get('/old_golds', isLogin, async (req, res, next) => {
       condition.gold_id = req.query.gold_id;
     }
 
-    // ตัวเลือกช่วงเวลา
-    let timeRange = req.query.select_timeRange;
+    let timeRange = req.query.time_range || '1_week'; // ค่าเริ่มต้นคือ 1 สัปดาห์
     let timeFilter;
 
     if (timeRange === '1_month') {
       timeFilter = dayjs().subtract(1, 'month').toDate();
     } else {
-      // ค่าเริ่มต้นเป็น 1 สัปดาห์
       timeFilter = dayjs().subtract(1, 'week').toDate();
     }
+    condition.gold_timestamp = { $lt: timeFilter };
+    
 
-    // ดึงข้อมูลจากฐานข้อมูล
+    //เปลี่ยนข้อความ
+    let timeRangeText;
+
+    if (timeRange === '1_week') {
+      timeRangeText = '1 สัปดาห์';
+    } else if (timeRange === '1_month') {
+      timeRangeText = '1 เดือน';
+    } else {
+      timeRangeText = 'ไม่ระบุ';
+    }
+
+    // ดึงข้อมูลจากฐานข้อมูลด้วยเงื่อนไขที่ตั้งไว้
     const golds = await Goldtagscount.find(condition);
+
 
     // กรองทองคำที่อยู่นานกว่า timeFilter
     const oldGolds = golds.filter(gold => new Date(gold.gold_timestamp) < timeFilter);
@@ -3027,16 +3038,17 @@ router.get('/old_golds', isLogin, async (req, res, next) => {
     };
 
     res.render('old_golds', {
-      oldGolds,
+      oldGolds: golds,
       dayjs,
       select_goldType: req.query.select_goldType,
       select_goldSize: req.query.select_goldSize,
-      select_timeRange: timeRange,
+      select_timeRange: timeRange, // ส่งค่า timeRange ไปยังหน้า view
       _id: req.query._id,
       gold_id: req.query.gold_id,
       currentUrl: req.originalUrl,
+      timeRangeText: timeRangeText,
       prices,
-    });
+    });    
   } catch (error) {
     next(error);
   }
